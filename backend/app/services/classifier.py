@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class SafetyFlag: 
     category: str 
     display_name: str 
-    confidence: str 
+    confidence: float 
     urgency: str 
     referral: str
     
@@ -56,6 +56,11 @@ class ClassifierService:
         self._categories = self._config["clinical_categories"]
         self._prompts = self._config["prompts"]
         self._confidence_thresholds = self._config["confidence_config"]
+        
+        # building reverse map: prompt text -> category name
+        for cat_name, cat_data in self._categories.items():
+            for prompt in cat_data["prompts"]:
+                self._prompt_to_category[prompt] = cat_name
         
         logger.info(
             f"Classifier config loaded: {len(self._categories)} categories, "
