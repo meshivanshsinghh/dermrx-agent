@@ -1,0 +1,2 @@
+Backend: 
+1. make sure we are handling the scenario where we don't get any data from ddinter api. 
