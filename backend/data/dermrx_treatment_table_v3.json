@@ -1,0 +1,1953 @@
+{
+  "version": "3.0",
+  "source": "MED-RT (RxClass API) + DDInter 1.0 cross-reference",
+  "description": "Evidence-based treatment table for DermRx Agent. Clinically curated from MED-RT (FDA/VA) + DDInter cross-reference. v3.0: Added SMILES from PubChem + TxGemma eligibility flags.",
+  "aliases_used": {
+    "calcipotriene": "calcipotriol",
+    "benzoyl peroxide": "benzoyl peroxide (topical)",
+    "retapamulin": "retapamulin (topical)",
+    "penciclovir": "penciclovir (topical)",
+    "fluocinolone": "fluocinolone acetonide",
+    "sulfacetamide": "sulfacetamide (ophthalmic)"
+  },
+  "treatment_classes": {
+    "antifungal": {
+      "ddinter_verified": [
+        {
+          "drug_name": "amphotericin B",
+          "ddinter_name": "Amphotericin B",
+          "rxcui": "732",
+          "mesh_sources": [
+            "Candidiasis, Cutaneous",
+            "Dermatomycoses"
+          ],
+          "smiles": "CC1C=CC=CC=CC=CC=CC=CC=CC(CC2C(C(CC(O2)(CC(CC(C(CCC(CC(CC(=O)OC(C(C1O)C)C)O)O)O)O)O)O)O)C(=O)O)OC3C(C(C(C(O3)C)O)N)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "ciclopirox",
+          "ddinter_name": "Ciclopirox",
+          "rxcui": "21090",
+          "mesh_sources": [
+            "Tinea",
+            "Candidiasis, Cutaneous",
+            "Dermatomycoses"
+          ],
+          "smiles": "CC1=CC(=O)N(C(=C1)C2CCCCC2)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "clotrimazole",
+          "ddinter_name": "Clotrimazole",
+          "rxcui": "2623",
+          "mesh_sources": [
+            "Tinea",
+            "Candidiasis, Cutaneous",
+            "Dermatomycoses"
+          ],
+          "smiles": "C1=CC=C(C=C1)C(C2=CC=CC=C2)(C3=CC=CC=C3Cl)N4C=CN=C4",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "econazole",
+          "ddinter_name": "Econazole",
+          "rxcui": "3743",
+          "mesh_sources": [
+            "Tinea",
+            "Candidiasis, Cutaneous",
+            "Dermatomycoses"
+          ],
+          "smiles": "C1=CC(=CC=C1COC(CN2C=CN=C2)C3=C(C=C(C=C3)Cl)Cl)Cl",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "fluconazole",
+          "ddinter_name": "Fluconazole",
+          "rxcui": "4450",
+          "mesh_sources": [
+            "Dermatomycoses"
+          ],
+          "smiles": "C1=CC(=C(C=C1F)F)C(CN2C=NC=N2)(CN3C=NC=N3)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "flucytosine",
+          "ddinter_name": "Flucytosine",
+          "rxcui": "4451",
+          "mesh_sources": [
+            "Dermatomycoses"
+          ],
+          "smiles": "C1=NC(=O)NC(=C1F)N",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "griseofulvin",
+          "ddinter_name": "Griseofulvin",
+          "rxcui": "5021",
+          "mesh_sources": [
+            "Tinea",
+            "Dermatomycoses"
+          ],
+          "smiles": "CC1CC(=O)C=C(C12C(=O)C3=C(O2)C(=C(C=C3OC)OC)Cl)OC",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "itraconazole",
+          "ddinter_name": "Itraconazole",
+          "rxcui": "28031",
+          "mesh_sources": [
+            "Tinea",
+            "Dermatomycoses"
+          ],
+          "smiles": "CCC(C)N1C(=O)N(C=N1)C2=CC=C(C=C2)N3CCN(CC3)C4=CC=C(C=C4)OCC5COC(O5)(CN6C=NC=N6)C7=C(C=C(C=C7)Cl)Cl",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "ketoconazole",
+          "ddinter_name": "Ketoconazole",
+          "rxcui": "6135",
+          "mesh_sources": [
+            "Tinea",
+            "Candidiasis, Cutaneous",
+            "Dermatomycoses"
+          ],
+          "smiles": "CC(=O)N1CCN(CC1)C2=CC=C(C=C2)OCC3COC(O3)(CN4C=CN=C4)C5=C(C=C(C=C5)Cl)Cl",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "miconazole",
+          "ddinter_name": "Miconazole",
+          "rxcui": "6932",
+          "mesh_sources": [
+            "Tinea",
+            "Candidiasis, Cutaneous",
+            "Dermatomycoses"
+          ],
+          "smiles": "C1=CC(=C(C=C1Cl)Cl)COC(CN2C=CN=C2)C3=C(C=C(C=C3)Cl)Cl",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "nystatin",
+          "ddinter_name": "Nystatin",
+          "rxcui": "7597",
+          "mesh_sources": [
+            "Candidiasis, Cutaneous",
+            "Dermatomycoses"
+          ],
+          "smiles": "CC1C=CC=CCCC=CC=CC=CC=CC(CC2C(C(CC(O2)(CC(C(CCC(CC(CC(CC(=O)OC(C(C1O)C)C)O)O)O)O)O)O)O)C(=O)O)OC3C(C(C(C(O3)C)O)N)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "potassium iodide",
+          "ddinter_name": "Potassium Iodide",
+          "rxcui": "8597",
+          "mesh_sources": [
+            "Dermatomycoses"
+          ],
+          "smiles": "[K+].[I-]",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "selenium sulfide",
+          "ddinter_name": "Selenium Sulfide",
+          "rxcui": "36345",
+          "mesh_sources": [
+            "Tinea",
+            "Dermatomycoses"
+          ],
+          "smiles": "S=[Se]",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "terbinafine",
+          "ddinter_name": "Terbinafine",
+          "rxcui": "37801",
+          "mesh_sources": [
+            "Tinea",
+            "Dermatomycoses"
+          ],
+          "smiles": "CC(C)(C)C#CC=CCN(C)CC1=CC=CC2=CC=CC=C21",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "voriconazole",
+          "ddinter_name": "Voriconazole",
+          "rxcui": "121243",
+          "mesh_sources": [
+            "Dermatomycoses"
+          ],
+          "smiles": "CC(C1=NC=NC=C1F)C(CN2C=NC=N2)(C3=C(C=C(C=C3)F)F)O",
+          "txgemma_eligible": true
+        }
+      ],
+      "not_in_ddinter": [
+        "bifonazole",
+        "butenafine",
+        "clioquinol",
+        "cloticasone",
+        "efinaconazole",
+        "flutrimazole",
+        "gentian violet",
+        "haloprogin",
+        "luliconazole",
+        "naftifine",
+        "natamycin",
+        "omoconazole",
+        "oxiconazole",
+        "povidone",
+        "sertaconazole",
+        "sulconazole",
+        "tavaborole",
+        "tolnaftate"
+      ]
+    },
+    "antibiotic": {
+      "ddinter_verified": [
+        {
+          "drug_name": "amoxicillin",
+          "ddinter_name": "Amoxicillin",
+          "rxcui": "723",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=C(C=C3)O)N)C(=O)O)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "ampicillin",
+          "ddinter_name": "Ampicillin",
+          "rxcui": "733",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O)O)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "aztreonam",
+          "ddinter_name": "Aztreonam",
+          "rxcui": "1272",
+          "mesh_sources": [
+            "Cellulitis"
+          ],
+          "smiles": "CC1C(C(=O)N1S(=O)(=O)O)NC(=O)C(=NOC(C)(C)C(=O)O)C2=CSC(=N2)N",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "bacitracin",
+          "ddinter_name": "Bacitracin",
+          "rxcui": "1291",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CCC(C)C1C(=O)NC(C(=O)NC(C(=O)NC(C(=O)NC(C(=O)NCCCCC(C(=O)NC(C(=O)N1)CCCN)NC(=O)C(C(C)CC)NC(=O)C(CCC(=O)O)NC(=O)C(CC(C)C)NC(=O)C2CSC(=N2)C(C(C)CC)N)CC(=O)N)CC(=O)O)CC3=CN=CN3)CC4=CC=CC=C4",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefaclor",
+          "ddinter_name": "Cefaclor",
+          "rxcui": "2176",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "C1C(=C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O)O)Cl",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefadroxil",
+          "ddinter_name": "Cefadroxil",
+          "rxcui": "2177",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial",
+            "Impetigo"
+          ],
+          "smiles": "CC1=C(N2C(C(C2=O)NC(=O)C(C3=CC=C(C=C3)O)N)SC1)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefamandole",
+          "ddinter_name": "Cefamandole",
+          "rxcui": "2178",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CN1C(=NN=N1)SCC2=C(N3C(C(C3=O)NC(=O)C(C4=CC=CC=C4)O)SC2)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefazolin",
+          "ddinter_name": "Cefazolin",
+          "rxcui": "2180",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC1=NN=C(S1)SCC2=C(N3C(C(C3=O)NC(=O)CN4C=NN=N4)SC2)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefdinir",
+          "ddinter_name": "Cefdinir",
+          "rxcui": "25037",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "C=CC1=C(N2C(C(C2=O)NC(=O)C(=NO)C3=CSC(=N3)N)SC1)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefditoren",
+          "ddinter_name": "Cefditoren",
+          "rxcui": "83682",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC1=C(SC=N1)C=CC2=C(N3C(C(C3=O)NC(=O)C(=NOC)C4=CSC(=N4)N)SC2)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefepime",
+          "ddinter_name": "Cefepime",
+          "rxcui": "20481",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "C[N+]1(CCCC1)CC2=C(N3C(C(C3=O)NC(=O)C(=NOC)C4=CSC(=N4)N)SC2)C(=O)[O-]",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefixime",
+          "ddinter_name": "Cefixime",
+          "rxcui": "25033",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "C=CC1=C(N2C(C(C2=O)NC(=O)C(=NOCC(=O)O)C3=CSC(=N3)N)SC1)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefoperazone",
+          "ddinter_name": "Cefoperazone",
+          "rxcui": "2184",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CCN1CCN(C(=O)C1=O)C(=O)NC(C2=CC=C(C=C2)O)C(=O)NC3C4N(C3=O)C(=C(CS4)CSC5=NN=NN5C)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefotaxime",
+          "ddinter_name": "Cefotaxime",
+          "rxcui": "2186",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC(=O)OCC1=C(N2C(C(C2=O)NC(=O)C(=NOC)C3=CSC(=N3)N)SC1)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefotetan",
+          "ddinter_name": "Cefotetan",
+          "rxcui": "2187",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CN1C(=NN=N1)SCC2=C(N3C(C(C3=O)(NC(=O)C4SC(=C(C(=O)N)C(=O)O)S4)OC)SC2)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefoxitin",
+          "ddinter_name": "Cefoxitin",
+          "rxcui": "2189",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "COC1(C2N(C1=O)C(=C(CS2)COC(=O)N)C(=O)O)NC(=O)CC3=CC=CS3",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefpodoxime",
+          "ddinter_name": "Cefpodoxime",
+          "rxcui": "20489",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "COCC1=C(N2C(C(C2=O)NC(=O)C(=NOC)C3=CSC(=N3)N)SC1)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefprozil",
+          "ddinter_name": "Cefprozil",
+          "rxcui": "19552",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC=CC1=C(N2C(C(C2=O)NC(=O)C(C3=CC=C(C=C3)O)N)SC1)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "ceftazidime",
+          "ddinter_name": "Ceftazidime",
+          "rxcui": "2191",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC(C)(C(=O)O)ON=C(C1=CSC(=N1)N)C(=O)NC2C3N(C2=O)C(=C(CS3)C[N+]4=CC=CC=C4)C(=O)[O-]",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "ceftizoxime",
+          "ddinter_name": "Ceftizoxime",
+          "rxcui": "2192",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CON=C(C1=CSC(=N1)N)C(=O)NC2C3N(C2=O)C(=CCS3)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "ceftriaxone",
+          "ddinter_name": "Ceftriaxone",
+          "rxcui": "2193",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CN1C(=NC(=O)C(=O)N1)SCC2=C(N3C(C(C3=O)NC(=O)C(=NOC)C4=CSC(=N4)N)SC2)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cefuroxime",
+          "ddinter_name": "Cefuroxime",
+          "rxcui": "2194",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial",
+            "Impetigo"
+          ],
+          "smiles": "CON=C(C1=CC=CO1)C(=O)NC2C3N(C2=O)C(=C(CS3)COC(=O)N)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cephalexin",
+          "ddinter_name": "Cephalexin",
+          "rxcui": "2231",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC1=C(N2C(C(C2=O)NC(=O)C(C3=CC=CC=C3)N)SC1)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "ciprofloxacin",
+          "ddinter_name": "Ciprofloxacin",
+          "rxcui": "2551",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "C1CC1N2C=C(C(=O)C3=CC(=C(C=C32)N4CCNCC4)F)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cloxacillin",
+          "ddinter_name": "Cloxacillin",
+          "rxcui": "2625",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial",
+            "Cellulitis"
+          ],
+          "smiles": "CC1=C(C(=NO1)C2=CC=CC=C2Cl)C(=O)NC3C4N(C3=O)C(C(S4)(C)C)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "dalfopristin",
+          "ddinter_name": "Dalfopristin",
+          "rxcui": "229369",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CCN(CC)CCS(=O)(=O)C1CCN2C1C(=O)OC(C(C=CC(=O)NCC=CC(=CC(CC(=O)CC3=NC(=CO3)C2=O)O)C)C)C(C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "daptomycin",
+          "ddinter_name": "Daptomycin",
+          "rxcui": "22299",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CCCCCCCCCC(=O)NC(CC1=CNC2=CC=CC=C21)C(=O)NC(CC(=O)N)C(=O)NC(CC(=O)O)C(=O)NC3C(OC(=O)C(NC(=O)C(NC(=O)C(NC(=O)CNC(=O)C(NC(=O)C(NC(=O)C(NC(=O)C(NC(=O)CNC3=O)CCCN)CC(=O)O)C)CC(=O)O)CO)C(C)CC(=O)O)CC(=O)C4=CC=CC=C4N)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "delafloxacin",
+          "ddinter_name": "Delafloxacin",
+          "rxcui": "1927663",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "C1C(CN1C2=C(C=C3C(=C2Cl)N(C=C(C3=O)C(=O)O)C4=C(C=C(C(=N4)N)F)F)F)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "dicloxacillin",
+          "ddinter_name": "Dicloxacillin",
+          "rxcui": "3356",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial",
+            "Cellulitis"
+          ],
+          "smiles": "CC1=C(C(=NO1)C2=C(C=CC=C2Cl)Cl)C(=O)NC3C4N(C3=O)C(C(S4)(C)C)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "doxycycline",
+          "ddinter_name": "Doxycycline",
+          "rxcui": "3640",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC1C2C(C3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "ertapenem",
+          "ddinter_name": "Ertapenem",
+          "rxcui": "325642",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC1C2C(C(=O)N2C(=C1SC3CC(NC3)C(=O)NC4=CC=CC(=C4)C(=O)O)C(=O)O)C(C)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "erythromycin",
+          "ddinter_name": "Erythromycin",
+          "rxcui": "4053",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CCC1C(C(C(C(=O)C(CC(C(C(C(C(C(=O)O1)C)OC2CC(C(C(O2)C)O)(C)OC)C)OC3C(C(CC(O3)C)N(C)C)O)(C)O)C)C)O)(C)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "gentamicin",
+          "ddinter_name": "Gentamicin",
+          "rxcui": "1596450",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC(C1CCC(C(O1)OC2C(CC(C(C2O)OC3C(C(C(CO3)(C)O)NC)O)N)N)N)NC",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "levofloxacin",
+          "ddinter_name": "Levofloxacin",
+          "rxcui": "82122",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC1COC2=C3N1C=C(C(=O)C3=CC(=C2N4CCN(CC4)C)F)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "linezolid",
+          "ddinter_name": "Linezolid",
+          "rxcui": "190376",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC(=O)NCC1CN(C(=O)O1)C2=CC(=C(C=C2)N3CCOCC3)F",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "mupirocin",
+          "ddinter_name": "Mupirocin",
+          "rxcui": "42372",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial",
+            "Impetigo"
+          ],
+          "smiles": "CC(C1C(O1)CC2COC(C(C2O)O)CC(=CC(=O)OCCCCCCCCC(=O)O)C)C(C)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "nafcillin",
+          "ddinter_name": "Nafcillin",
+          "rxcui": "7233",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial",
+            "Cellulitis"
+          ],
+          "smiles": "CCOC1=C(C2=CC=CC=C2C=C1)C(=O)NC3C4N(C3=O)C(C(S4)(C)C)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "neomycin",
+          "ddinter_name": "Neomycin",
+          "rxcui": "7299",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "C1C(C(C(C(C1N)OC2C(C(C(C(O2)CN)O)O)N)OC3C(C(C(O3)CO)OC4C(C(C(C(O4)CN)O)O)N)O)O)N",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "ofloxacin",
+          "ddinter_name": "Ofloxacin",
+          "rxcui": "7623",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC1COC2=C3N1C=C(C(=O)C3=CC(=C2N4CCN(CC4)C)F)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "omadacycline",
+          "ddinter_name": "Omadacycline",
+          "rxcui": "2059269",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC(C)(C)CNCC1=CC(=C2CC3CC4C(C(=O)C(=C(C4(C(=O)C3=C(C2=C1O)O)O)O)C(=O)N)N(C)C)N(C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "oxacillin",
+          "ddinter_name": "Oxacillin",
+          "rxcui": "7773",
+          "mesh_sources": [
+            "Cellulitis"
+          ],
+          "smiles": "CC1=C(C(=NO1)C2=CC=CC=C2)C(=O)NC3C4N(C3=O)C(C(S4)(C)C)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "retapamulin",
+          "ddinter_name": "Retapamulin (topical)",
+          "rxcui": "642274",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial",
+            "Impetigo"
+          ],
+          "alias_used": "retapamulin (topical)",
+          "smiles": "CC1CCC23CCC(=O)C2C1(C(CC(C(C3C)O)(C)C=C)OC(=O)CSC4CC5CCC(C4)N5C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "streptomycin",
+          "ddinter_name": "Streptomycin",
+          "rxcui": "10109",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC1C(C(C(O1)OC2C(C(C(C(C2O)O)N=C(N)N)O)N=C(N)N)OC3C(C(C(C(O3)CO)O)O)NC)(C=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "sulfacetamide",
+          "ddinter_name": "Sulfacetamide (ophthalmic)",
+          "rxcui": "10169",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "alias_used": "sulfacetamide (ophthalmic)",
+          "smiles": "CC(=O)NS(=O)(=O)C1=CC=C(C=C1)N",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "tedizolid",
+          "ddinter_name": "Tedizolid",
+          "rxcui": "1540825",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CN1N=C(N=N1)C2=NC=C(C=C2)C3=C(C=C(C=C3)N4CC(OC4=O)CO)F",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "tetracycline",
+          "ddinter_name": "Tetracycline",
+          "rxcui": "10395",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "tigecycline",
+          "ddinter_name": "Tigecycline",
+          "rxcui": "384455",
+          "mesh_sources": [
+            "Skin Diseases, Bacterial"
+          ],
+          "smiles": "CC(C)(C)NCC(=O)NC1=CC(=C2CC3CC4C(C(=O)C(=C(C4(C(=O)C3=C(C2=C1O)O)O)O)C(=O)N)N(C)C)N(C)C",
+          "txgemma_eligible": true
+        }
+      ],
+      "not_in_ddinter": [
+        "cephalothin",
+        "cephapirin",
+        "cephradine",
+        "gentian violet",
+        "nitrofurazone",
+        "ozenoxacin",
+        "penicillin G",
+        "povidone",
+        "prasterone",
+        "silver acetate",
+        "sulbactam",
+        "temafloxacin"
+      ]
+    },
+    "antiviral": {
+      "ddinter_verified": [
+        {
+          "drug_name": "acyclovir",
+          "ddinter_name": "Acyclovir",
+          "rxcui": "281",
+          "mesh_sources": [
+            "Herpes Simplex",
+            "Herpes Zoster"
+          ],
+          "smiles": "C1=NC2=C(N1COCCO)N=C(NC2=O)N",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "famciclovir",
+          "ddinter_name": "Famciclovir",
+          "rxcui": "68099",
+          "mesh_sources": [
+            "Herpes Simplex",
+            "Herpes Zoster"
+          ],
+          "smiles": "CC(=O)OCC(CCN1C=NC2=CN=C(N=C21)N)COC(=O)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "foscarnet",
+          "ddinter_name": "Foscarnet",
+          "rxcui": "33562",
+          "mesh_sources": [
+            "Herpes Simplex"
+          ],
+          "smiles": "C(=O)(O)P(=O)(O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "interferon alfa-2b",
+          "ddinter_name": "Interferon alfa-2b",
+          "rxcui": "5880",
+          "mesh_sources": [
+            "Herpes Simplex"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "penciclovir",
+          "ddinter_name": "Penciclovir (topical)",
+          "rxcui": "59839",
+          "mesh_sources": [
+            "Herpes Simplex"
+          ],
+          "alias_used": "penciclovir (topical)",
+          "smiles": "C1=NC2=C(N1CCC(CO)CO)N=C(NC2=O)N",
+          "txgemma_eligible": true
+        }
+      ],
+      "not_in_ddinter": [
+        "benzocaine",
+        "benzyl alcohol",
+        "capsaicin",
+        "Capsicum extract",
+        "Capsicum oleoresin",
+        "idoxuridine",
+        "resveratrol",
+        "valacyclovir",
+        "vidarabine"
+      ]
+    },
+    "wart_treatment": {
+      "ddinter_verified": [
+        {
+          "drug_name": "imiquimod",
+          "ddinter_name": "Imiquimod",
+          "rxcui": "59943",
+          "mesh_sources": [
+            "Warts"
+          ],
+          "smiles": "CC(C)CN1C=NC2=C1C3=CC=CC=C3N=C2N",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "interferon alfa-2b",
+          "ddinter_name": "Interferon alfa-2b",
+          "rxcui": "5880",
+          "mesh_sources": [
+            "Warts"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "interferon alfa-n3",
+          "ddinter_name": "Interferon alfa-n3",
+          "rxcui": "612937",
+          "mesh_sources": [
+            "Warts"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "interferon alfacon-1",
+          "ddinter_name": "Interferon alfacon-1",
+          "rxcui": "59744",
+          "mesh_sources": [
+            "Warts"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "interferon gamma-1b",
+          "ddinter_name": "Interferon gamma-1b",
+          "rxcui": "5882",
+          "mesh_sources": [
+            "Warts"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "peginterferon alfa-2a",
+          "ddinter_name": "Peginterferon alfa-2a",
+          "rxcui": "120608",
+          "mesh_sources": [
+            "Warts"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "peginterferon alfa-2b",
+          "ddinter_name": "Peginterferon alfa-2b",
+          "rxcui": "253453",
+          "mesh_sources": [
+            "Warts"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        }
+      ],
+      "not_in_ddinter": [
+        "cantharidin",
+        "formaldehyde",
+        "formalin",
+        "interferon alfa-2a",
+        "mavorixafor",
+        "nitrogen",
+        "podofilox",
+        "podophyllin",
+        "salicylic acid"
+      ]
+    },
+    "topical_steroid": {
+      "ddinter_verified": [
+        {
+          "drug_name": "betamethasone",
+          "ddinter_name": "Betamethasone",
+          "rxcui": "1514",
+          "mesh_sources": [
+            "Dermatitis, Atopic"
+          ],
+          "smiles": "CC1CC2C3CCC4=CC(=O)C=CC4(C3(C(CC2(C1(C(=O)CO)O)C)O)F)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "doxepin",
+          "ddinter_name": "Doxepin",
+          "rxcui": "3638",
+          "mesh_sources": [
+            "Dermatitis, Atopic"
+          ],
+          "smiles": "CN(C)CCC=C1C2=CC=CC=C2COC3=CC=CC=C31",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "dupilumab",
+          "ddinter_name": "Dupilumab",
+          "rxcui": "1876376",
+          "mesh_sources": [
+            "Dermatitis, Atopic"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "fluocinolone",
+          "ddinter_name": "Fluocinolone acetonide",
+          "rxcui": "25126",
+          "mesh_sources": [
+            "Dermatitis, Atopic"
+          ],
+          "alias_used": "fluocinolone acetonide",
+          "smiles": "CC12CC(C3(C(C1CC(C2(C(=O)CO)O)O)CC(C4=CC(=O)C=CC43C)F)F)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "hydrocortisone",
+          "ddinter_name": "Hydrocortisone",
+          "rxcui": "5492",
+          "mesh_sources": [
+            "Dermatitis, Contact"
+          ],
+          "smiles": "CC12CCC(=O)C=C1CCC3C2C(CC4(C3CCC4(C(=O)CO)O)C)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "methylprednisolone",
+          "ddinter_name": "Methylprednisolone",
+          "rxcui": "6902",
+          "mesh_sources": [
+            "Dermatitis, Atopic"
+          ],
+          "smiles": "CC1CC2C3CCC(C3(CC(C2C4(C1=CC(=O)C=C4)C)O)C)(C(=O)CO)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "pimecrolimus",
+          "ddinter_name": "Pimecrolimus",
+          "rxcui": "321952",
+          "mesh_sources": [
+            "Dermatitis, Atopic"
+          ],
+          "smiles": "CCC1C=C(CC(CC(C2C(CC(C(O2)(C(=O)C(=O)N3CCCCC3C(=O)OC(C(C(CC1=O)O)C)C(=CC4CCC(C(C4)OC)Cl)C)O)C)OC)OC)C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "prednisolone",
+          "ddinter_name": "Prednisolone",
+          "rxcui": "8638",
+          "mesh_sources": [
+            "Dermatitis, Atopic"
+          ],
+          "smiles": "CC12CC(C3C(C1CCC2(C(=O)CO)O)CCC4=CC(=O)C=CC34C)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "prednisone",
+          "ddinter_name": "Prednisone",
+          "rxcui": "8640",
+          "mesh_sources": [
+            "Dermatitis, Contact",
+            "Dermatitis, Atopic"
+          ],
+          "smiles": "CC12CC(=O)C3C(C1CCC2(C(=O)CO)O)CCC4=CC(=O)C=CC34C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "tacrolimus",
+          "ddinter_name": "Tacrolimus",
+          "rxcui": "42316",
+          "mesh_sources": [
+            "Dermatitis, Atopic"
+          ],
+          "smiles": "CC1CC(C2C(CC(C(O2)(C(=O)C(=O)N3CCCCC3C(=O)OC(C(C(CC(=O)C(C=C(C1)C)CC=C)O)C)C(=CC4CCC(C(C4)OC)O)C)O)C)OC)OC",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "triamcinolone",
+          "ddinter_name": "Triamcinolone",
+          "rxcui": "10759",
+          "mesh_sources": [
+            "Dermatitis, Atopic"
+          ],
+          "smiles": "CC12CC(C3(C(C1CC(C2(C(=O)CO)O)O)CCC4=CC(=O)C=CC43C)F)O",
+          "txgemma_eligible": true
+        }
+      ],
+      "not_in_ddinter": [
+        "abrocitinib",
+        "aluminum acetate",
+        "amlexanox",
+        "boric acid",
+        "cortisone",
+        "crisaborole",
+        "delgocitinib",
+        "dibucaine",
+        "flumethasone",
+        "ichthammol",
+        "lebrikizumab",
+        "peppermint oil",
+        "pramoxine",
+        "racemethionine",
+        "tralokinumab",
+        "trimeprazine",
+        "zinc oxide"
+      ]
+    },
+    "psoriasis_treatment": {
+      "ddinter_verified": [
+        {
+          "drug_name": "abatacept",
+          "ddinter_name": "Abatacept",
+          "rxcui": "614391",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "acitretin",
+          "ddinter_name": "Acitretin",
+          "rxcui": "16818",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CC1=CC(=C(C(=C1C=CC(=CC=CC(=CC(=O)O)C)C)C)C)OC",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "adalimumab",
+          "ddinter_name": "Adalimumab",
+          "rxcui": "327361",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "apremilast",
+          "ddinter_name": "Apremilast",
+          "rxcui": "1492727",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CCOC1=C(C=CC(=C1)C(CS(=O)(=O)C)N2C(=O)C3=C(C2=O)C(=CC=C3)NC(=O)C)OC",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "auranofin",
+          "ddinter_name": "Auranofin",
+          "rxcui": "1227",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CCP(CC)CC.CC(=O)OCC1C(C(C(C(O1)[S-])OC(=O)C)OC(=O)C)OC(=O)C.[Au+]",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "aurothioglucose",
+          "ddinter_name": "Aurothioglucose",
+          "rxcui": "4980",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "C(C1C(C(C(C(O1)[S-])O)O)O)O.[Au+]",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "betamethasone",
+          "ddinter_name": "Betamethasone",
+          "rxcui": "1514",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CC1CC2C3CCC4=CC(=O)C=CC4(C3(C(CC2(C1(C(=O)CO)O)C)O)F)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "brodalumab",
+          "ddinter_name": "Brodalumab",
+          "rxcui": "1872251",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "calcipotriene",
+          "ddinter_name": "Calcipotriol",
+          "rxcui": "29365",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "alias_used": "calcipotriol",
+          "smiles": "CC(C=CC(C1CC1)O)C2CCC3C2(CCCC3=CC=C4CC(CC(C4=C)O)O)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "calcitriol",
+          "ddinter_name": "Calcitriol",
+          "rxcui": "1894",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CC(CCCC(C)(C)O)C1CCC2C1(CCCC2=CC=C3CC(CC(C3=C)O)O)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "certolizumab pegol",
+          "ddinter_name": "Certolizumab pegol",
+          "rxcui": "709271",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "cholecalciferol",
+          "ddinter_name": "Cholecalciferol",
+          "rxcui": "2418",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CC(C)CCCC(C)C1CCC2C1(CCCC2=CC=C3CC(CCC3=C)O)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cyclosporine",
+          "ddinter_name": "Cyclosporine",
+          "rxcui": "3008",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CCC1C(=O)N(CC(=O)N(C(C(=O)NC(C(=O)N(C(C(=O)NC(C(=O)NC(C(=O)N(C(C(=O)N(C(C(=O)N(C(C(=O)N(C(C(=O)N1)C(C(C)CC=CC)O)C)C(C)C)C)CC(C)C)C)CC(C)C)C)C)C)CC(C)C)C)C(C)C)CC(C)C)C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "etanercept",
+          "ddinter_name": "Etanercept",
+          "rxcui": "214555",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "fluocinolone",
+          "ddinter_name": "Fluocinolone acetonide",
+          "rxcui": "25126",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "alias_used": "fluocinolone acetonide",
+          "smiles": "CC12CC(C3(C(C1CC(C2(C(=O)CO)O)O)CC(C4=CC(=O)C=CC43C)F)F)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "guselkumab",
+          "ddinter_name": "Guselkumab",
+          "rxcui": "1928588",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "hydroxyurea",
+          "ddinter_name": "Hydroxyurea",
+          "rxcui": "5552",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "C(=O)(N)NO",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "infliximab",
+          "ddinter_name": "Infliximab",
+          "rxcui": "191831",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "ixekizumab",
+          "ddinter_name": "Ixekizumab",
+          "rxcui": "1745099",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "methotrexate",
+          "ddinter_name": "Methotrexate",
+          "rxcui": "6851",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CN(CC1=CN=C2C(=N1)C(=NC(=N2)N)N)C3=CC=C(C=C3)C(=O)NC(CCC(=O)O)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "methoxsalen",
+          "ddinter_name": "Methoxsalen",
+          "rxcui": "6854",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "COC1=C2C(=CC3=C1OC=C3)C=CC(=O)O2",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "mycophenolate mofetil",
+          "ddinter_name": "Mycophenolate mofetil",
+          "rxcui": "68149",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CC1=C2COC(=O)C2=C(C(=C1OC)CC=C(C)CCC(=O)OCCN3CCOCC3)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "mycophenolic acid",
+          "ddinter_name": "Mycophenolic acid",
+          "rxcui": "7145",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CC1=C2COC(=O)C2=C(C(=C1OC)CC=C(C)CCC(=O)O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "prednisone",
+          "ddinter_name": "Prednisone",
+          "rxcui": "8640",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CC12CC(=O)C3C(C1CCC2(C(=O)CO)O)CCC4=CC(=O)C=CC34C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "risankizumab",
+          "ddinter_name": "Risankizumab",
+          "rxcui": "2166040",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "secukinumab",
+          "ddinter_name": "Secukinumab",
+          "rxcui": "1599788",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "tazarotene",
+          "ddinter_name": "Tazarotene",
+          "rxcui": "83947",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CCOC(=O)C1=CN=C(C=C1)C#CC2=CC3=C(C=C2)SCCC3(C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "tildrakizumab",
+          "ddinter_name": "Tildrakizumab",
+          "rxcui": "2053436",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "trioxsalen",
+          "ddinter_name": "Trioxsalen",
+          "rxcui": "10844",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": "CC1=CC(=O)OC2=C1C=C3C=C(OC3=C2C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "ustekinumab",
+          "ddinter_name": "Ustekinumab",
+          "rxcui": "847083",
+          "mesh_sources": [
+            "Psoriasis"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        }
+      ],
+      "not_in_ddinter": [
+        "Aloe vera preparation",
+        "anthralin",
+        "bimekizumab",
+        "coal tar",
+        "cod liver oil",
+        "colloid sulfur",
+        "cortisone",
+        "etretinate",
+        "flumethasone",
+        "salicylic acid",
+        "spesolimab",
+        "sulfur",
+        "sulfur, colloidal",
+        "tapinarof",
+        "thioguanine"
+      ]
+    },
+    "acne_treatment": {
+      "ddinter_verified": [
+        {
+          "drug_name": "adapalene",
+          "ddinter_name": "Adapalene",
+          "rxcui": "60223",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "COC1=C(C=C(C=C1)C2=CC3=C(C=C2)C=C(C=C3)C(=O)O)C45CC6CC(C4)CC(C6)C5",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "benzoyl peroxide",
+          "ddinter_name": "Benzoyl peroxide (topical)",
+          "rxcui": "1418",
+          "mesh_sources": [
+            "Rosacea",
+            "Acne Vulgaris"
+          ],
+          "alias_used": "benzoyl peroxide (topical)",
+          "smiles": "C1=CC=C(C=C1)C(=O)OOC(=O)C2=CC=CC=C2",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "clindamycin",
+          "ddinter_name": "Clindamycin",
+          "rxcui": "2582",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "CCCC1CC(N(C1)C)C(=O)NC(C2C(C(C(C(O2)SC)O)O)O)C(C)Cl",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "demeclocycline",
+          "ddinter_name": "Demeclocycline",
+          "rxcui": "3154",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "CN(C)C1C2CC3C(C4=C(C=CC(=C4C(=C3C(=O)C2(C(=C(C1=O)C(=O)N)O)O)O)O)Cl)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "desogestrel",
+          "ddinter_name": "Desogestrel",
+          "rxcui": "22656",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "CCC12CC(=C)C3C(C1CCC2(C#C)O)CCC4=CCCCC34",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "erythromycin",
+          "ddinter_name": "Erythromycin",
+          "rxcui": "4053",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "CCC1C(C(C(C(=O)C(CC(C(C(C(C(C(=O)O1)C)OC2CC(C(C(O2)C)O)(C)OC)C)OC3C(C(CC(O3)C)N(C)C)O)(C)O)C)C)O)(C)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "isotretinoin",
+          "ddinter_name": "Isotretinoin",
+          "rxcui": "6064",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "CC1=C(C(CCC1)(C)C)C=CC(=CC=CC(=CC(=O)O)C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "metronidazole",
+          "ddinter_name": "Metronidazole",
+          "rxcui": "6922",
+          "mesh_sources": [
+            "Rosacea"
+          ],
+          "smiles": "CC1=NC=C(N1CCO)[N+](=O)[O-]",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "minocycline",
+          "ddinter_name": "Minocycline",
+          "rxcui": "6980",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "CN(C)C1C2CC3CC4=C(C=CC(=C4C(=C3C(=O)C2(C(=C(C1=O)C(=O)N)O)O)O)O)N(C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "oxytetracycline",
+          "ddinter_name": "Oxytetracycline",
+          "rxcui": "7821",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "CC1(C2C(C3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "sarecycline",
+          "ddinter_name": "Sarecycline",
+          "rxcui": "2059018",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "CN(C)C1C2CC3CC4=C(C=CC(=C4C(=C3C(=O)C2(C(=C(C1=O)C(=O)N)O)O)O)O)CN(C)OC",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "tazarotene",
+          "ddinter_name": "Tazarotene",
+          "rxcui": "83947",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "CCOC(=O)C1=CN=C(C=C1)C#CC2=CC3=C(C=C2)SCCC3(C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "tetracycline",
+          "ddinter_name": "Tetracycline",
+          "rxcui": "10395",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "tretinoin",
+          "ddinter_name": "Tretinoin",
+          "rxcui": "10753",
+          "mesh_sources": [
+            "Acne Vulgaris"
+          ],
+          "smiles": "CC1=C(C(CCC1)(C)C)C=CC(=CC=CC(=CC(=O)O)C)C",
+          "txgemma_eligible": true
+        }
+      ],
+      "not_in_ddinter": [
+        "4,6-bis(1-methylpentyl)resorcinol",
+        "clomocycline",
+        "colloid sulfur",
+        "hexachlorophene",
+        "loteprednol",
+        "norethindrone",
+        "resorcinol",
+        "salicylic acid",
+        "silver",
+        "sulfur",
+        "sulfur, colloidal",
+        "tioxolone",
+        "trifarotene"
+      ]
+    },
+    "antihistamine": {
+      "ddinter_verified": [
+        {
+          "drug_name": "acrivastine",
+          "ddinter_name": "Acrivastine",
+          "rxcui": "19959",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CC1=CC=C(C=C1)C(=CCN2CCCC2)C3=CC=CC(=N3)C=CC(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "azatadine",
+          "ddinter_name": "Azatadine",
+          "rxcui": "18600",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CN1CCC(=C2C3=CC=CC=C3CCC4=C2N=CC=C4)CC1",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "brompheniramine",
+          "ddinter_name": "Brompheniramine",
+          "rxcui": "1767",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CN(C)CCC(C1=CC=C(C=C1)Br)C2=CC=CC=N2",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "carbinoxamine",
+          "ddinter_name": "Carbinoxamine",
+          "rxcui": "20220",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CN(C)CCOC(C1=CC=C(C=C1)Cl)C2=CC=CC=N2",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cetirizine",
+          "ddinter_name": "Cetirizine",
+          "rxcui": "20610",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "C1CN(CCN1CCOCC(=O)O)C(C2=CC=CC=C2)C3=CC=C(C=C3)Cl",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "chlorcyclizine",
+          "ddinter_name": "Chlorcyclizine",
+          "rxcui": "2354",
+          "mesh_sources": [
+            "Pruritus"
+          ],
+          "smiles": "CN1CCN(CC1)C(C2=CC=CC=C2)C3=CC=C(C=C3)Cl",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "chlorpheniramine",
+          "ddinter_name": "Chlorpheniramine",
+          "rxcui": "2400",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CN(C)CCC(C1=CC=C(C=C1)Cl)C2=CC=CC=N2",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cimetidine",
+          "ddinter_name": "Cimetidine",
+          "rxcui": "2541",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CC1=C(N=CN1)CSCCNC(=NC)NC#N",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "clemastine",
+          "ddinter_name": "Clemastine",
+          "rxcui": "2578",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CC(C1=CC=CC=C1)(C2=CC=C(C=C2)Cl)OCCC3CCCN3C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "cyproheptadine",
+          "ddinter_name": "Cyproheptadine",
+          "rxcui": "3013",
+          "mesh_sources": [
+            "Urticaria",
+            "Pruritus"
+          ],
+          "smiles": "CN1CCC(=C2C3=CC=CC=C3C=CC4=CC=CC=C42)CC1",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "desloratadine",
+          "ddinter_name": "Desloratadine",
+          "rxcui": "275635",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "C1CC2=C(C=CC(=C2)Cl)C(=C3CCNCC3)C4=C1C=CC=N4",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "dexbrompheniramine",
+          "ddinter_name": "Dexbrompheniramine",
+          "rxcui": "22696",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CN(C)CCC(C1=CC=C(C=C1)Br)C2=CC=CC=N2",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "diphenhydramine",
+          "ddinter_name": "Diphenhydramine",
+          "rxcui": "3498",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CN(C)CCOC(C1=CC=CC=C1)C2=CC=CC=C2",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "doxepin",
+          "ddinter_name": "Doxepin",
+          "rxcui": "3638",
+          "mesh_sources": [
+            "Pruritus"
+          ],
+          "smiles": "CN(C)CCC=C1C2=CC=CC=C2COC3=CC=CC=C31",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "famotidine",
+          "ddinter_name": "Famotidine",
+          "rxcui": "4278",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "C1=C(N=C(S1)N=C(N)N)CSCCC(=NS(=O)(=O)N)N",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "fexofenadine",
+          "ddinter_name": "Fexofenadine",
+          "rxcui": "87636",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CC(C)(C1=CC=C(C=C1)C(CCCN2CCC(CC2)C(C3=CC=CC=C3)(C4=CC=CC=C4)O)O)C(=O)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "hydroxyzine",
+          "ddinter_name": "Hydroxyzine",
+          "rxcui": "5553",
+          "mesh_sources": [
+            "Pruritus"
+          ],
+          "smiles": "C1CN(CCN1CCOCCO)C(C2=CC=CC=C2)C3=CC=C(C=C3)Cl",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "levocetirizine",
+          "ddinter_name": "Levocetirizine",
+          "rxcui": "356887",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "C1CN(CCN1CCOCC(=O)O)C(C2=CC=CC=C2)C3=CC=C(C=C3)Cl",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "loratadine",
+          "ddinter_name": "Loratadine",
+          "rxcui": "28889",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CCOC(=O)N1CCC(=C2C3=C(CCC4=C2N=CC=C4)C=C(C=C3)Cl)CC1",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "methdilazine",
+          "ddinter_name": "Methdilazine",
+          "rxcui": "29648",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CN1CCC(C1)CN2C3=CC=CC=C3SC4=CC=CC=C42",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "nizatidine",
+          "ddinter_name": "Nizatidine",
+          "rxcui": "42319",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CNC(=C[N+](=O)[O-])NCCSCC1=CSC(=N1)CN(C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "phenindamine",
+          "ddinter_name": "Phenindamine",
+          "rxcui": "33283",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CN1CCC2=C(C1)C(C3=CC=CC=C23)C4=CC=CC=C4",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "phenyltoloxamine",
+          "ddinter_name": "Phenyltoloxamine",
+          "rxcui": "33408",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CN(C)CCOC1=CC=CC=C1CC2=CC=CC=C2",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "promethazine",
+          "ddinter_name": "Promethazine",
+          "rxcui": "8745",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CC(CN1C2=CC=CC=C2SC3=CC=CC=C31)N(C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "tripelennamine",
+          "ddinter_name": "Tripelennamine",
+          "rxcui": "10847",
+          "mesh_sources": [
+            "Urticaria"
+          ],
+          "smiles": "CN(C)CCN(CC1=CC=CC=C1)C2=CC=CC=N2",
+          "txgemma_eligible": true
+        }
+      ],
+      "not_in_ddinter": [
+        "antazoline",
+        "benzocaine",
+        "bromodiphenhydramine",
+        "dexchlorpheniramine",
+        "dibucaine",
+        "difelikefalin",
+        "ecallantide",
+        "mequitazine",
+        "mometasone",
+        "pheniramine",
+        "pramoxine",
+        "pyrilamine",
+        "remibrutinib",
+        "sebetralstat",
+        "trimeprazine"
+      ]
+    },
+    "antiparasitic": {
+      "ddinter_verified": [
+        {
+          "drug_name": "ivermectin",
+          "ddinter_name": "Ivermectin",
+          "rxcui": "6069",
+          "mesh_sources": [
+            "Scabies"
+          ],
+          "smiles": "CCC(C)C1C(CCC2(O1)CC3CC(O2)CC=C(C(C(C=CC=C4COC5C4(C(C=C(C5O)C)C(=O)O3)O)C)OC6CC(C(C(O6)C)OC7CC(C(C(O7)C)O)OC)OC)C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "lindane",
+          "ddinter_name": "Lindane",
+          "rxcui": "1388",
+          "mesh_sources": [
+            "Lice Infestations",
+            "Scabies"
+          ],
+          "smiles": "C1(C(C(C(C(C1Cl)Cl)Cl)Cl)Cl)Cl",
+          "txgemma_eligible": true
+        }
+      ],
+      "not_in_ddinter": [
+        "benzyl alcohol",
+        "crotamiton",
+        "malathion",
+        "permethrin",
+        "piperonyl butoxide",
+        "pyrethrins",
+        "spinosad"
+      ]
+    },
+    "lichen_treatment": {
+      "ddinter_verified": [
+        {
+          "drug_name": "betamethasone",
+          "ddinter_name": "Betamethasone",
+          "rxcui": "1514",
+          "mesh_sources": [
+            "Lichen Planus"
+          ],
+          "smiles": "CC1CC2C3CCC4=CC(=O)C=CC4(C3(C(CC2(C1(C(=O)CO)O)C)O)F)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "doxepin",
+          "ddinter_name": "Doxepin",
+          "rxcui": "3638",
+          "mesh_sources": [
+            "Lichen Planus"
+          ],
+          "smiles": "CN(C)CCC=C1C2=CC=CC=C2COC3=CC=CC=C31",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "dupilumab",
+          "ddinter_name": "Dupilumab",
+          "rxcui": "1876376",
+          "mesh_sources": [
+            "Lichen Planus"
+          ],
+          "smiles": null,
+          "txgemma_eligible": false
+        },
+        {
+          "drug_name": "fluocinolone",
+          "ddinter_name": "Fluocinolone acetonide",
+          "rxcui": "25126",
+          "mesh_sources": [
+            "Lichen Planus"
+          ],
+          "alias_used": "fluocinolone acetonide",
+          "smiles": "CC12CC(C3(C(C1CC(C2(C(=O)CO)O)O)CC(C4=CC(=O)C=CC43C)F)F)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "hydrocortisone",
+          "ddinter_name": "Hydrocortisone",
+          "rxcui": "5492",
+          "mesh_sources": [
+            "Lichen Planus"
+          ],
+          "smiles": "CC12CCC(=O)C=C1CCC3C2C(CC4(C3CCC4(C(=O)CO)O)C)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "methylprednisolone",
+          "ddinter_name": "Methylprednisolone",
+          "rxcui": "6902",
+          "mesh_sources": [
+            "Lichen Planus"
+          ],
+          "smiles": "CC1CC2C3CCC(C3(CC(C2C4(C1=CC(=O)C=C4)C)O)C)(C(=O)CO)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "pimecrolimus",
+          "ddinter_name": "Pimecrolimus",
+          "rxcui": "321952",
+          "mesh_sources": [
+            "Lichen Planus"
+          ],
+          "smiles": "CCC1C=C(CC(CC(C2C(CC(C(O2)(C(=O)C(=O)N3CCCCC3C(=O)OC(C(C(CC1=O)O)C)C(=CC4CCC(C(C4)OC)Cl)C)O)C)OC)OC)C)C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "prednisolone",
+          "ddinter_name": "Prednisolone",
+          "rxcui": "8638",
+          "mesh_sources": [
+            "Lichen Planus"
+          ],
+          "smiles": "CC12CC(C3C(C1CCC2(C(=O)CO)O)CCC4=CC(=O)C=CC34C)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "prednisone",
+          "ddinter_name": "Prednisone",
+          "rxcui": "8640",
+          "mesh_sources": [
+            "Lichen Planus"
+          ],
+          "smiles": "CC12CC(=O)C3C(C1CCC2(C(=O)CO)O)CCC4=CC(=O)C=CC34C",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "tacrolimus",
+          "ddinter_name": "Tacrolimus",
+          "rxcui": "42316",
+          "mesh_sources": [
+            "Lichen Planus"
+          ],
+          "smiles": "CC1CC(C2C(CC(C(O2)(C(=O)C(=O)N3CCCCC3C(=O)OC(C(C(CC(=O)C(C=C(C1)C)CC=C)O)C)C(=CC4CCC(C(C4)OC)O)C)O)C)OC)OC",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "triamcinolone",
+          "ddinter_name": "Triamcinolone",
+          "rxcui": "10759",
+          "mesh_sources": [
+            "Lichen Planus"
+          ],
+          "smiles": "CC12CC(C3(C(C1CC(C2(C(=O)CO)O)O)CCC4=CC(=O)C=CC43C)F)O",
+          "txgemma_eligible": true
+        }
+      ],
+      "note": "MED-RT returned 0 drugs for Lichen Planus (D008010). Drugs mapped from topical_steroid class as standard off-label treatment.",
+      "not_in_ddinter": [
+        "abrocitinib",
+        "aluminum acetate",
+        "amlexanox",
+        "boric acid",
+        "cortisone",
+        "crisaborole",
+        "delgocitinib",
+        "dibucaine",
+        "flumethasone",
+        "ichthammol",
+        "lebrikizumab",
+        "peppermint oil",
+        "pramoxine",
+        "racemethionine",
+        "tralokinumab",
+        "trimeprazine",
+        "zinc oxide"
+      ]
+    },
+    "nail_treatment": {
+      "ddinter_verified": [
+        {
+          "drug_name": "ciclopirox",
+          "ddinter_name": "Ciclopirox",
+          "rxcui": "21090",
+          "mesh_sources": [
+            "Onychomycosis"
+          ],
+          "smiles": "CC1=CC(=O)N(C(=C1)C2CCCCC2)O",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "itraconazole",
+          "ddinter_name": "Itraconazole",
+          "rxcui": "28031",
+          "mesh_sources": [
+            "Onychomycosis"
+          ],
+          "smiles": "CCC(C)N1C(=O)N(C=N1)C2=CC=C(C=C2)N3CCN(CC3)C4=CC=C(C=C4)OCC5COC(O5)(CN6C=NC=N6)C7=C(C=C(C=C7)Cl)Cl",
+          "txgemma_eligible": true
+        },
+        {
+          "drug_name": "terbinafine",
+          "ddinter_name": "Terbinafine",
+          "rxcui": "37801",
+          "mesh_sources": [
+            "Onychomycosis"
+          ],
+          "smiles": "CC(C)(C)C#CC=CCN(C)CC1=CC=CC2=CC=CC=C21",
+          "txgemma_eligible": true
+        }
+      ],
+      "not_in_ddinter": [
+        "efinaconazole",
+        "tavaborole"
+      ]
+    }
+  }
+}
