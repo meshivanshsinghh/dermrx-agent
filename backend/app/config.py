@@ -14,10 +14,11 @@ DDINTER2_REQUEST_DELAY = 0.5
 DDINTER2_CACHE_TTL = 86400
 
 API_PREFIX = "/api"
-API_TITLE = "DermRx Agent API"
+APP_TITLE = "DermRx Agent API"
 APP_VERSION = "0.1.0"
-
-CORS_ORIGIN = [
-    "http://localhost:3000", 
-    "http://localhost:8000"
+CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
 ]

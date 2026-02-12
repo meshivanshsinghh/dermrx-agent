@@ -76,7 +76,7 @@ def get_ddinter_id(drug_name:str) -> str | None:
     do Max 5 IDs per URL. Reserving 1 spot for treatment drug, 
     batch patient meds in group of 4.
 '''
-def builder_checker_ids(treatment_id: str, patient_med_ids: list[str]) -> list[str]:
+def build_checker_ids(treatment_id: str, patient_med_ids: list[str]) -> list[str]:
     batch_size = DDINTER2_MAX_DRUGS_PER_URL - 1 
     batches = []
     
@@ -110,11 +110,23 @@ def _parse_checker_page(html:str) -> tuple[list[DrugInteraction], str | None,
         logger.error("response_data not found")
         return [], csrf_token, [], []
 
-    raw_data = json.loads(data_match.group(1))
+    raw_text = data_match.group(1)
+    try:
+        raw_data = json.loads(raw_text)
+    except json.JSONDecodeError:
+        raw_text = raw_text.replace("'", '"')
+        raw_data = json.loads(raw_text)
     
     # extracting drug names
     names_match = re.search(r"let name = (\[.*?\]);", html)
-    drug_names = json.loads(names_match.group(1)) if names_match else []
+    if names_match:
+        try:
+            drug_names = json.loads(names_match.group(1))
+        except json.JSONDecodeError:
+            raw_names = names_match.group(1).replace("'", '"')
+            drug_names = json.loads(raw_names)
+    else:
+        drug_names = []    
     
     # parsing each interactrion
     interactions = []
@@ -210,35 +222,36 @@ def _parse_detail_page(html:str, interaction_id: int) -> InteractionDetail:
         
     # alternative drugs
     alternatives = []
-    alt_elements = soup.find_all(string=re.compile(r"Alternative for"))
-
-    for alt_text in alt_elements:
-        name_match = re.search(r"Alternative for\s+(.+)", alt_text.strip())
-        if not name_match:
-            continue
-        drug_name = name_match.group(1).strip()
-        
-        # finding the parent container and getting all linked drug names
-        parent = alt_text.find_parent("tr") or alt_text.find_parent("div")
-        if not parent:
+    
+    key_cells = soup.find_all("td", class_="key")
+    
+    for key_td in key_cells:
+        if "Alternative for" not in key_td.get_text():
             continue
         
-        # now finding the alternative drug names
-        links = parent.find_all("a")
+        name_span = key_td.find("span")
+        if not name_span:
+            continue
+        drug_name = name_span.get_text(strip=True)
+        
+        value_td = key_td.find_next_sibling("td", class_="value")
+        if not value_td:
+            continue
+        
+        links = value_td.find_all("a")
         alt_drug_names = []
         for link in links:
             name = link.get_text(strip=True)
-            if name and name != drug_name:
+            if name and name != drug_name and name.lower() not in ("more", "hide"):
                 alt_drug_names.append(name)
-                
-        # deduplicate while preserving order
-        seen = set() 
+        
+        seen = set()
         unique_alts = []
         for name in alt_drug_names:
-            if name not in seen: 
+            if name not in seen:
                 seen.add(name)
                 unique_alts.append(name)
-                
+        
         alternatives.append(AlternativeDrugs(
             drug_name=drug_name,
             alternatives=unique_alts,
@@ -271,7 +284,7 @@ async def check_interactions(
         logger.info(f"Cache hit for {ids_string}")
         return _checker_cache[ids_string]
     
-    checker_url = f"{DDINTER2_BASE_URL}/checker/result/{ids_string}"
+    checker_url = f"{DDINTER2_BASE_URL}/checker/result/{ids_string}/"
     
     async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client: 
         resp = await client.get(checker_url)
