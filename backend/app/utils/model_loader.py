@@ -35,7 +35,7 @@ def _load_medsiglip():
     _siglip_model = AutoModel.from_pretrained(
         "google/medsiglip-448",
         torch_dtype=torch.float16,
-    ).to("cuda")
+    ).to(_get_device())
     _siglip_processor = AutoProcessor.from_pretrained("google/medsiglip-448")
     logger.info("MedSigLIP loaded")
     
@@ -89,3 +89,11 @@ def get_medgemma():
 
 def get_txgemma():
     return _txgemma_model, _txgemma_tokenizer, _tdc_prompts
+
+def _get_device():
+    import torch
+    if torch.cuda.is_available():
+        return "cuda"
+    elif torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"

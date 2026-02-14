@@ -128,7 +128,7 @@ class PipelineService:
                 logger.info(f"REJECTED: {evaluation.reason}")
                 continue
             if evaluation.status in ("SAFE", "CAUTION"):
-                logger.info(f"{evaluation.drug} selected with status: {evaluation.status}")
+                logger.info(f"{evaluation.drug.drug_name} selected with status: {evaluation.status}")
                 selected = evaluation
                 break 
         return selected

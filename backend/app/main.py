@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import APP_TITLE, APP_VERSION, CORS_ORIGINS
-from app.routers import health, ddi
+from app.routers import health, ddi, analyze
 from contextlib import asynccontextmanager
 from app.utils.model_loader import load_all_models
 
@@ -13,9 +13,15 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    load_all_models()
+    yield
+
 app = FastAPI(
     title=APP_TITLE,
     version=APP_VERSION,
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -28,12 +34,7 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(ddi.router)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    load_all_models()
-    yield
+app.include_router(analyze.router)
 
 @app.get("/")
 def root():
