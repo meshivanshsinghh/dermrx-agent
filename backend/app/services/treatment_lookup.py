@@ -35,6 +35,38 @@ class TreatmentLookupService:
             f"{total} verified drugs"
         )
     
+    # method for clinical orrdering
+    CLINICAL_PRIORITY = {
+        "antifungal": ["fluconazole", "terbinafine", "clotrimazole", "ketoconazole", "miconazole"],
+        "antibiotic": ["cephalexin", "doxycycline", "amoxicillin", "mupirocin"],
+        "antiviral": ["acyclovir", "valacyclovir"],
+        "topical_steroid": ["hydrocortisone", "betamethasone", "triamcinolone"],
+        "psoriasis_treatment": ["methotrexate", "calcipotriene", "acitretin", "cyclosporine"],
+        "acne_treatment": ["tretinoin", "adapalene", "isotretinoin", "doxycycline"],
+        "antihistamine": ["cetirizine", "loratadine", "diphenhydramine", "hydroxyzine"],
+        "antiparasitic": ["permethrin", "ivermectin"],
+        "lichen_treatment": ["clobetasol", "tacrolimus"],
+        "nail_treatment": ["terbinafine", "itraconazole", "ciclopirox"],
+        "wart_treatment": ["salicylic acid", "imiquimod"],
+    }
+    
+    def get_candidates_ranked(
+        self,
+        treatment_class: str,
+        txgemma_only: bool = False,
+    ) -> list[DrugCandidate]:
+        candidates = self.get_candidates(treatment_class, txgemma_only)
+        priority = self.CLINICAL_PRIORITY.get(treatment_class, [])
+
+        def sort_key(c: DrugCandidate) -> int:
+            name = c.drug_name.lower()
+            if name in priority:
+                return priority.index(name)
+            return len(priority) + 1
+
+        candidates.sort(key=sort_key)
+        return candidates
+    
     def get_candidates(
         self, 
         treatment_class: str, 

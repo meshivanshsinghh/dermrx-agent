@@ -394,3 +394,22 @@ async def check_interactions(
     _checker_cache[ids_string] = (checker_result, details)
 
     return checker_result, details
+
+MOCK_DDI_DATA = {
+    ("Fluconazole", "Warfarin"): {"severity": "Major", "description": "CYP2C9 inhibition increases warfarin levels, risk of bleeding"},
+    ("Fluconazole", "Atorvastatin"): {"severity": "Major", "description": "CYP3A4 inhibition increases atorvastatin levels, risk of rhabdomyolysis"},
+    ("Fluconazole", "Metformin"): {"severity": "Unknown", "description": "Limited clinical significance"},
+    ("Fluconazole", "Lisinopril"): {"severity": "Unknown", "description": "No significant interaction expected"},
+    ("Fluconazole", "Omeprazole"): {"severity": "Moderate", "description": "CYP2C19 inhibition may increase omeprazole levels"},
+    ("Fluconazole", "Amlodipine"): {"severity": "Moderate", "description": "CYP3A4 inhibition may increase amlodipine levels"},
+    ("Terbinafine", "Warfarin"): {"severity": "Moderate", "description": "May slightly increase warfarin effect, monitor INR"},
+    ("Terbinafine", "Metformin"): {"severity": "Unknown", "description": "No significant interaction expected"},
+    ("Ketoconazole", "Warfarin"): {"severity": "Moderate", "description": "CYP3A4 inhibition may affect warfarin metabolism"},
+    ("Clotrimazole", "Warfarin"): {"severity": "Unknown", "description": "Minimal systemic absorption with topical use"},
+}
+
+
+def mock_check_ddi(drug_name: str, patient_med: str) -> dict | None:
+    key1 = (drug_name.title(), patient_med.title())
+    key2 = (patient_med.title(), drug_name.title())
+    return MOCK_DDI_DATA.get(key1) or MOCK_DDI_DATA.get(key2)

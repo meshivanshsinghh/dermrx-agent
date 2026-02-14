@@ -1,2 +1,24 @@
 Backend: 
-1. make sure we are handling the scenario where we don't get any data from ddinter api. 
+1. make sure we are handling the scenario where we don't get any data from ddinter api.
+2. and showing popup when error happens. like no drug matching, or something for agentic flow. 
+3. for tier 2 and tier 3 maybe creating a report or showing to person. 
+
+Things to have:
+1. all notebook complete code with clear understanding 
+2. showing a finding in each notebook, and creating a video explanaing each notebook. [ A video combining the entire reseach and finding ]
+3. architecture diagram - deployment challenges i faced and how i overcome them
+model performance analysis too if also a criteria <- so we need to make sure we do that too by showing how we assessed model accuracy and classification?
+4. code comments
+5. github readme for setting the repo up. 
+6. good demo 
+    - problems statement -> storytelling, clarity of problem, magnitude of problem, who is our user and who will their journey be. 
+    - relation to myself 
+    - impact that we can create? 
+    - showcasing demo with quick tap and play thing. 
+    - uploading image from medical context and syncing the medication for patient. 
+7. a good writeup 
+8. website landing page with a button showing click to use 
+9. getting personal feedback from dermatologist too and sharing their update on landing page. [asking what do you think how impactful this can be?]
+
+
+scraper for extracting information from pubchem and rxclass too.
