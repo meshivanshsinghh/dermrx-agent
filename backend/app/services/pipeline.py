@@ -113,11 +113,12 @@ class PipelineService:
         self, 
         candidates: list[DrugCandidate],
         patient_medications: list[str],
-        trace: PipelineTrace
+        trace: PipelineTrace,
+        max_evaluate: int = 5
     ) -> DrugEvaluation | None: 
         selected = None 
         
-        for candidate in candidates: 
+        for candidate in candidates[:max_evaluate]: 
             logger.info(f"Evaluating: {candidate.drug_name}")
             evaluation = await self._evaluate_single_drug(
                 candidate, patient_medications
@@ -127,10 +128,11 @@ class PipelineService:
             if evaluation.status == "REJECTED":
                 logger.info(f"REJECTED: {evaluation.reason}")
                 continue
-            if evaluation.status in ("SAFE", "CAUTION"):
-                logger.info(f"{evaluation.drug.drug_name} selected with status: {evaluation.status}")
+            if selected is None:
                 selected = evaluation
-                break 
+            elif evaluation.status == "SAFE" and selected.status == "CAUTION":
+                selected = evaluation
+        
         return selected
     
     
@@ -185,29 +187,51 @@ class PipelineService:
     
     async def drug_check(
         self, 
-        drug_name: str, 
+        drug_names: list[str], 
         patient_medications: list[str]
     ) -> PipelineTrace:
         trace = PipelineTrace(mode="drug_check")
-        drug = self.treatment_lookup.get_drug_by_name(drug_name)
-        if not drug:
-            logger.warning(f"Drug {drug_name} not in treatment table")
-            # still checking DDI even if not in our table and skipping TxGemma
-            drug = DrugCandidate(
-                drug_name = drug_name,
-                ddinter_name=drug_name.title(),
-                rxcui="",
-                mesh_sources=[],
-                smiles=None,
-                txgemma_eligible=False,
-                treatment_class="unknown",
-            )
-            
-        evaluation = await self._evaluate_single_drug(drug, patient_medications)
-        trace.candidates_evaluated = [evaluation]
-        trace.selected_drug = drug.drug_name 
         
-        # building a simplified report for Mode 2 
+        for drug_name in drug_names:
+            drug = self.treatment_lookup.get_drug_by_name(drug_name)
+            if not drug:
+                drug = DrugCandidate(
+                    drug_name=drug_name,
+                    ddinter_name=drug_name.title(),
+                    rxcui="",
+                    mesh_sources=[],
+                    smiles=None,
+                    txgemma_eligible=False,
+                    treatment_class="unknown",
+                )
+                
+            evaluation = await self._evaluate_single_drug(drug, patient_medications)
+            trace.candidates_evaluated.append(evaluation)
+        
+        # selecing best: we prefer SAFE > CAUTION > REJECTED
+        best = None
+        for ev in trace.candidates_evaluated:
+            if ev.status == "REJECTED":
+                continue
+            if best is None:
+                best = ev
+            elif ev.status == "SAFE" and best.status == "CAUTION":
+                best = ev
+        
+        if best:
+            trace.selected_drug = best.drug.drug_name
+        
+        # building report with all findings
+        all_findings = []
+        rejected = []
+        for ev in trace.candidates_evaluated:
+            all_findings.extend(ev.ddi_findings)
+            if ev.status == "REJECTED":
+                rejected.append({
+                    "drug": ev.drug.drug_name,
+                    "reason": ev.reason,
+                })
+
         report = self.synthesizer.synthesize(
             classification=ClassificationResult(
                 predicted_category="doctor_specified",
@@ -215,19 +239,18 @@ class PipelineService:
                 tier=1,
                 confidence=1.0,
                 confidence_level="HIGH",
-                treatment_class=drug.treatment_class,
+                treatment_class=trace.candidates_evaluated[0].drug.treatment_class if trace.candidates_evaluated else "unknown",
             ),
-            selected_drug=drug.drug_name,
-            safety_findings=evaluation.ddi_findings,
-            toxicity_profile=evaluation.toxicity_profile,
-            rejected_drugs=[],
+            selected_drug=trace.selected_drug or "none",
+            safety_findings=all_findings,
+            toxicity_profile=best.toxicity_profile if best else None,
+            rejected_drugs=rejected,
             patient_medications=patient_medications,
         )
         
-        trace.report = report 
+        trace.report = report
         return trace
         
-    
     
     def _build_non_treatment_report(
         self, classification: ClassificationResult

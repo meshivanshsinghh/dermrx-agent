@@ -173,17 +173,18 @@ async def analyze(
     return trace_to_response(trace)
 
 class DrugCheckBody(BaseModel):
-    drug_name: str 
+    drug_names: list[str] = []
+    drug_name: str | None = None
     patient_medications: list[str]
     
 @router.post("/drug-check", response_model=AnalyzeResponse)
 async def drug_check(body: DrugCheckBody):
-    if not body.drug_name or len(body.drug_name) < 2:
-        raise HTTPException(400, "Drug name required")
+    names = body.drug_names or ([body.drug_name] if body.drug_name else [])
+    if not names:
+        raise HTTPException(400, "At least one drug name required")
     if not body.patient_medications:
         raise HTTPException(400, "At least one medication required")
 
     pipeline = get_pipeline()
-    trace = await pipeline.drug_check(body.drug_name, body.patient_medications)
-
+    trace = await pipeline.drug_check(names, body.patient_medications)
     return trace_to_response(trace)

@@ -73,6 +73,10 @@ class SynthesizerService:
         rejected_drugs: list[dict],
         patient_medications: list[str],
     ) -> SynthesisReport:
+        #  if we have no safe drug found, we still send to MedGemma
+        if selected_drug == "none" or selected_drug is None:
+            selected_drug = "none — specialist consultation needed"
+            
         model, tokenizer = get_medgemma()
 
         prompt = self._build_prompt(
@@ -201,9 +205,72 @@ Keep each section concise. Focus on the safety reasoning."""
         rejected_drugs: list[dict],
         patient_medications: list[str],
     ) -> SynthesisReport:
-        """Return realistic mock report for the flagship demo."""
-        logger.info(f"MOCK: Synthesizing report for {selected_drug}")
 
+        # CASE 1: No safe drug found — all candidates rejected
+        if selected_drug == "none" or selected_drug is None:
+            rejected_lines = [
+                f"{rd['drug']} — {rd['reason']}" for rd in rejected_drugs
+            ]
+            rejected_text = "; ".join(rejected_lines) if rejected_lines else "safety concerns"
+
+            return SynthesisReport(
+                clinical_summary=(
+                    f"Patient presents with {classification.display_name} "
+                    f"(confidence: {classification.confidence_level}). "
+                    f"Current medications: {', '.join(patient_medications)}. "
+                    f"All evaluated treatments have significant interactions "
+                    f"with the patient's current medications. "
+                    f"Specialist consultation recommended."
+                ),
+                recommended_treatment="Specialist consultation required — no safe option identified",
+                drug_name="none",
+                reasoning_trace=(
+                    f"The system evaluated {len(rejected_drugs)} candidate treatment(s) "
+                    f"against the patient's {len(patient_medications)} current medications "
+                    f"using DDInter 2.0 and TxGemma. All were rejected: {rejected_text}. "
+                    f"A specialist should be consulted to identify safe alternatives."
+                ),
+                patient_explanation=(
+                    f"We checked the requested treatment(s) against your current "
+                    f"medications. Unfortunately, all options may interact with your "
+                    f"medications and are not recommended without specialist guidance. "
+                    f"Please discuss alternative options with your doctor."
+                ),
+                safety_findings=safety_findings,
+                rejected_drugs=rejected_drugs,
+            )
+
+        # CASE 2: Selected drug is itself in the rejected list (Mode 2 single drug check)
+        drug_is_rejected = any(
+            r["drug"] == selected_drug for r in rejected_drugs
+        )
+        if drug_is_rejected:
+            rejection = next(r for r in rejected_drugs if r["drug"] == selected_drug)
+            return SynthesisReport(
+                clinical_summary=(
+                    f"Safety check for {selected_drug} against patient's "
+                    f"medications ({', '.join(patient_medications)}): "
+                    f"NOT RECOMMENDED. {rejection['reason']}."
+                ),
+                recommended_treatment=f"{selected_drug} — NOT RECOMMENDED for this patient",
+                drug_name=selected_drug,
+                reasoning_trace=(
+                    f"{selected_drug} was checked against "
+                    f"{', '.join(patient_medications)} using DDInter 2.0. "
+                    f"Result: {rejection['reason']}. "
+                    f"Consider alternative treatments."
+                ),
+                patient_explanation=(
+                    f"Your doctor wanted to check if {selected_drug} is safe "
+                    f"with your current medications. Unfortunately, {selected_drug} "
+                    f"may interact with your medications and is not recommended. "
+                    f"Please discuss alternative options with your doctor."
+                ),
+                safety_findings=safety_findings,
+                rejected_drugs=rejected_drugs,
+            )
+
+        # CASE 3: A safe drug was selected — normal report
         rejected_text = ""
         if rejected_drugs:
             rejected_lines = [

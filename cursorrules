@@ -1,0 +1,224 @@
+# DermRx Agent — Cursor Rules
+# AI agents: read this file to understand the project architecture and conventions.
+
+## Project Overview
+
+DermRx Agent is a multi-model medication safety system for Google's MedGemma Impact Challenge hackathon.
+It combines skin image diagnosis with cross-specialty drug interaction checking and molecular toxicity analysis.
+
+**Deadline: February 24, 2026**
+
+## Tech Stack
+
+- **Backend:** FastAPI + Python 3.11+ (backend/ directory)
+- **Frontend:** Next.js 15 + Tailwind CSS + shadcn/ui (frontend/ directory — NOT YET BUILT)
+- **Deployment:** GCE VM with L4 GPU (backend) + Firebase App Hosting (frontend)
+- **GPU Models:** MedSigLIP, MedGemma 4B, TxGemma 2B (loaded via utils/model_loader.py)
+- **External Data:** DDInter 2.0 drug interaction database (scraped via services/ddi_checker.py)
+
+## Architecture: How the Pipeline Works
+
+```
+User Input: Skin Image + Patient Medication List
+         │
+         ▼
+[MedSigLIP] → Zero-shot classification → 22 categories, 76 prompts
+         │    Confidence thresholds: HIGH >15%, MODERATE >8%, LOW <8%
+         │    Safety flags: Tier 2 categories >6%
+         │
+    ┌────┴────┐
+    │ Tier 1  │ → Treatment pipeline (below)
+    │ Tier 2  │ → Specialist referral (urgency-based)
+    │ Tier 3  │ → Out of scope
+    └─────────┘
+         │
+         ▼
+[Treatment Lookup] → dermrx_treatment_table_v3.json
+         │    Returns ranked DDInter-verified drug candidates
+         │    Sorted by CLINICAL_PRIORITY (first-line drugs first)
+         │
+         ▼
+[Agentic Loop] — For each candidate drug:
+    ├── [DDInter 2.0] → Check drug vs ALL patient medications
+    │     Major DDI → REJECTED (try next drug)
+    │     Moderate DDI → CAUTION (still usable)
+    │     Minor/Unknown → SAFE
+    │
+    ├── [TxGemma 2B] → Molecular toxicity (if SMILES available)
+    │     Skin_Reaction, DILI, CYP2C9, CYP3A4, hERG, ClinTox
+    │     Flags added as NOTEs (don't cause rejection)
+    │
+    └── First SAFE/CAUTION drug → selected
+         │
+         ▼
+[MedGemma 4B] → Clinical synthesis
+         │    Combines: diagnosis + safe drug + rejected drugs + toxicity flags
+         │    Outputs: clinical summary, treatment recommendation, reasoning trace, patient explanation
+         │
+         ▼
+Output: Complete report with visible reasoning trace
+```
+
+## Two Operating Modes
+
+**Mode 1 — Analyze (`POST /api/analyze`):**
+Image upload + medication list → full pipeline (classification → treatment → safety → report)
+
+**Mode 2 — Drug Check (`POST /api/drug-check`):**
+Doctor specifies drug + medication list → safety check only (no image needed)
+
+## Mock Mode
+
+All GPU services have mock implementations controlled by `DERMRX_MOCK_MODE` env var (default: "true").
+Mock data is realistic — uses actual model validation results from development sessions.
+DDI mock data in `ddi_checker.py` covers the flagship warfarin demo scenario.
+
+**To run locally:** Just start the server. Mock mode is default — no GPU needed.
+```bash
+cd backend && uvicorn app.main:app --reload
+```
+
+**To run with real models:** Set `DERMRX_MOCK_MODE=false` (requires GPU + model downloads).
+
+## File Structure
+
+```
+backend/app/
+├── config.py                  # All paths, settings, constants
+├── main.py                    # FastAPI app, lifespan, CORS, router registration
+├── models/
+│   └── responses.py           # DDI Pydantic models (DrugInteraction, CheckerResult, etc.)
+├── routers/
+│   ├── health.py              # GET /api/health
+│   ├── ddi.py                 # Drug search + DDI check endpoints
+│   └── analyze.py             # POST /api/analyze + /api/drug-check + pipeline response models
+├── services/
+│   ├── ddi_checker.py         # DDInter 2.0 scraper + mock DDI data
+│   ├── treatment_lookup.py    # Treatment table queries + clinical ranking
+│   ├── classifier.py          # MedSigLIP wrapper + mock
+│   ├── toxicity.py            # TxGemma wrapper + mock (6 tasks)
+│   ├── synthesizer.py         # MedGemma wrapper + mock
+│   └── pipeline.py            # Orchestrator (Mode 1 + Mode 2 + agentic loop)
+└── utils/
+    └── model_loader.py        # Centralized model loading + mock mode toggle
+
+backend/data/
+├── ddinter_drug_lookup.csv        # 1,867 drugs → DDInterID mapping
+├── dermrx_config_final.json       # 22 clinical categories, 76 prompts, thresholds
+└── dermrx_treatment_table_v3.json # 170 drugs, 11 treatment classes, SMILES
+```
+
+## Data Flow Between Services
+
+```
+classifier.py  → ClassificationResult (dataclass)
+    ↓ tier routing + treatment_class
+treatment_lookup.py → list[DrugCandidate] (dataclass)
+    ↓ ranked candidates
+pipeline.py → for each candidate:
+    ├── ddi_checker.py → list[SafetyFinding] (from synthesizer.py)
+    └── toxicity.py → ToxicityProfile (dataclass)
+    ↓ selected drug + all findings
+synthesizer.py → SynthesisReport (dataclass)
+    ↓
+analyze.py → trace_to_response() → AnalyzeResponse (Pydantic, JSON)
+```
+
+## Key Data Models
+
+**Internal (dataclasses — never serialized to API):**
+- `DrugCandidate` — drug_name, ddinter_name, smiles, txgemma_eligible, treatment_class
+- `ClassificationResult` — predicted_category, tier, confidence, treatment_class, safety_flags
+- `ToxicityProfile` — drug_name, smiles, predictions, flagged_count
+- `SynthesisReport` — clinical_summary, recommended_treatment, reasoning_trace, patient_explanation
+- `DrugEvaluation` — drug, status (SAFE/REJECTED/CAUTION), ddi_findings, toxicity_profile
+- `PipelineTrace` — classification, candidates_evaluated, selected_drug, report
+
+**API Response (Pydantic — in analyze.py):**
+- `AnalyzeResponse` — mode, classification, candidates_evaluated, selected_drug, report
+- `ClassificationResponse`, `DrugEvaluationResponse`, `ReportResponse`, `SafetyFindingResponse`
+
+**DDI Models (Pydantic — in responses.py):**
+- `DrugInteraction`, `DiseaseInteraction`, `FoodInteraction`, `CheckerResult`, `DDICheckResponse`
+
+## Service Design Pattern
+
+Every GPU service follows:
+```python
+class SomeService:
+    def __init__(self):
+        self._load_config()  # if needed
+
+    def predict(self, input):
+        if is_mock_mode():
+            return self._mock_predict(input)
+        return self._real_predict(input)
+
+    def _real_predict(self, input):
+        model, tokenizer = get_model()  # from model_loader
+        # ... actual GPU inference ...
+
+    def _mock_predict(self, input):
+        # ... realistic hardcoded response ...
+```
+
+## Conventions
+
+- **Dataclasses** for internal data structures (lightweight, not serialized)
+- **Pydantic BaseModel** only for API request/response schemas
+- **Logging** via `logging.getLogger(__name__)` — all services log their actions
+- **Async** for pipeline and DDI checker (httpx async client)
+- **Config centralized** in `config.py` — all paths, URLs, thresholds
+- **No GPU packages in requirements.txt** — torch/transformers installed only on GPU server
+- **Single Uvicorn worker** — models loaded once as global singletons
+
+## Important Clinical/Technical Notes
+
+- DDInter stores Aspirin as "Acetylsalicylic acid"
+- DDInter 2.0 checker URLs accept max 5 drugs (auto-batched)
+- TxGemma 2B misses fluconazole CYP2C9 (known limitation) — DDInter catches it
+- MedGemma cannot reliably select from large drug lists — use treatment table instead
+- 18 biologics in treatment table have no SMILES — skip TxGemma, still check DDI
+- Treatment table built from MED-RT (FDA/VA) — authoritative, evidence-based
+
+## Flagship Demo Scenario
+
+Patient on warfarin presents with fungal skin infection:
+1. MedSigLIP → fungal infection (HIGH confidence)
+2. Treatment lookup → [fluconazole, terbinafine, clotrimazole, ...]
+3. Fluconazole: DDInter flags MAJOR interaction with warfarin (CYP2C9) → REJECTED
+4. Terbinafine: DDInter flags MODERATE with warfarin → CAUTION, TxGemma adds toxicity notes → SELECTED
+5. Report explains why fluconazole was avoided and terbinafine chosen
+
+## WHAT STILL NEEDS TO BE BUILT
+
+### Backend Enhancements (Priority: Medium)
+1. **Multi-drug Mode 2** — Accept list of drugs for comparative safety analysis
+   - Update DrugCheckBody to accept drug_names: list[str]
+   - Update pipeline.drug_check to evaluate ALL drugs (don't stop at first safe)
+   - Return comparative results so doctor can see which is safest
+
+2. **Mode 1: Multiple safe drug suggestions** — Don't stop at first safe drug
+   - Continue evaluating top 3-5 candidates after finding first safe one
+   - Return all with safety profiles for clinical choice
+   - More impressive for hackathon judges
+
+### Frontend (Priority: HIGH — must build)
+- Next.js 15 + Tailwind + shadcn/ui
+- Landing page, analyze page (Mode 1), drug-check page (Mode 2)
+- Image upload, medication autocomplete, pipeline trace visualization
+- Clinical report display with color-coded severity indicators
+- Firebase App Hosting deployment
+
+### Deployment (Priority: HIGH — blocked on GPU quota)
+- GCE VM with L4 GPU in us-central1 (quota pending)
+- Set DERMRX_MOCK_MODE=false
+- Download models from HuggingFace
+- Nginx + Let's Encrypt SSL
+- Firebase frontend pointing to VM backend
+
+### Final Submission (Priority: CRITICAL)
+- 3-minute demo video
+- Technical overview document (≤3 pages)
+- Clean Kaggle notebooks (01-08)
+- Submit before February 24, 2026
