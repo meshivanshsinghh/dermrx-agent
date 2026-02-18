@@ -1,0 +1,57 @@
+Backend: 
+1. make sure we are handling the scenario where we don't get any data from ddinter api.
+2. and showing popup when error happens. like no drug matching, or something for agentic flow. 
+3. for tier 2 and tier 3 maybe creating a report or showing to person. 
+
+Things to have:
+1. all notebook complete code with clear understanding 
+2. showing a finding in each notebook, and creating a video explanaing each notebook. [ A video combining the entire reseach and finding ]
+3. architecture diagram - deployment challenges i faced and how i overcome them
+model performance analysis too if also a criteria <- so we need to make sure we do that too by showing how we assessed model accuracy and classification?
+4. code comments
+5. github readme for setting the repo up. 
+6. good demo 
+    - problems statement -> storytelling, clarity of problem, magnitude of problem, who is our user and who will their journey be. 
+    - relation to myself 
+    - impact that we can create? 
+    - showcasing demo with quick tap and play thing. 
+    - uploading image from medical context and syncing the medication for patient. 
+7. a good writeup 
+8. website landing page with a button showing click to use 
+9. getting personal feedback from dermatologist too and sharing their update on landing page. [asking what do you think how impactful this can be?]
+link notebooks together on kaggle on some folder, and maybe list the link for other notebooks in starting.
+
+llm chat intergation
+check if the safety measurement is working where it runs simulatenously
+maybe showing this measurement in technical difficulty. 
+
+scraper for extracting information from pubchem and rxclass too.
+
+deployment scripts too and testing scripts too 
+postman collection too
+
+refer specialist list. 
+
+
+we initally thought of taking suggestions from MedGemma but we didn't do that. 
+
+
+maybe downloading the model on the gpu and then trying to understand if we can make quick calls. 
+good ui for TxGemma predictions
+link to writeup when including notebooks and links in each notebook and also maybe the live demo?
+tell i analyzed lot of things in other notebooks and created a final notebook. 
+
+
+
+MANUAL METHOD without DETECTION and also DRUG SAFETY check
+
+
+also show in frontend when showing this is fungal infection what type of things are included in fungal infection? 
+
+
+show how we handlded the Tier 2 safety thing. 
+
+
+The response structure in the handoff shows candidates_evaluated as an array with status/findings per drug — the frontend needs to render that evaluation trail clearly, since that's the visual proof of the agentic loop (which is what wins the Agentic Prize).
+The Tier 2/3 routing is important — the frontend needs to handle the "show referral, don't show treatment pipeline" branch properly, or it'll look broken during the demo.
+What do you want to tackle first? I'm guessing the frontend, but tell me specifically — are you starting from scratch with the Next.js project, or do you already have a repo initialized? And are you planning to build all three pages this session or start with one?

@@ -1,0 +1,328 @@
+{
+  "clinical_categories": {
+    "fungal infection": {
+      "tier": 1,
+      "prompts": [
+        "fungal infection",
+        "tinea",
+        "ringworm",
+        "candidiasis"
+      ],
+      "treatment_class": "antifungal",
+      "display_name": "Fungal Infection"
+    },
+    "bacterial infection": {
+      "tier": 1,
+      "prompts": [
+        "bacterial skin infection",
+        "impetigo",
+        "cellulitis"
+      ],
+      "treatment_class": "antibiotic",
+      "display_name": "Bacterial Infection"
+    },
+    "herpes viral infection": {
+      "tier": 1,
+      "prompts": [
+        "herpes",
+        "herpes zoster",
+        "shingles",
+        "varicella"
+      ],
+      "treatment_class": "antiviral",
+      "display_name": "Herpes/Viral Infection"
+    },
+    "warts": {
+      "tier": 1,
+      "prompts": [
+        "wart",
+        "verruca",
+        "molluscum contagiosum"
+      ],
+      "treatment_class": "wart_treatment",
+      "display_name": "Warts"
+    },
+    "eczema dermatitis": {
+      "tier": 1,
+      "prompts": [
+        "eczema",
+        "dermatitis",
+        "atopic dermatitis",
+        "contact dermatitis"
+      ],
+      "treatment_class": "topical_steroid",
+      "display_name": "Eczema/Dermatitis"
+    },
+    "psoriasis": {
+      "tier": 1,
+      "prompts": [
+        "psoriasis",
+        "plaque psoriasis",
+        "pityriasis"
+      ],
+      "treatment_class": "psoriasis_treatment",
+      "display_name": "Psoriasis"
+    },
+    "acne rosacea": {
+      "tier": 1,
+      "prompts": [
+        "acne",
+        "rosacea",
+        "acne vulgaris",
+        "cystic acne"
+      ],
+      "treatment_class": "acne_treatment",
+      "display_name": "Acne/Rosacea"
+    },
+    "urticaria": {
+      "tier": 1,
+      "prompts": [
+        "urticaria",
+        "hives",
+        "allergic reaction skin"
+      ],
+      "treatment_class": "antihistamine",
+      "display_name": "Urticaria/Hives"
+    },
+    "parasitic infestation": {
+      "tier": 1,
+      "prompts": [
+        "scabies",
+        "lice",
+        "insect bite",
+        "parasitic infestation"
+      ],
+      "treatment_class": "antiparasitic",
+      "display_name": "Parasitic Infestation"
+    },
+    "lichen planus": {
+      "tier": 1,
+      "prompts": [
+        "lichen planus",
+        "lichen sclerosus"
+      ],
+      "treatment_class": "lichen_treatment",
+      "display_name": "Lichen Planus"
+    },
+    "nail disorder": {
+      "tier": 1,
+      "prompts": [
+        "nail disease",
+        "onychomycosis",
+        "nail disorder"
+      ],
+      "treatment_class": "nail_treatment",
+      "display_name": "Nail Disorder"
+    },
+    "melanoma": {
+      "tier": 2,
+      "prompts": [
+        "melanoma",
+        "malignant melanoma"
+      ],
+      "urgency": "urgent",
+      "referral": "dermatology oncology",
+      "display_name": "Melanoma"
+    },
+    "skin cancer non melanoma": {
+      "tier": 2,
+      "prompts": [
+        "basal cell carcinoma",
+        "squamous cell carcinoma",
+        "actinic keratosis",
+        "skin cancer"
+      ],
+      "urgency": "soon",
+      "referral": "dermatology",
+      "display_name": "Skin Cancer (Non-Melanoma)"
+    },
+    "benign skin growth": {
+      "tier": 2,
+      "prompts": [
+        "seborrheic keratosis",
+        "benign skin tumor",
+        "cyst",
+        "skin tag"
+      ],
+      "urgency": "routine",
+      "referral": "dermatology",
+      "display_name": "Benign Skin Growth"
+    },
+    "pigmented lesion": {
+      "tier": 2,
+      "prompts": [
+        "nevus",
+        "mole",
+        "pigmented lesion",
+        "atypical mole"
+      ],
+      "urgency": "routine",
+      "referral": "dermatology",
+      "display_name": "Pigmented Lesion"
+    },
+    "vascular lesion": {
+      "tier": 2,
+      "prompts": [
+        "hemangioma",
+        "vascular tumor",
+        "pyogenic granuloma",
+        "vascular malformation"
+      ],
+      "urgency": "routine",
+      "referral": "dermatology",
+      "display_name": "Vascular Lesion"
+    },
+    "alopecia": {
+      "tier": 2,
+      "prompts": [
+        "alopecia",
+        "hair loss",
+        "alopecia areata"
+      ],
+      "urgency": "routine",
+      "referral": "dermatology",
+      "display_name": "Alopecia"
+    },
+    "autoimmune skin disease": {
+      "tier": 3,
+      "prompts": [
+        "lupus",
+        "autoimmune skin disease",
+        "vasculitis",
+        "dermatomyositis"
+      ],
+      "reason": "Requires rheumatology workup",
+      "display_name": "Autoimmune Skin Disease"
+    },
+    "bullous disease": {
+      "tier": 3,
+      "prompts": [
+        "bullous disease",
+        "pemphigoid",
+        "pemphigus",
+        "blistering disease"
+      ],
+      "reason": "Requires specialized testing",
+      "display_name": "Bullous Disease"
+    },
+    "drug reaction": {
+      "tier": 3,
+      "prompts": [
+        "drug eruption",
+        "drug reaction",
+        "erythema multiforme"
+      ],
+      "reason": "Requires drug identification",
+      "display_name": "Drug Reaction"
+    },
+    "systemic disease": {
+      "tier": 3,
+      "prompts": [
+        "granuloma annulare",
+        "necrobiosis lipoidica",
+        "xanthoma",
+        "systemic disease skin"
+      ],
+      "reason": "Skin manifestation of systemic condition",
+      "display_name": "Systemic Disease"
+    },
+    "photodamage pigmentation": {
+      "tier": 3,
+      "prompts": [
+        "sun damage",
+        "photodamage",
+        "lentigo"
+      ],
+      "reason": "Requires dermatology evaluation",
+      "display_name": "Photodamage/Pigmentation"
+    }
+  },
+  "confidence_config": {
+    "high_confidence_threshold": 0.15,
+    "moderate_confidence_threshold": 0.08,
+    "tier2_safety_threshold": 0.06
+  },
+  "prompts": [
+    "fungal infection",
+    "tinea",
+    "ringworm",
+    "candidiasis",
+    "bacterial skin infection",
+    "impetigo",
+    "cellulitis",
+    "herpes",
+    "herpes zoster",
+    "shingles",
+    "varicella",
+    "wart",
+    "verruca",
+    "molluscum contagiosum",
+    "eczema",
+    "dermatitis",
+    "atopic dermatitis",
+    "contact dermatitis",
+    "psoriasis",
+    "plaque psoriasis",
+    "pityriasis",
+    "acne",
+    "rosacea",
+    "acne vulgaris",
+    "cystic acne",
+    "urticaria",
+    "hives",
+    "allergic reaction skin",
+    "scabies",
+    "lice",
+    "insect bite",
+    "parasitic infestation",
+    "lichen planus",
+    "lichen sclerosus",
+    "nail disease",
+    "onychomycosis",
+    "nail disorder",
+    "melanoma",
+    "malignant melanoma",
+    "basal cell carcinoma",
+    "squamous cell carcinoma",
+    "actinic keratosis",
+    "skin cancer",
+    "seborrheic keratosis",
+    "benign skin tumor",
+    "cyst",
+    "skin tag",
+    "nevus",
+    "mole",
+    "pigmented lesion",
+    "atypical mole",
+    "hemangioma",
+    "vascular tumor",
+    "pyogenic granuloma",
+    "vascular malformation",
+    "alopecia",
+    "hair loss",
+    "alopecia areata",
+    "lupus",
+    "autoimmune skin disease",
+    "vasculitis",
+    "dermatomyositis",
+    "bullous disease",
+    "pemphigoid",
+    "pemphigus",
+    "blistering disease",
+    "drug eruption",
+    "drug reaction",
+    "erythema multiforme",
+    "granuloma annulare",
+    "necrobiosis lipoidica",
+    "xanthoma",
+    "systemic disease skin",
+    "sun damage",
+    "photodamage",
+    "lentigo"
+  ],
+  "version": "1.0",
+  "validated_accuracy": {
+    "high_confidence_accuracy": 0.71,
+    "tier2_safety_rate": 1.0
+  }
+}
