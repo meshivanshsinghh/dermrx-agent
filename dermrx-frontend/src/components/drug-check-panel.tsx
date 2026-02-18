@@ -15,6 +15,7 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
+  Zap,
 } from "lucide-react";
 import {
   drugCheck,
@@ -45,13 +46,10 @@ export default function DrugCheckPanel({
   const [result, setResult] = useState<DrugCheckResponse | null>(
     session.result as DrugCheckResponse | null
   );
-  const [expandedCandidate, setExpandedCandidate] = useState<string | null>(
-    null
-  );
+  const [expandedCandidate, setExpandedCandidate] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Drug search with debounce
   useEffect(() => {
     if (drugInput.length < 2) {
       setSuggestions([]);
@@ -71,7 +69,6 @@ export default function DrugCheckPanel({
     };
   }, [drugInput]);
 
-  // Click outside to close suggestions
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -110,6 +107,14 @@ export default function DrugCheckPanel({
     setMedications(medications.filter((m) => m !== med));
   };
 
+  const loadDemoDrugs = () => {
+    setDrugNames(["fluconazole", "terbinafine", "clotrimazole"]);
+  };
+
+  const loadDemoMedications = () => {
+    setMedications(["warfarin", "metformin", "lisinopril"]);
+  };
+
   const handleCheck = async () => {
     if (drugNames.length === 0) return;
 
@@ -122,7 +127,7 @@ export default function DrugCheckPanel({
 
       const updatedSession: PatientSession = {
         ...session,
-        name: `Drug Check: ${drugNames.join(", ")}`,
+        name: `Drug Check: ${drugNames.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(", ")}`,
         result: response,
       };
       onSessionUpdate(updatedSession);
@@ -160,6 +165,19 @@ export default function DrugCheckPanel({
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "SAFE":
+        return "border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400";
+      case "CAUTION":
+        return "border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400";
+      case "REJECTED":
+        return "border-red-300 text-red-600 dark:border-red-700 dark:text-red-400";
+      default:
+        return "";
+    }
+  };
+
   if (result) {
     return (
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
@@ -172,13 +190,14 @@ export default function DrugCheckPanel({
               setResult(null);
               setDrugNames([]);
               setMedications([]);
+              setExpandedCandidate(null);
+              window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           >
             New Check
           </Button>
         </div>
 
-        {/* Results */}
         {result.candidates_evaluated.length > 0 && (
           <Card className="animate-slide-in">
             <CardHeader className="pb-3">
@@ -195,7 +214,13 @@ export default function DrugCheckPanel({
                 (candidate: CandidateEvaluation) => (
                   <div
                     key={candidate.drug_name}
-                    className="rounded-lg border p-3"
+                    className={`rounded-lg border p-3 transition-all ${
+                      candidate.status === "REJECTED"
+                        ? "border-red-200 bg-red-50/30 dark:border-red-900 dark:bg-red-900/5"
+                        : candidate.status === "CAUTION"
+                        ? "border-amber-200 bg-amber-50/30 dark:border-amber-900 dark:bg-amber-900/5"
+                        : "border-border"
+                    }`}
                   >
                     <div
                       className="flex items-center justify-between cursor-pointer"
@@ -209,20 +234,14 @@ export default function DrugCheckPanel({
                     >
                       <div className="flex items-center gap-2">
                         {getStatusIcon(candidate.status)}
-                        <span className="font-medium text-sm">
+                        <span className="font-medium text-sm capitalize">
                           {candidate.drug_name}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge
                           variant="outline"
-                          className={`text-[10px] ${
-                            candidate.status === "SAFE"
-                              ? "border-emerald-300 text-emerald-600"
-                              : candidate.status === "CAUTION"
-                              ? "border-amber-300 text-amber-600"
-                              : "border-red-300 text-red-600"
-                          }`}
+                          className={`text-[10px] ${getStatusColor(candidate.status)}`}
                         >
                           {candidate.status}
                         </Badge>
@@ -240,7 +259,7 @@ export default function DrugCheckPanel({
 
                     {expandedCandidate === candidate.drug_name &&
                       candidate.findings.length > 0 && (
-                        <div className="mt-3 space-y-2 pl-6 border-l-2 border-muted">
+                        <div className="mt-3 space-y-2.5 pl-6 border-l-2 border-muted">
                           {candidate.findings.map((finding, i) => (
                             <div key={i} className="text-xs space-y-0.5">
                               <div className="flex items-center gap-1.5">
@@ -251,7 +270,7 @@ export default function DrugCheckPanel({
                                 >
                                   {finding.severity}
                                 </Badge>
-                                <span className="font-medium">
+                                <span className="font-medium uppercase text-[10px] tracking-wide">
                                   {finding.finding_type}
                                 </span>
                               </div>
@@ -325,7 +344,9 @@ export default function DrugCheckPanel({
                   onKeyDown={(e) => {
                     if (e.key === "Enter") addDrug();
                   }}
-                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  onFocus={() =>
+                    suggestions.length > 0 && setShowSuggestions(true)
+                  }
                   placeholder="Search drug name..."
                   className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
                 />
@@ -335,14 +356,13 @@ export default function DrugCheckPanel({
               </Button>
             </div>
 
-            {/* Suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute z-10 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-40 overflow-y-auto">
                 {suggestions.map((s) => (
                   <button
                     key={s}
                     onClick={() => addDrug(s)}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors capitalize"
                   >
                     {s}
                   </button>
@@ -356,7 +376,7 @@ export default function DrugCheckPanel({
               {drugNames.map((drug) => (
                 <Badge
                   key={drug}
-                  className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 cursor-pointer"
+                  className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 cursor-pointer capitalize"
                   onClick={() => removeDrug(drug)}
                 >
                   <Pill className="h-3 w-3 mr-1" />
@@ -365,6 +385,19 @@ export default function DrugCheckPanel({
                 </Badge>
               ))}
             </div>
+          )}
+
+          {/* Demo Quick-Fill — Drugs */}
+          {drugNames.length === 0 && (
+            <button
+              onClick={loadDemoDrugs}
+              className="flex items-center gap-2 text-xs text-emerald-500 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors mt-1"
+            >
+              <Zap className="h-3 w-3" />
+              <span>
+                Try demo: <strong>fluconazole</strong>, <strong>terbinafine</strong>, <strong>clotrimazole</strong>
+              </span>
+            </button>
           )}
         </div>
 
@@ -392,7 +425,7 @@ export default function DrugCheckPanel({
                 <Badge
                   key={med}
                   variant="secondary"
-                  className="text-xs cursor-pointer hover:bg-destructive/10"
+                  className="text-xs cursor-pointer hover:bg-destructive/10 capitalize"
                   onClick={() => removeMedication(med)}
                 >
                   {med}
@@ -400,6 +433,19 @@ export default function DrugCheckPanel({
                 </Badge>
               ))}
             </div>
+          )}
+
+          {/* Demo Quick-Fill — Medications */}
+          {medications.length === 0 && (
+            <button
+              onClick={loadDemoMedications}
+              className="flex items-center gap-2 text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors mt-1"
+            >
+              <Pill className="h-3 w-3" />
+              <span>
+                Try demo: Patient on <strong>warfarin</strong>, <strong>metformin</strong>, <strong>lisinopril</strong>
+              </span>
+            </button>
           )}
         </div>
 

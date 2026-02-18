@@ -77,14 +77,14 @@ export interface PatientSession {
 
 export async function analyzeImage(
   file: File,
-  patientMedications: string[]
+  patientMedications: string[],
 ): Promise<AnalyzeResponse> {
   const formData = new FormData();
-  formData.append("file", file);
-  if (patientMedications.length > 0) {
-    formData.append("patient_medications", patientMedications.join(","));
-  }
-
+  formData.append("image", file);
+  formData.append(
+    "patient_medications",
+    patientMedications.length > 0 ? patientMedications.join(",") : "none",
+  );
   const res = await fetch(`${API_BASE}/api/analyze`, {
     method: "POST",
     body: formData,
@@ -100,14 +100,17 @@ export async function analyzeImage(
 
 export async function drugCheck(
   drugNames: string[],
-  patientMedications: string[]
+  patientMedications: string[],
 ): Promise<DrugCheckResponse> {
-  const params = new URLSearchParams();
-  drugNames.forEach((d) => params.append("drug_names", d));
-  patientMedications.forEach((m) => params.append("patient_medications", m));
-
-  const res = await fetch(`${API_BASE}/api/drug-check?${params.toString()}`, {
+  const res = await fetch(`${API_BASE}/api/drug-check`, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      drug_names: drugNames,
+      patient_medications: patientMedications,
+    }),
   });
 
   if (!res.ok) {
@@ -122,13 +125,13 @@ export async function searchDrugs(query: string): Promise<string[]> {
   if (!query || query.length < 2) return [];
 
   const res = await fetch(
-    `${API_BASE}/api/drugs/search?q=${encodeURIComponent(query)}`
+    `${API_BASE}/api/drugs/search?q=${encodeURIComponent(query)}`,
   );
 
   if (!res.ok) return [];
 
   const data = await res.json();
-  return data.results || data || [];
+  return (data.results || []).map((r: { drug_name: string }) => r.drug_name);
 }
 
 export async function checkHealth(): Promise<HealthResponse> {
@@ -169,4 +172,13 @@ export function deleteSession(id: string): void {
 
 export function generateSessionId(): string {
   return `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+}
+
+export interface ClinicalReport {
+  clinical_summary: string;
+  drug_name: string;
+  recommended_treatment: string;
+  reasoning_trace: string;
+  patient_explanation: string;
+  rejected_drugs: Array<string | { drug: string; reason: string }>;
 }

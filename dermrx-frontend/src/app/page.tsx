@@ -1,17 +1,19 @@
 "use client";
+
 import { useState, useEffect, useCallback } from "react";
+import Sidebar from "@/components/sidebar";
+import AnalyzePanel from "@/components/analyze-panel";
+import DrugCheckPanel from "@/components/drug-check-panel";
+import ChatPanel from "@/components/chat-panel";
 import {
   PatientSession,
+  AnalyzeResponse,
   getSessions,
   saveSession,
   deleteSession,
   generateSessionId,
 } from "@/lib/api";
-import Sidebar from "@/components/sidebar";
-import { Pill, Stethoscope } from "lucide-react";
-import AnalyzePanel from "@/components/analyze-panel";
-import ChatPanel from "@/components/chat-panel";
-import DrugCheckPanel from "@/components/drug-check-panel";
+import { Stethoscope, Pill } from "lucide-react";
 
 export default function Home() {
   const [sessions, setSessions] = useState<PatientSession[]>([]);
@@ -19,7 +21,6 @@ export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [chatCollapsed, setChatCollapsed] = useState(false);
 
-  // loading sessions from localstorage on mount
   useEffect(() => {
     const saved = getSessions();
     setSessions(saved);
@@ -27,19 +28,26 @@ export default function Home() {
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) || null;
 
-  const handleNewSession = useCallback((mode: "analyze" | "drug_check") => {
-    const newSession: PatientSession = {
-      id: generateSessionId(),
-      name: mode === "analyze" ? `New Analysis` : `New Drug Check`,
-      createdAt: new Date().toISOString(),
-      mode,
-      result: null,
-      imagePreview: null,
-    };
-    saveSession(newSession);
-    setSessions((prev) => [newSession, ...prev]);
-    setActiveSessionId(newSession.id);
-  }, []);
+  // Get the current result for the chat panel
+  const currentResult: AnalyzeResponse | null =
+    activeSession?.result as AnalyzeResponse | null;
+
+  const handleNewSession = useCallback(
+    (mode: "analyze" | "drug_check") => {
+      const newSession: PatientSession = {
+        id: generateSessionId(),
+        name: mode === "analyze" ? "New Analysis" : "New Drug Check",
+        createdAt: new Date().toISOString(),
+        mode,
+        result: null,
+        imagePreview: null,
+      };
+      saveSession(newSession);
+      setSessions((prev) => [newSession, ...prev]);
+      setActiveSessionId(newSession.id);
+    },
+    []
+  );
 
   const handleSelectSession = useCallback((id: string) => {
     setActiveSessionId(id);
@@ -53,11 +61,13 @@ export default function Home() {
         setActiveSessionId(null);
       }
     },
-    [activeSessionId],
+    [activeSessionId]
   );
 
   const handleSessionUpdate = useCallback((updated: PatientSession) => {
-    setSessions((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    setSessions((prev) =>
+      prev.map((s) => (s.id === updated.id ? updated : s))
+    );
   }, []);
 
   return (
@@ -77,15 +87,14 @@ export default function Home() {
       <div className="flex-1 flex flex-col min-w-0">
         {activeSession ? (
           <>
-            {/* Workspace Header  */}
-            <div className="h-14 border-b flex items-center justify-between px-6">
+            {/* Workspace Header */}
+            <div className="h-14 border-b flex items-center justify-between px-6 shrink-0">
               <div className="flex items-center gap-2">
                 {activeSession.mode === "analyze" ? (
                   <Stethoscope className="h-4 w-4 text-indigo-500" />
                 ) : (
                   <Pill className="h-4 w-4 text-emerald-500" />
                 )}
-                {/* TODO: Name of Analysis or Drug Check should be present here somehow */}
                 <h2 className="text-sm font-semibold truncate">
                   {activeSession.name}
                 </h2>
@@ -94,6 +103,7 @@ export default function Home() {
                 {new Date(activeSession.createdAt).toLocaleString()}
               </span>
             </div>
+
             {/* Panel */}
             {activeSession.mode === "analyze" ? (
               <AnalyzePanel
@@ -154,10 +164,11 @@ export default function Home() {
         )}
       </div>
 
-      {/* Right Chat Panel */}
+      {/* Right Chat Panel — now with result context */}
       <ChatPanel
         collapsed={chatCollapsed}
         onToggleCollapse={() => setChatCollapsed(!chatCollapsed)}
+        currentResult={currentResult}
       />
     </div>
   );
