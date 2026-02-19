@@ -402,7 +402,7 @@ class PipelineService:
                     other_name = di.drug_b_name if di.drug_a_id == treatment_id else di.drug_a_name
                     description = f"{other_name}"
                     if di.interaction:
-                        description += f" — {di.interaction[:200]}"
+                        description += f" — {di.interaction}"
 
                     action = "REJECTED" if di.severity == "Major" else "CAUTION"
 
@@ -428,7 +428,7 @@ class PipelineService:
 
                 # Food interactions
                 for fi in checker_result.food_interactions:
-                    fi_desc = fi.interaction[:200] if fi.interaction else 'Food interaction'
+                    fi_desc = fi.interaction if fi.interaction else 'Food interaction'
                     findings.append(SafetyFinding(
                         drug_name=fi.drug_name,
                         finding_type=f"FOOD_{fi.severity.upper()}",
@@ -442,7 +442,7 @@ class PipelineService:
                 # Disease contraindications
                 for dis in checker_result.disease_interactions:
                     action = "REJECTED" if dis.severity == "Major" else "CAUTION"
-                    dis_desc = dis.description[:200] if dis.description else 'Disease contraindication'
+                    dis_desc = dis.description if dis.description else 'Disease contraindication'
                     findings.append(SafetyFinding(
                         drug_name=dis.drug_name,
                         finding_type=f"DISEASE_{dis.severity.upper()}",

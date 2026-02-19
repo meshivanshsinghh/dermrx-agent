@@ -76,3 +76,9 @@ also make sure we have a button for judges to know that please only click yes if
 machine is spot on and less charge or something. 
 
 tier based confidence is good but showing 18.7% confidence is shit right???? thinking about it. 
+-> medgemma takes time what to do? and it's not correct in general actually what are the some best practices for medgemma?
+-> for better writing? 
+
+
+-> add more to food interaction
+-> where is medgemma in drug check recommendation???

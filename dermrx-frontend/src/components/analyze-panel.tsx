@@ -460,10 +460,15 @@ export default function AnalyzePanel({
                     {/* Confidence */}
                     <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                          Confidence
-                        </span>
-                        <span className="text-xl font-bold tabular-nums text-foreground">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            Diagnostic Signal
+                          </span>
+                          <Badge className={`text-[9px] px-1.5 py-0 ${getConfidenceBadgeColor(result.classification.confidence_level)}`}>
+                            {result.classification.confidence_level}
+                          </Badge>
+                        </div>
+                        <span className="text-lg font-bold tabular-nums text-muted-foreground/60">
                           {formatScore(result.classification.confidence)}
                         </span>
                       </div>
@@ -478,6 +483,11 @@ export default function AnalyzePanel({
                           }}
                         />
                       </div>
+                      {(result.classification.confidence || 0) > 0.15 && (
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                          Raw score &gt;15% indicates strong diagnostic signal for zero-shot classification
+                        </p>
+                      )}
                     </div>
 
                     {/* Safety Flags */}
@@ -511,12 +521,15 @@ export default function AnalyzePanel({
                     Differential Diagnosis
                   </p>
                   <div className="space-y-1.5">
-                    {(result.classification.top_scores as TopScore[])
-                      .filter((s) => s.score > 0)
-                      .sort((a, b) => b.score - a.score)
-                      .slice(0, 5)
-                      .map((entry, index) => {
-                        const pct = Math.min(entry.score * 100, 100);
+                    {(() => {
+                      const sorted = (result.classification!.top_scores as TopScore[])
+                        .filter((s) => s.score > 0)
+                        .sort((a, b) => b.score - a.score)
+                        .slice(0, 5);
+                      const maxScore = sorted[0]?.score || 1;
+                      return sorted.map((entry, index) => {
+                        const normalizedPct = Math.round((entry.score / maxScore) * 100);
+                        const rawPct = (entry.score * 100).toFixed(1);
                         const isTop = index === 0;
                         return (
                           <div
@@ -551,30 +564,44 @@ export default function AnalyzePanel({
                                       Tier {entry.tier}
                                     </span>
                                   )}
+                                  {isTop && (
+                                    <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[9px] px-1.5 py-0">
+                                      HIGH
+                                    </Badge>
+                                  )}
                                 </div>
-                                <span
-                                  className={`text-sm font-mono tabular-nums ml-2 ${
-                                    isTop
-                                      ? "font-bold text-foreground"
-                                      : "text-muted-foreground"
-                                  }`}
-                                >
-                                  {formatScore(entry.score)}
-                                </span>
+                                <div className="flex items-center gap-2 ml-2">
+                                  <span
+                                    className={`text-sm font-mono tabular-nums ${
+                                      isTop
+                                        ? "font-bold text-foreground"
+                                        : "text-muted-foreground"
+                                    }`}
+                                  >
+                                    {normalizedPct}%
+                                  </span>
+                                  <span className="text-[10px] text-muted-foreground/40 tabular-nums">
+                                    ({rawPct}%)
+                                  </span>
+                                </div>
                               </div>
                               <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                                 <div
                                   className={`h-full rounded-full transition-all duration-700 ${
                                     isTop ? "bg-indigo-500" : "bg-indigo-400/30"
                                   }`}
-                                  style={{ width: `${pct}%` }}
+                                  style={{ width: `${normalizedPct}%` }}
                                 />
                               </div>
                             </div>
                           </div>
                         );
-                      })}
+                      });
+                    })()}
                   </div>
+                  <p className="text-[10px] text-muted-foreground/50 mt-2">
+                    Bars show relative signal strength (top prediction = 100%). Raw scores in parentheses. Scores above 15% indicate strong diagnostic signal.
+                  </p>
                 </CardContent>
               </Card>
             )}

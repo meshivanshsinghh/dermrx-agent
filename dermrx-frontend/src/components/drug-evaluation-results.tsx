@@ -171,11 +171,27 @@ function StatusBadge({ status }: { status: string }) {
    ───────────────────────────────────────────── */
 
 function FindingCard({ finding }: { finding: DDIFinding }) {
+  const [expanded, setExpanded] = useState(false);
+  const TEXT_LIMIT = 200;
+  const descriptionLong = (finding.description?.length || 0) > TEXT_LIMIT;
+  const displayDescription =
+    descriptionLong && !expanded
+      ? finding.description.slice(0, TEXT_LIMIT) + "..."
+      : finding.description;
+
   return (
     <div className="flex items-start justify-between gap-3 rounded-lg border border-border/50 bg-background px-4 py-3 transition-colors hover:bg-muted/20">
       <div className="flex-1 min-w-0 space-y-1">
         <p className="text-[13px] leading-snug text-foreground">
-          {finding.description}
+          {displayDescription}
+          {descriptionLong && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="ml-1 text-[13px] font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors"
+            >
+              {expanded ? "Show Less" : "Read More"}
+            </button>
+          )}
         </p>
         {finding.mechanism && (
           <p className="text-xs text-muted-foreground/70 italic">

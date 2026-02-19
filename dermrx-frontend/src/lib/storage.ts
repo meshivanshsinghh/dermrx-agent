@@ -55,9 +55,9 @@ export function deleteSession(id: string): void {
 // ── ID Generators ──
 
 export function generatePatientId(): string {
-  return `patient_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  return `p_${Math.random().toString(36).substring(2, 8)}`;
 }
 
 export function generateSessionId(): string {
-  return `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  return `s_${Math.random().toString(36).substring(2, 8)}`;
 }

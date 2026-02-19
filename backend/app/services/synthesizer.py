@@ -1,4 +1,5 @@
 import logging
+import re
 from dataclasses import dataclass
 
 from app.utils.model_loader import is_mock_mode, get_medgemma
@@ -98,12 +99,10 @@ class SynthesizerService:
 
         outputs = model.generate(
             **input_ids,
-            max_new_tokens=768,
-            temperature=0.4,
-            top_p=0.9,
-            top_k=40,
+            max_new_tokens=512,
+            temperature=0.1,
             do_sample=True,
-            repetition_penalty=1.3,
+            repetition_penalty=1.05,
         )
         response = tokenizer.decode(
             outputs[0][len(input_ids["input_ids"][0]):],
@@ -111,7 +110,7 @@ class SynthesizerService:
         ).strip()
 
         logger.info(f"MedGemma raw response length: {len(response)} chars")
-        logger.info(f"MedGemma response:\n{response[:2000]}")
+        logger.info(f"MedGemma response:\n{response}")
 
         # parsing sections from MedGemma's response
         return self._parse_response(
@@ -151,7 +150,7 @@ class SynthesizerService:
             ]
             findings_section = "SAFETY FINDINGS:\n" + "\n".join(lines)
 
-        return f"""You are a clinical decision support system generating a report for a primary care physician.
+        return f"""You are a clinical decision-support system. Write a concise report for a primary-care physician.
 
 DIAGNOSIS: {classification.display_name}
 Confidence: {classification.confidence_level} ({classification.confidence})
@@ -167,13 +166,19 @@ RECOMMENDED TREATMENT: {selected_drug}
 
 {toxicity_section}
 
-Generate a clinical report with these sections:
-1. CLINICAL SUMMARY: Brief assessment of the diagnosis and treatment decision
-2. TREATMENT RECOMMENDATION: Selected drug with dosing guidance
-3. REASONING: Why this drug was selected, what was avoided and why
-4. PATIENT EXPLANATION: Simple explanation suitable for the patient
+Return EXACTLY the four sections below. Use the EXACT headers shown (all-caps, underscores, colon). No markdown, no bullet-points, no extra headers.
 
-Keep each section concise. Focus on the safety reasoning."""
+CLINICAL_SUMMARY:
+<2-3 sentence assessment>
+
+RECOMMENDED_TREATMENT:
+<drug name, dose, route, duration>
+
+REASONING:
+<why this drug; what was rejected and why>
+
+PATIENT_EXPLANATION:
+<plain-language explanation for the patient>"""
 
     def _parse_response(
         self,
@@ -182,33 +187,28 @@ Keep each section concise. Focus on the safety reasoning."""
         safety_findings: list[SafetyFinding],
         rejected_drugs: list[dict],
     ) -> SynthesisReport:
-        sections = {
-            "clinical_summary": "",
-            "treatment": "",
-            "reasoning": "",
-            "patient_explanation": "",
-        }
+        tags = [
+            "CLINICAL_SUMMARY",
+            "RECOMMENDED_TREATMENT",
+            "REASONING",
+            "PATIENT_EXPLANATION",
+        ]
+        tag_pattern = "|".join(tags)
 
-        current_section = "clinical_summary"
-        for line in response.split("\n"):
-            line_upper = line.strip().upper()
-            if "TREATMENT RECOMMENDATION" in line_upper:
-                current_section = "treatment"
-            elif "REASONING" in line_upper:
-                current_section = "reasoning"
-            elif "PATIENT EXPLANATION" in line_upper:
-                current_section = "patient_explanation"
-            elif "CLINICAL SUMMARY" in line_upper:
-                current_section = "clinical_summary"
-            else:
-                sections[current_section] += line + "\n"
+        def extract(tag: str) -> str:
+            m = re.search(
+                rf"{tag}:\s*(.*?)(?=\n(?:{tag_pattern}):|$)",
+                response,
+                re.S,
+            )
+            return m.group(1).strip() if m else ""
 
         return SynthesisReport(
-            clinical_summary=sections["clinical_summary"].strip(),
-            recommended_treatment=sections["treatment"].strip(),
+            clinical_summary=extract("CLINICAL_SUMMARY"),
+            recommended_treatment=extract("RECOMMENDED_TREATMENT"),
             drug_name=selected_drug,
-            reasoning_trace=sections["reasoning"].strip(),
-            patient_explanation=sections["patient_explanation"].strip(),
+            reasoning_trace=extract("REASONING"),
+            patient_explanation=extract("PATIENT_EXPLANATION"),
             safety_findings=safety_findings,
             rejected_drugs=rejected_drugs,
         )

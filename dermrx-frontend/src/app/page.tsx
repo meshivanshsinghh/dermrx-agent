@@ -151,6 +151,56 @@ export default function Home() {
     setSessions(getSessions());
   }, []);
 
+  /* ── URL-based navigation: parse URL on initial load ── */
+  useEffect(() => {
+    const path = window.location.pathname;
+    const match = path.match(/^\/p\/([^/]+)\/s\/([^/]+)/) || path.match(/^\/patient\/([^/]+)\/session\/([^/]+)/);
+    if (match) {
+      const [, patientId, sessionId] = match;
+      // Verify the session exists in localStorage
+      const allSessions = getSessions();
+      const found = allSessions.find(
+        (s) => s.id === sessionId && s.patientId === patientId
+      );
+      if (found) {
+        setActiveSessionId(sessionId);
+      }
+    }
+  }, []);
+
+  /* ── Sync URL when activeSessionId changes ── */
+  useEffect(() => {
+    if (activeSessionId) {
+      const session = sessions.find((s) => s.id === activeSessionId);
+      if (session) {
+        const newPath = `/p/${session.patientId}/s/${session.id}`;
+        if (window.location.pathname !== newPath) {
+          window.history.pushState({ patientId: session.patientId, sessionId: session.id }, "", newPath);
+        }
+      }
+    } else {
+      if (window.location.pathname !== "/") {
+        window.history.pushState({}, "", "/");
+      }
+    }
+  }, [activeSessionId, sessions]);
+
+  /* ── Handle browser back/forward ── */
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const match = path.match(/^\/p\/([^/]+)\/s\/([^/]+)/) || path.match(/^\/patient\/([^/]+)\/session\/([^/]+)/);
+      if (match) {
+        const [, , sessionId] = match;
+        setActiveSessionId(sessionId);
+      } else {
+        setActiveSessionId(null);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const activeSession = sessions.find((s) => s.id === activeSessionId) || null;
   const activePatient = activeSession ? patients.find((p) => p.id === activeSession.patientId) || null : null;
   const currentResult = activeSession?.result as AnalyzeResponse | null;
@@ -268,6 +318,7 @@ export default function Home() {
         onNewSessionForPatient={handleNewSessionForPatient}
         onDeleteSession={handleDeleteSession} onDeletePatient={handleDeletePatient}
         collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onGoHome={() => setActiveSessionId(null)}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
