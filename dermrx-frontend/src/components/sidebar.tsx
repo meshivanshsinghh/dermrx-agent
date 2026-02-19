@@ -30,6 +30,7 @@ interface SidebarProps {
   onDeletePatient: (id: string) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  onGoHome: () => void;
 }
 
 export default function Sidebar({
@@ -43,6 +44,7 @@ export default function Sidebar({
   onDeletePatient,
   collapsed,
   onToggleCollapse,
+  onGoHome,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedPatients, setExpandedPatients] = useState<Set<string>>(
@@ -116,11 +118,15 @@ export default function Sidebar({
       {/* Header */}
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+          <button
+            onClick={onGoHome}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            title="Back to Home"
+          >
             <div className="h-8 w-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
               <Stethoscope className="h-4 w-4 text-sidebar-primary-foreground" />
             </div>
-            <div>
+            <div className="text-left">
               <h1 className="text-sm font-semibold text-sidebar-foreground">
                 DermRx
               </h1>
@@ -128,7 +134,7 @@ export default function Sidebar({
                 AI Dermatology Agent
               </p>
             </div>
-          </div>
+          </button>
           <Button variant="ghost" size="icon" onClick={onToggleCollapse}>
             <ChevronLeft className="h-4 w-4" />
           </Button>

@@ -34,7 +34,7 @@ def _load_medsiglip():
     
     _siglip_model = AutoModel.from_pretrained(
         "google/medsiglip-448",
-        torch_dtype=torch.float16,
+        dtype=torch.float16,
     ).to(_get_device())
     _siglip_processor = AutoProcessor.from_pretrained("google/medsiglip-448")
     logger.info("MedSigLIP loaded")

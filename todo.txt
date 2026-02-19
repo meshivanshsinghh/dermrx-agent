@@ -66,3 +66,19 @@ NEW TODO:
 2. clicking on dermrx ai dermatology agent on left should take us on homepage.
 3. analysis for patient name should be in url session based on patient id and session id not just on the homepage. 
 4. 
+
+
+technical challenge getting google and aws
+making it responsive
+all requests are secure fro my own frontend only 
+also make sure we have a button for judges to know that please only click yes if you think you are evaluating the
+-> now this loading of weights takes a bit time so we let them know. 
+machine is spot on and less charge or something. 
+
+tier based confidence is good but showing 18.7% confidence is shit right???? thinking about it. 
+-> medgemma takes time what to do? and it's not correct in general actually what are the some best practices for medgemma?
+-> for better writing? 
+
+
+-> add more to food interaction
+-> where is medgemma in drug check recommendation???

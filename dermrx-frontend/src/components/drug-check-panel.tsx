@@ -13,6 +13,7 @@ import {
   Shield,
   Search,
   Zap,
+  Brain,
 } from "lucide-react";
 import { drugCheck, searchDrugs } from "@/lib/api";
 import {
@@ -139,6 +140,108 @@ export default function DrugCheckPanel({
             selectedDrug={result.selected_drug}
             title="Safety Evaluation"
           />
+        )}
+
+        {/* Clinical Report from MedGemma */}
+        {result.report && (
+          <Card className="animate-slide-in overflow-hidden" style={{ animationDelay: "0.2s" }}>
+            <div className="px-6 pt-1 pb-6 space-y-5">
+              <div className="flex items-center gap-2">
+                <Brain className="h-4 w-4 text-indigo-500" />
+                <h3 className="text-[15px] font-semibold tracking-tight">
+                  Clinical Report
+                </h3>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                  Summary
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {result.report.clinical_summary}
+                </p>
+              </div>
+
+              <div className="border-l-[3px] border-emerald-500 pl-4 py-1">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1">
+                  Recommended Treatment
+                </p>
+                <p className="text-base font-semibold capitalize text-foreground">
+                  {result.report.drug_name}
+                </p>
+                {result.report.recommended_treatment && (
+                  <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">
+                    {result.report.recommended_treatment}
+                  </p>
+                )}
+              </div>
+
+              {result.report.reasoning_trace && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                    Clinical Reasoning
+                  </p>
+                  <div className="bg-muted/30 rounded-lg p-4">
+                    <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {result.report.reasoning_trace}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {result.report.patient_explanation && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                    For the Patient
+                  </p>
+                  <blockquote className="border-l-2 border-border pl-4 py-1">
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {result.report.patient_explanation}
+                    </p>
+                  </blockquote>
+                </div>
+              )}
+
+              {result.report.rejected_drugs && result.report.rejected_drugs.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                    Alternatives Considered
+                  </p>
+                  <div className="space-y-1">
+                    {result.report.rejected_drugs.map(
+                      (item: string | { drug: string; reason: string }, idx: number) => {
+                        const drugName = typeof item === "string" ? item : item.drug;
+                        const rejectionReason = typeof item === "string" ? null : item.reason;
+                        const candidate = result.candidates_evaluated.find(
+                          (c) => c.drug_name === drugName,
+                        );
+                        return (
+                          <div key={drugName || idx} className="flex items-start gap-2.5 py-1.5">
+                            <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium capitalize">{drugName}</span>
+                                <span className={`text-[10px] uppercase tracking-widest font-bold ${
+                                  candidate?.status === "REJECTED" ? "text-red-500" : "text-muted-foreground"
+                                }`}>
+                                  {candidate?.status || "avoided"}
+                                </span>
+                              </div>
+                              {(rejectionReason || candidate?.reason) && (
+                                <p className="text-xs text-muted-foreground/70 mt-0.5">
+                                  {rejectionReason || candidate?.reason}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      },
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
         )}
 
         {result.safety_note && (

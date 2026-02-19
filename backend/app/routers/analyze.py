@@ -174,7 +174,14 @@ async def analyze(
     pipeline = get_pipeline()
     trace = await pipeline.analyze(pil_image, meds)
 
-    return trace_to_response(trace)
+    response = trace_to_response(trace)
+    logger.info(f"Analyze complete: mode={response.mode}, selected_drug={response.selected_drug}")
+    if response.report:
+        logger.info(f"Report clinical_summary: {response.report.clinical_summary[:200]}")
+        logger.info(f"Report reasoning_trace: {response.report.reasoning_trace[:200]}")
+    for ev in response.candidates_evaluated:
+        logger.info(f"  Candidate {ev.drug_name}: {ev.status} | findings={len(ev.findings)}")
+    return response
 
 class DrugCheckBody(BaseModel):
     drug_names: list[str] = []
@@ -191,4 +198,8 @@ async def drug_check(body: DrugCheckBody):
 
     pipeline = get_pipeline()
     trace = await pipeline.drug_check(names, body.patient_medications)
-    return trace_to_response(trace)
+    response = trace_to_response(trace)
+    logger.info(f"Drug check complete: selected_drug={response.selected_drug}")
+    for ev in response.candidates_evaluated:
+        logger.info(f"  Candidate {ev.drug_name}: {ev.status} | findings={len(ev.findings)}")
+    return response
