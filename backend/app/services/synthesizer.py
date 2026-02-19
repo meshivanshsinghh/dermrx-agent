@@ -91,12 +91,13 @@ class SynthesizerService:
 
         # Use chat template for MedGemma (it's an instruction-tuned model)
         messages = [{"role": "user", "content": prompt}]
-        input_ids = tokenizer.apply_chat_template(
-            messages, return_tensors="pt", add_generation_prompt=True
-        ).to(model.device)
+        formatted = tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
+        input_ids = tokenizer(formatted, return_tensors="pt").to(model.device)
 
         outputs = model.generate(
-            input_ids,
+            **input_ids,
             max_new_tokens=768,
             temperature=0.4,
             top_p=0.9,
@@ -105,7 +106,7 @@ class SynthesizerService:
             repetition_penalty=1.3,
         )
         response = tokenizer.decode(
-            outputs[0][input_ids.shape[-1]:],
+            outputs[0][len(input_ids["input_ids"][0]):],
             skip_special_tokens=True,
         ).strip()
 

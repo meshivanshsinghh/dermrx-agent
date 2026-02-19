@@ -72,6 +72,7 @@ technical challenge getting google and aws
 making it responsive
 all requests are secure fro my own frontend only 
 also make sure we have a button for judges to know that please only click yes if you think you are evaluating the
+-> now this loading of weights takes a bit time so we let them know. 
 machine is spot on and less charge or something. 
 
 tier based confidence is good but showing 18.7% confidence is shit right???? thinking about it. 
