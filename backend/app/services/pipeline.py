@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 from app.services.classifier import ClassifierService, ClassificationResult
 from app.services.treatment_lookup import TreatmentLookupService, DrugCandidate
-from app.services.ddi_checker import get_ddinter_id, check_interactions, build_checker_ids
+from app.services.ddi_checker import MOCK_DISEASE_DATA, MOCK_FOOD_DATA, get_ddinter_id, check_interactions, build_checker_ids
 from app.services.toxicity import ToxicityService, ToxicityProfile
 from app.services.synthesizer import (
     SynthesizerService, SynthesisReport, SafetyFinding
@@ -146,25 +146,28 @@ class PipelineService:
         _build_no_safe_drug_report: Report when all candidates fail safety checks
     '''
     async def _evaluate_single_drug(
-        self, 
-        drug: DrugCandidate, 
-        patient_medications: list[str], 
+        self,
+        drug: DrugCandidate,
+        patient_medications: list[str],
     ) -> DrugEvaluation:
         evaluation = DrugEvaluation(drug=drug, status="SAFE")
-        
+
         ddi_findings = await self._check_ddi(drug, patient_medications)
         evaluation.ddi_findings = ddi_findings
-        
-        # CHECKING for Major DDI then we Reject
-        major_findings = [f for f in ddi_findings if f.severity == "Major"]
+
+        # Only DDI findings drive REJECTED/CAUTION — food and disease are informational
+        ddi_only = [f for f in ddi_findings if f.finding_type.startswith("DDI_")]
+
+        # Major DDI → REJECT
+        major_findings = [f for f in ddi_only if f.severity == "Major"]
         if major_findings:
             reasons = [f.description for f in major_findings]
             evaluation.status = "REJECTED"
             evaluation.reason = f"Major DDI: {'; '.join(reasons)}"
             return evaluation
 
-        # Check for Moderate DDI → CAUTION
-        moderate_findings = [f for f in ddi_findings if f.severity == "Moderate"]
+        # Moderate DDI → CAUTION
+        moderate_findings = [f for f in ddi_only if f.severity == "Moderate"]
         if moderate_findings:
             evaluation.status = "CAUTION"
             evaluation.reason = "Moderate DDI — monitor closely"
@@ -183,6 +186,7 @@ class PipelineService:
                         description=pred.label,
                         action="NOTE",
                     ))
+
         return evaluation
     
     async def drug_check(
@@ -340,60 +344,66 @@ class PipelineService:
         )
     
     async def _check_ddi(
-        self, 
-        drug: DrugCandidate, 
+        self,
+        drug: DrugCandidate,
         patient_medications: list[str]
     ) -> list[SafetyFinding]:
-        
+
         if is_mock_mode():
             return self._mock_check_ddi(drug, patient_medications)
-        
+
         findings = []
-        
-        # getting ddInterID for treatment drug
+
+        # Getting DDInterID for treatment drug
         treatment_id = get_ddinter_id(drug.ddinter_name)
-        if not treatment_id: 
+        if not treatment_id:
             logger.warning(f"DDInter ID not found for {drug.ddinter_name}")
             return findings
 
-        # getting ddInterIDs for patient medications
+        # Getting DDInterIDs for patient medications
         patient_ids = []
         resolved_meds = {}
-        
-        for med in patient_medications: 
+
+        for med in patient_medications:
             med_id = get_ddinter_id(med)
             if med_id:
                 patient_ids.append(med_id)
-                resolved_meds[med_id] = med 
-            else: 
+                resolved_meds[med_id] = med
+            else:
                 logger.warning(f"Patient med not in DDInter: {med}")
-        
-        if not patient_ids: 
+
+        if not patient_ids:
             return findings
-        
+
         batches = build_checker_ids(treatment_id, patient_ids)
-        
+
         for ids_string in batches:
             try:
                 checker_result, details = await check_interactions(
-                    ids_string, fetch_details = True,
+                    ids_string, fetch_details=True,
                 )
-                # converting DDI results to SafetyFindings
+
+                # Drug-drug interactions
                 for di in checker_result.drug_interactions:
                     if treatment_id not in (di.drug_a_id, di.drug_b_id):
                         continue
-                    
-                    # determining which drug is the patient medication
-                    if di.drug_a_id == treatment_id: 
-                        other_name = di.drug_b_name
-                    else: 
-                        other_name = di.drug_a_name
-                    
+
+                    other_name = di.drug_b_name if di.drug_a_id == treatment_id else di.drug_a_name
                     description = f"{other_name}"
-                    if di.interaction: 
-                        description += f" - {di.interaction[:200]}"
-                    
+                    if di.interaction:
+                        description += f" — {di.interaction[:200]}"
+
                     action = "REJECTED" if di.severity == "Major" else "CAUTION"
+
+                    mechanism_parts = []
+                    flags = di.mechanism_flags
+                    if flags.absorption: mechanism_parts.append("Absorption")
+                    if flags.distribution: mechanism_parts.append("Distribution")
+                    if flags.metabolism: mechanism_parts.append("Metabolism")
+                    if flags.excretion: mechanism_parts.append("Excretion")
+                    if flags.synergistic_effect: mechanism_parts.append("Synergistic Effect")
+                    if flags.antagonistic_effect: mechanism_parts.append("Antagonistic Effect")
+                    mechanism_str = ", ".join(mechanism_parts) if mechanism_parts else None
 
                     findings.append(SafetyFinding(
                         drug_name=drug.drug_name,
@@ -401,31 +411,89 @@ class PipelineService:
                         severity=di.severity,
                         description=description,
                         action=action,
+                        management=di.management,
+                        mechanism=mechanism_str,
+                    ))
+
+                # Food interactions
+                for fi in checker_result.food_interactions:
+                    findings.append(SafetyFinding(
+                        drug_name=drug.drug_name,
+                        finding_type=f"FOOD_{fi.level.upper()}",
+                        severity=fi.level,
+                        description=f"{fi.food_name} — {fi.text[:200] if fi.text else 'Food interaction'}",
+                        action="NOTE",
+                        management=None,
+                        mechanism=None,
+                    ))
+
+                # Disease contraindications
+                for dis in checker_result.disease_interactions:
+                    action = "REJECTED" if dis.level == "Major" else "CAUTION"
+                    findings.append(SafetyFinding(
+                        drug_name=drug.drug_name,
+                        finding_type=f"DISEASE_{dis.level.upper()}",
+                        severity=dis.level,
+                        description=f"{dis.disease_name} — {dis.text[:200] if dis.text else 'Disease contraindication'}",
+                        action=action,
+                        management=None,
+                        mechanism=None,
                     ))
 
             except Exception as e:
-                logger.error(f"DDI check failed for batch {ids_string}:{e}")
-        
+                logger.error(f"DDI check failed for batch {ids_string}: {e}")
+
         return findings
-        
-        
-        
-    # MOCK implementation
+
+
     def _mock_check_ddi(
-        self, 
+        self,
         drug: DrugCandidate,
         patient_medications: list[str]
     ) -> list[SafetyFinding]:
         findings = []
-        for med in patient_medications: 
+
+        # Drug-drug interactions
+        for med in patient_medications:
             result = mock_check_ddi(drug.ddinter_name, med)
-            if result and result["severity"] in ("Major", "Moderate"): 
+            if result and result["severity"] in ("Major", "Moderate"):
                 action = "REJECTED" if result["severity"] == "Major" else "CAUTION"
                 findings.append(SafetyFinding(
-                    drug_name = drug.drug_name, 
-                   finding_type=f"DDI_{result['severity'].upper()}",
+                    drug_name=drug.drug_name,
+                    finding_type=f"DDI_{result['severity'].upper()}",
                     severity=result["severity"],
                     description=f"{med} — {result['description']}",
                     action=action,
+                    management=None,
+                    mechanism=None,
                 ))
+
+        # Food interactions (based on patient medications)
+        for med in patient_medications:
+            food_list = MOCK_FOOD_DATA.get(med.title(), [])
+            for food in food_list:
+                findings.append(SafetyFinding(
+                    drug_name=drug.drug_name,
+                    finding_type=f"FOOD_{food['severity'].upper()}",
+                    severity=food["severity"],
+                    description=f"{food['food']} — {food['description']}",
+                    action="NOTE",
+                    management=None,
+                    mechanism=None,
+                ))
+
+        # Disease contraindications (based on the treatment drug)
+        disease_list = MOCK_DISEASE_DATA.get(drug.ddinter_name, [])
+        for disease in disease_list:
+            action = "REJECTED" if disease["severity"] == "Major" else "NOTE"
+            findings.append(SafetyFinding(
+                drug_name=drug.drug_name,
+                finding_type=f"DISEASE_{disease['severity'].upper()}",
+                severity=disease["severity"],
+                description=f"{disease['disease']} — {disease['description']}",
+                action=action,
+                management=None,
+                mechanism=None,
+            ))
+
         return findings

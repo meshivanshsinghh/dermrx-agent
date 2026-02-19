@@ -12,7 +12,7 @@ import {
   deletePatient as deletePatientStorage, deleteSession as deleteSessionStorage,
   generateSessionId,
 } from "@/lib/storage";
-import { Stethoscope, Pill } from "lucide-react";
+import { Stethoscope, Pill, Pencil } from "lucide-react";
 
 export default function Home() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -23,6 +23,7 @@ export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"analyze" | "drug_check">("analyze");
   const [dialogPatient, setDialogPatient] = useState<Patient | null>(null);
+  const [dialogEditOnly, setDialogEditOnly] = useState(false);
 
   useEffect(() => {
     setPatients(getPatients());
@@ -37,6 +38,7 @@ export default function Home() {
   const handleNewSession = useCallback((mode: "analyze" | "drug_check") => {
     setDialogMode(mode);
     setDialogPatient(null);
+    setDialogEditOnly(false);
     setDialogOpen(true);
   }, []);
 
@@ -52,7 +54,15 @@ export default function Home() {
     setActiveSessionId(newSession.id);
   }, []);
 
-  // Dialog submit → save patient + create session
+  // Edit patient (opens dialog with existing patient, no new session)
+  const handleEditPatient = useCallback((patient: Patient) => {
+    setDialogMode("analyze");
+    setDialogPatient(patient);
+    setDialogEditOnly(true);
+    setDialogOpen(true);
+  }, []);
+
+  // Dialog submit → save patient + optionally create session
   const handleDialogSubmit = useCallback((patient: Patient, mode: "analyze" | "drug_check") => {
     savePatient(patient);
     setPatients((prev) => {
@@ -60,16 +70,19 @@ export default function Home() {
       if (idx >= 0) { const next = [...prev]; next[idx] = patient; return next; }
       return [patient, ...prev];
     });
-    const newSession: PatientSession = {
-      id: generateSessionId(), patientId: patient.id, mode,
-      name: mode === "analyze" ? "New Analysis" : "New Drug Check",
-      createdAt: new Date().toISOString(), result: null, imagePreview: null,
-    };
-    saveSession(newSession);
-    setSessions((prev) => [newSession, ...prev]);
-    setActiveSessionId(newSession.id);
+    if (!dialogEditOnly) {
+      const newSession: PatientSession = {
+        id: generateSessionId(), patientId: patient.id, mode,
+        name: mode === "analyze" ? "New Analysis" : "New Drug Check",
+        createdAt: new Date().toISOString(), result: null, imagePreview: null,
+      };
+      saveSession(newSession);
+      setSessions((prev) => [newSession, ...prev]);
+      setActiveSessionId(newSession.id);
+    }
     setDialogOpen(false);
-  }, []);
+    setDialogEditOnly(false);
+  }, [dialogEditOnly]);
 
   const handleDeleteSession = useCallback((id: string) => {
     deleteSessionStorage(id);
@@ -115,7 +128,17 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-              <span className="text-xs text-muted-foreground">{new Date(activeSession.createdAt).toLocaleString()}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleEditPatient(activePatient)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                  title="Edit patient details & medications"
+                >
+                  <Pencil className="h-3 w-3" />
+                  Edit Patient
+                </button>
+                <span className="text-xs text-muted-foreground">{new Date(activeSession.createdAt).toLocaleString()}</span>
+              </div>
             </div>
 
             {activeSession.mode === "analyze" ? (
@@ -152,7 +175,7 @@ export default function Home() {
       </div>
 
       <ChatPanel collapsed={chatCollapsed} onToggleCollapse={() => setChatCollapsed(!chatCollapsed)} currentResult={currentResult} />
-      <NewPatientDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSubmit={handleDialogSubmit} initialMode={dialogMode} existingPatient={dialogPatient} />
+      <NewPatientDialog open={dialogOpen} onClose={() => { setDialogOpen(false); setDialogEditOnly(false); }} onSubmit={handleDialogSubmit} initialMode={dialogMode} existingPatient={dialogPatient} editOnly={dialogEditOnly} />
     </div>
   );
 }

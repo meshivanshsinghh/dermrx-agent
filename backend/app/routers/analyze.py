@@ -27,6 +27,8 @@ class SafetyFindingResponse(BaseModel):
     severity: str
     description: str
     action: str
+    management: str | None = None
+    mechanism: str | None = None
 
 
 class DrugEvaluationResponse(BaseModel):
@@ -107,6 +109,8 @@ def trace_to_response(trace: PipelineTrace) -> AnalyzeResponse:
                     severity=f.severity,
                     description=f.description,
                     action=f.action,
+                    management=f.management,
+                    mechanism=f.mechanism,
                 )
                 for f in ev.ddi_findings
             ]

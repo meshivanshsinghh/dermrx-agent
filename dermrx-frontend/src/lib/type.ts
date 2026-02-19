@@ -37,6 +37,8 @@ export interface DDIFinding {
   severity: string;
   description: string;
   action: string;
+  management?: string | null;
+  mechanism?: string | null;
 }
 
 export interface CandidateEvaluation {

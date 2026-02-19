@@ -126,20 +126,31 @@ export default function AnalyzePanel({
     null,
   );
 
-  const handleFileDrop = useCallback((e: React.DragEvent) => {
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile && droppedFile.type.startsWith("image/")) {
       setFile(droppedFile);
-      setPreview(URL.createObjectURL(droppedFile));
+      const base64 = await fileToBase64(droppedFile);
+      setPreview(base64);
     }
   }, []);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
-      setPreview(URL.createObjectURL(selectedFile));
+      const base64 = await fileToBase64(selectedFile);
+      setPreview(base64);
     }
   };
 
@@ -706,8 +717,8 @@ export default function AnalyzePanel({
                           candidate.findings.length > 0 && (
                             <div className="mt-3 space-y-2.5 pl-6 border-l-2 border-muted">
                               {candidate.findings.map((finding, i) => (
-                                <div key={i} className="text-xs space-y-0.5">
-                                  <div className="flex items-center gap-1.5">
+                                <div key={i} className="text-xs space-y-1">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
                                     <Badge
                                       className={`text-[10px] ${getSeverityColor(
                                         finding.severity,
@@ -718,11 +729,24 @@ export default function AnalyzePanel({
                                     <span className="font-medium uppercase text-[10px] tracking-wide">
                                       {finding.finding_type}
                                     </span>
+                                    {finding.mechanism && (
+                                      <span className="text-[10px] text-muted-foreground italic">
+                                        ({finding.mechanism})
+                                      </span>
+                                    )}
                                   </div>
                                   <p className="text-muted-foreground">
                                     {finding.description}
                                   </p>
-                                  {finding.action && (
+                                  {finding.management && (
+                                    <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded px-2 py-1.5">
+                                      <p className="text-blue-700 dark:text-blue-400 font-medium text-[10px] uppercase tracking-wide mb-0.5">Management</p>
+                                      <p className="text-blue-600 dark:text-blue-300">
+                                        {finding.management}
+                                      </p>
+                                    </div>
+                                  )}
+                                  {finding.action && !finding.management && (
                                     <p className="text-indigo-600 dark:text-indigo-400 font-medium">
                                       → {finding.action}
                                     </p>
@@ -883,6 +907,13 @@ export default function AnalyzePanel({
   }
 
   // ======================== INPUT FORM ========================
+  const SAMPLE_CONDITIONS = [
+    { label: "Fungal Infection", emoji: "🦠", color: "bg-amber-100 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800" },
+    { label: "Eczema / Dermatitis", emoji: "🔴", color: "bg-rose-100 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800" },
+    { label: "Psoriasis", emoji: "🩹", color: "bg-purple-100 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800" },
+    { label: "Acne", emoji: "💊", color: "bg-blue-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" },
+  ];
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-lg space-y-6">
@@ -915,18 +946,18 @@ export default function AnalyzePanel({
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleFileDrop}
-          className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+          className={`border-2 border-dashed rounded-xl transition-colors ${
             preview
-              ? "border-indigo-300 bg-indigo-50/50 dark:border-indigo-700 dark:bg-indigo-900/10"
-              : "border-muted-foreground/20 hover:border-indigo-300 hover:bg-indigo-50/30"
+              ? "border-indigo-300 bg-indigo-50/50 dark:border-indigo-700 dark:bg-indigo-900/10 p-6"
+              : "border-muted-foreground/20 hover:border-indigo-300 hover:bg-indigo-50/30 p-0"
           }`}
         >
           {preview ? (
-            <div className="space-y-3">
+            <div className="space-y-3 text-center">
               <img
                 src={preview}
                 alt="Preview"
-                className="max-h-48 rounded-lg mx-auto object-cover"
+                className="max-h-56 rounded-lg mx-auto object-cover shadow-sm"
               />
               <p className="text-sm font-medium">{file?.name}</p>
               <Button
@@ -942,21 +973,48 @@ export default function AnalyzePanel({
               </Button>
             </div>
           ) : (
-            <label className="cursor-pointer space-y-3 block">
-              <div className="mx-auto h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+            <label className="cursor-pointer block">
+              {/* Main upload zone */}
+              <div className="p-8 text-center space-y-4">
+                <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center shadow-sm">
+                  <Upload className="h-7 w-7 text-indigo-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">
+                    Upload Skin Image
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Drag & drop or{" "}
+                    <span className="text-indigo-600 dark:text-indigo-400 font-medium">
+                      click to browse
+                    </span>
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    PNG, JPG, HEIC up to 10MB
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium">
-                  Drop skin image here or{" "}
-                  <span className="text-indigo-600 dark:text-indigo-400">
-                    browse
-                  </span>
+
+              {/* Sample conditions hint */}
+              <div className="border-t border-dashed border-muted-foreground/10 px-6 py-4 bg-muted/30 rounded-b-xl">
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide mb-2.5 text-center">
+                  Supported Conditions
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  PNG, JPG up to 10MB
-                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {SAMPLE_CONDITIONS.map((cond) => (
+                    <div
+                      key={cond.label}
+                      className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg border ${cond.color} transition-colors`}
+                    >
+                      <span className="text-lg">{cond.emoji}</span>
+                      <span className="text-[10px] font-medium text-center leading-tight">
+                        {cond.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
+
               <input
                 type="file"
                 accept="image/*"

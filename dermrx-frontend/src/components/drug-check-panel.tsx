@@ -248,8 +248,8 @@ export default function DrugCheckPanel({
                       candidate.findings.length > 0 && (
                         <div className="mt-3 space-y-2.5 pl-6 border-l-2 border-muted">
                           {candidate.findings.map((finding, i) => (
-                            <div key={i} className="text-xs space-y-0.5">
-                              <div className="flex items-center gap-1.5">
+                            <div key={i} className="text-xs space-y-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <Badge
                                   className={`text-[10px] ${getSeverityColor(
                                     finding.severity
@@ -260,11 +260,24 @@ export default function DrugCheckPanel({
                                 <span className="font-medium uppercase text-[10px] tracking-wide">
                                   {finding.finding_type}
                                 </span>
+                                {finding.mechanism && (
+                                  <span className="text-[10px] text-muted-foreground italic">
+                                    ({finding.mechanism})
+                                  </span>
+                                )}
                               </div>
                               <p className="text-muted-foreground">
                                 {finding.description}
                               </p>
-                              {finding.action && (
+                              {finding.management && (
+                                <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded px-2 py-1.5">
+                                  <p className="text-blue-700 dark:text-blue-400 font-medium text-[10px] uppercase tracking-wide mb-0.5">Management</p>
+                                  <p className="text-blue-600 dark:text-blue-300">
+                                    {finding.management}
+                                  </p>
+                                </div>
+                              )}
+                              {finding.action && !finding.management && (
                                 <p className="text-indigo-600 dark:text-indigo-400 font-medium">
                                   → {finding.action}
                                 </p>
@@ -344,12 +357,12 @@ export default function DrugCheckPanel({
             </div>
 
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute z-10 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-40 overflow-y-auto">
+              <div className="absolute z-10 mt-1 w-full bg-white dark:bg-neutral-900 border rounded-md shadow-lg max-h-40 overflow-y-auto">
                 {suggestions.map((s) => (
                   <button
                     key={s}
                     onClick={() => addDrug(s)}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors capitalize"
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors capitalize"
                   >
                     {s}
                   </button>

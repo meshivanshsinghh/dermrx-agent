@@ -14,10 +14,11 @@ interface NewPatientDialogProps {
   onSubmit: (patient: Patient, mode: "analyze" | "drug_check") => void;
   initialMode: "analyze" | "drug_check";
   existingPatient?: Patient | null;
+  editOnly?: boolean;
 }
 
 export default function NewPatientDialog({
-  open, onClose, onSubmit, initialMode, existingPatient,
+  open, onClose, onSubmit, initialMode, existingPatient, editOnly = false,
 }: NewPatientDialogProps) {
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -171,9 +172,9 @@ export default function NewPatientDialog({
                 <Button variant="outline" size="sm" onClick={() => addMedication()} className="h-[42px]">Add</Button>
               </div>
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-20 mt-1 w-full bg-popover border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                <div className="absolute z-20 mt-1 w-full bg-white dark:bg-neutral-900 border rounded-lg shadow-lg max-h-40 overflow-y-auto">
                   {suggestions.map((s) => (
-                    <button key={s} onClick={() => addMedication(s)} className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors capitalize">{s}</button>
+                    <button key={s} onClick={() => addMedication(s)} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors capitalize">{s}</button>
                   ))}
                 </div>
               )}
@@ -202,8 +203,8 @@ export default function NewPatientDialog({
         {/* Footer */}
         <div className="sticky bottom-0 bg-background border-t px-6 py-4 rounded-b-2xl">
           <Button onClick={handleSubmit} disabled={!name.trim()} size="lg"
-            className={`w-full text-white ${initialMode === "analyze" ? "bg-indigo-600 hover:bg-indigo-700" : "bg-emerald-600 hover:bg-emerald-700"}`}>
-            {initialMode === "analyze" ? <><Stethoscope className="h-4 w-4 mr-2" />Start Analysis</> : <><Shield className="h-4 w-4 mr-2" />Start Drug Check</>}
+            className={`w-full text-white ${editOnly ? "bg-indigo-600 hover:bg-indigo-700" : initialMode === "analyze" ? "bg-indigo-600 hover:bg-indigo-700" : "bg-emerald-600 hover:bg-emerald-700"}`}>
+            {editOnly ? <><Pill className="h-4 w-4 mr-2" />Save Changes</> : initialMode === "analyze" ? <><Stethoscope className="h-4 w-4 mr-2" />Start Analysis</> : <><Shield className="h-4 w-4 mr-2" />Start Drug Check</>}
           </Button>
           <p className="text-[10px] text-center text-muted-foreground mt-2">Patient data is stored locally on your device only.</p>
         </div>

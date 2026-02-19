@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import {
   ChevronDown,
@@ -75,11 +75,20 @@ export default function Sidebar({
       ),
   );
 
-  // Auto-expand active patient
+  // Auto-expand active patient on activeSessionId change
   const activeSession = sessions.find((s) => s.id === activeSessionId);
-  if (activeSession && !expandedPatients.has(activeSession.patientId)) {
-    expandedPatients.add(activeSession.patientId);
-  }
+  const activePatientId = activeSession?.patientId;
+
+  useEffect(() => {
+    if (activePatientId) {
+      setExpandedPatients((prev) => {
+        if (prev.has(activePatientId)) return prev;
+        const next = new Set(prev);
+        next.add(activePatientId);
+        return next;
+      });
+    }
+  }, [activePatientId]);
 
   if (collapsed) {
     return (
