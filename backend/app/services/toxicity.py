@@ -90,6 +90,8 @@ class ToxicityService:
             is_flagged = "B" in response
             label = task_info["label_flag"] if is_flagged else task_info["label_safe"]
 
+            logger.info(f"TxGemma [{drug_name}] {task_name}: raw='{response}' flagged={is_flagged} → {label}")
+
             predictions.append(ToxicityPrediction(
                 task=task_name,
                 raw_output=response,

@@ -179,12 +179,16 @@ class PipelineService:
 
             for pred in tox_profile.predictions:
                 if pred.is_flagged:
+                    # Map toxicity tasks to meaningful severity
+                    tox_severity = "Moderate"
+                    if pred.task in ("ClinTox", "DILI", "hERG"):
+                        tox_severity = "Major"
                     evaluation.ddi_findings.append(SafetyFinding(
                         drug_name=drug.drug_name,
                         finding_type="TOXICITY",
-                        severity="Flag",
+                        severity=tox_severity,
                         description=pred.label,
-                        action="NOTE",
+                        action="CAUTION",
                     ))
 
         return evaluation
@@ -383,6 +387,13 @@ class PipelineService:
                     ids_string, fetch_details=True,
                 )
 
+                logger.info(
+                    f"DDI batch {ids_string}: "
+                    f"{len(checker_result.drug_interactions)} drug interactions, "
+                    f"{len(checker_result.food_interactions)} food interactions, "
+                    f"{len(checker_result.disease_interactions)} disease interactions"
+                )
+
                 # Drug-drug interactions
                 for di in checker_result.drug_interactions:
                     if treatment_id not in (di.drug_a_id, di.drug_b_id):
@@ -417,24 +428,26 @@ class PipelineService:
 
                 # Food interactions
                 for fi in checker_result.food_interactions:
+                    fi_desc = fi.interaction[:200] if fi.interaction else 'Food interaction'
                     findings.append(SafetyFinding(
-                        drug_name=drug.drug_name,
-                        finding_type=f"FOOD_{fi.level.upper()}",
-                        severity=fi.level,
-                        description=f"{fi.food_name} — {fi.text[:200] if fi.text else 'Food interaction'}",
+                        drug_name=fi.drug_name,
+                        finding_type=f"FOOD_{fi.severity.upper()}",
+                        severity=fi.severity,
+                        description=f"{fi.food_name} — {fi_desc}",
                         action="NOTE",
-                        management=None,
-                        mechanism=None,
+                        management=fi.management,
+                        mechanism=fi.mechanism,
                     ))
 
                 # Disease contraindications
                 for dis in checker_result.disease_interactions:
-                    action = "REJECTED" if dis.level == "Major" else "CAUTION"
+                    action = "REJECTED" if dis.severity == "Major" else "CAUTION"
+                    dis_desc = dis.description[:200] if dis.description else 'Disease contraindication'
                     findings.append(SafetyFinding(
-                        drug_name=drug.drug_name,
-                        finding_type=f"DISEASE_{dis.level.upper()}",
-                        severity=dis.level,
-                        description=f"{dis.disease_name} — {dis.text[:200] if dis.text else 'Disease contraindication'}",
+                        drug_name=dis.drug_name,
+                        finding_type=f"DISEASE_{dis.severity.upper()}",
+                        severity=dis.severity,
+                        description=f"{dis.disease_name} — {dis_desc}",
                         action=action,
                         management=None,
                         mechanism=None,

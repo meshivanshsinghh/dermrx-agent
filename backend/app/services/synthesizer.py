@@ -86,17 +86,31 @@ class SynthesizerService:
             toxicity_profile, rejected_drugs, patient_medications,
         )
 
-        input_ids = tokenizer(prompt, return_tensors="pt").to(model.device)
+        logger.info(f"MedGemma prompt length: {len(prompt)} chars")
+        logger.debug(f"MedGemma prompt:\n{prompt}")
+
+        # Use chat template for MedGemma (it's an instruction-tuned model)
+        messages = [{"role": "user", "content": prompt}]
+        input_ids = tokenizer.apply_chat_template(
+            messages, return_tensors="pt", add_generation_prompt=True
+        ).to(model.device)
+
         outputs = model.generate(
-            **input_ids,
-            max_new_tokens=1024,
-            temperature=0.3,
+            input_ids,
+            max_new_tokens=768,
+            temperature=0.4,
+            top_p=0.9,
+            top_k=40,
             do_sample=True,
+            repetition_penalty=1.3,
         )
         response = tokenizer.decode(
-            outputs[0][len(input_ids["input_ids"][0]):],
+            outputs[0][input_ids.shape[-1]:],
             skip_special_tokens=True,
         ).strip()
+
+        logger.info(f"MedGemma raw response length: {len(response)} chars")
+        logger.info(f"MedGemma response:\n{response[:2000]}")
 
         # parsing sections from MedGemma's response
         return self._parse_response(

@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
+echo "=========================================="
 echo "  DermRx Agent - EC2 GPU Setup Script"
+echo "=========================================="
 
 # 1. Verify GPU
 echo ""
@@ -39,7 +41,7 @@ import torch
 assert torch.cuda.is_available(), 'CUDA not available in PyTorch!'
 print(f'  PyTorch {torch.__version__}')
 print(f'  CUDA device: {torch.cuda.get_device_name(0)}')
-print(f'  VRAM: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB')
+print(f'  VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB')
 "
 echo ""
 
@@ -48,23 +50,22 @@ echo "[6/6] HuggingFace authentication..."
 echo ""
 echo "You need a HuggingFace token with access to:"
 echo "  - google/medgemma-4b-it"
-echo "  - google/txgemma-2b-predict"  
-echo "  - google/medsiglip2-med-s2-b16-384"
+echo "  - google/txgemma-2b-predict"
+echo "  - google/medsiglip-448"
 echo ""
 echo "Get your token at: https://huggingface.co/settings/tokens"
 echo ""
 
-# Check if already logged in
-if huggingface-cli whoami &> /dev/null; then
-    echo "Already logged into HuggingFace as: $(huggingface-cli whoami)"
-    read -p "Continue with this account? (y/n): " -n 1 -r
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        huggingface-cli login
-    fi
-else
-    huggingface-cli login
-fi
+# Login via Python (huggingface-cli may not be on PATH)
+python3 -c "
+from huggingface_hub import HfApi
+try:
+    user = HfApi().whoami()['name']
+    print(f'Already logged into HuggingFace as: {user}')
+except Exception:
+    from huggingface_hub import login
+    login()
+"
 
 echo ""
 echo "Downloading models (this takes 5-15 minutes depending on connection)..."
@@ -75,13 +76,13 @@ from transformers import AutoProcessor, AutoModel, AutoTokenizer, AutoModelForCa
 import torch
 
 print('Downloading MedSigLIP...')
-AutoModel.from_pretrained('google/medsiglip2-med-s2-b16-384', torch_dtype=torch.float16)
-AutoProcessor.from_pretrained('google/medsiglip2-med-s2-b16-384')
+AutoModel.from_pretrained('google/medsiglip-448', dtype=torch.float16)
+AutoProcessor.from_pretrained('google/medsiglip-448')
 print('  MedSigLIP cached.')
 
 print('Downloading MedGemma 4B...')
 AutoModelForCausalLM.from_pretrained('google/medgemma-4b-it', torch_dtype=torch.bfloat16)
-AutoProcessor.from_pretrained('google/medgemma-4b-it')
+AutoTokenizer.from_pretrained('google/medgemma-4b-it')
 print('  MedGemma cached.')
 
 print('Downloading TxGemma 2B...')
@@ -93,4 +94,8 @@ print('')
 print('All models downloaded successfully!')
 "
 
+echo ""
+echo "=========================================="
 echo "  Setup complete!"
+echo "  Run: bash ~/dermrx-agent/deploy/start_server.sh"
+echo "=========================================="
