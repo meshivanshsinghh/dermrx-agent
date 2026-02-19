@@ -10,7 +10,7 @@ import {
   User,
   Sparkles,
 } from "lucide-react";
-import { AnalyzeResponse, CandidateEvaluation } from "@/lib/api";
+import { AnalyzeResponse, CandidateEvaluation } from "@/lib/type";
 
 interface ChatMessage {
   role: "user" | "assistant";

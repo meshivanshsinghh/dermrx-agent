@@ -24,16 +24,18 @@ import {
   Check,
   Info,
 } from "lucide-react";
+import { analyzeImage } from "@/lib/api";
 import {
-  analyzeImage,
   AnalyzeResponse,
   CandidateEvaluation,
+  Patient,
   PatientSession,
-  saveSession,
-} from "@/lib/api";
+} from "@/lib/type";
+import { saveSession } from "@/lib/storage";
 
 interface AnalyzePanelProps {
   session: PatientSession;
+  patient: Patient;
   onSessionUpdate: (session: PatientSession) => void;
 }
 
@@ -103,14 +105,16 @@ function getStepStatus(
 
 export default function AnalyzePanel({
   session,
+  patient,
   onSessionUpdate,
 }: AnalyzePanelProps) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(
     session.imagePreview || null,
   );
-  const [medications, setMedications] = useState<string[]>([]);
-  const [medInput, setMedInput] = useState("");
+
+  // Medications come from the patient record
+  const medications = patient.medications;
   const [stage, setStage] = useState<PipelineStage>(
     session.result ? "complete" : "idle",
   );
@@ -137,22 +141,6 @@ export default function AnalyzePanel({
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
     }
-  };
-
-  const addMedication = () => {
-    const trimmed = medInput.trim();
-    if (trimmed && !medications.includes(trimmed)) {
-      setMedications([...medications, trimmed]);
-      setMedInput("");
-    }
-  };
-
-  const removeMedication = (med: string) => {
-    setMedications(medications.filter((m) => m !== med));
-  };
-
-  const loadDemoMedications = () => {
-    setMedications(["warfarin", "metformin", "lisinopril"]);
   };
 
   const handleAnalyze = async () => {
@@ -408,7 +396,6 @@ export default function AnalyzePanel({
               setResult(null);
               setFile(null);
               setPreview(null);
-              setMedications([]);
               setStage("idle");
               setExpandedCandidate(null);
               window.scrollTo({ top: 0, behavior: "smooth" });
@@ -980,57 +967,22 @@ export default function AnalyzePanel({
           )}
         </div>
 
-        {/* Medications */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Patient Medications{" "}
-            <span className="text-muted-foreground font-normal">
-              (optional)
-            </span>
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={medInput}
-              onChange={(e) => setMedInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addMedication()}
-              placeholder="e.g. Warfarin, Metformin..."
-              className="flex-1 px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-            <Button variant="outline" size="sm" onClick={addMedication}>
-              Add
-            </Button>
-          </div>
-          {medications.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {medications.map((med) => (
-                <Badge
-                  key={med}
-                  variant="secondary"
-                  className="text-xs cursor-pointer hover:bg-destructive/10 capitalize"
-                  onClick={() => removeMedication(med)}
-                >
-                  {med}
-                  <X className="h-3 w-3 ml-1" />
-                </Badge>
-              ))}
+        {/* Patient Medications (from patient record) */}
+        {medications.length > 0 && (
+          <div className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <Pill className="h-4 w-4 text-indigo-500 mt-0.5" />
+              <div>
+                <p className="text-xs font-medium text-indigo-700 dark:text-indigo-400">
+                  {patient.name}&apos;s Medications ({medications.length})
+                </p>
+                <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 capitalize">
+                  {medications.join(", ")}
+                </p>
+              </div>
             </div>
-          )}
-
-          {/* Demo Quick-Fill */}
-          {medications.length === 0 && (
-            <button
-              onClick={loadDemoMedications}
-              className="flex items-center gap-2 text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors mt-1"
-            >
-              <Pill className="h-3 w-3" />
-              <span>
-                Try demo: Patient on <strong>warfarin</strong>,{" "}
-                <strong>metformin</strong>, <strong>lisinopril</strong>
-              </span>
-            </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Analyze Button */}
         <Button

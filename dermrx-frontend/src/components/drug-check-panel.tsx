@@ -17,30 +17,34 @@ import {
   ChevronUp,
   Zap,
 } from "lucide-react";
+import { drugCheck, searchDrugs } from "@/lib/api";
 import {
-  drugCheck,
-  searchDrugs,
   DrugCheckResponse,
   CandidateEvaluation,
+  Patient,
   PatientSession,
-  saveSession,
-} from "@/lib/api";
+} from "@/lib/type";
+import { saveSession } from "@/lib/storage";
 
 interface DrugCheckPanelProps {
   session: PatientSession;
+  patient: Patient;
   onSessionUpdate: (session: PatientSession) => void;
 }
 
 export default function DrugCheckPanel({
   session,
+  patient,
   onSessionUpdate,
 }: DrugCheckPanelProps) {
   const [drugNames, setDrugNames] = useState<string[]>([]);
   const [drugInput, setDrugInput] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [medications, setMedications] = useState<string[]>([]);
-  const [medInput, setMedInput] = useState("");
+
+  // Medications come from the patient record
+  const medications = patient.medications;
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<DrugCheckResponse | null>(
@@ -95,24 +99,8 @@ export default function DrugCheckPanel({
     setDrugNames(drugNames.filter((d) => d !== drug));
   };
 
-  const addMedication = () => {
-    const trimmed = medInput.trim();
-    if (trimmed && !medications.includes(trimmed)) {
-      setMedications([...medications, trimmed]);
-      setMedInput("");
-    }
-  };
-
-  const removeMedication = (med: string) => {
-    setMedications(medications.filter((m) => m !== med));
-  };
-
   const loadDemoDrugs = () => {
     setDrugNames(["fluconazole", "terbinafine", "clotrimazole"]);
-  };
-
-  const loadDemoMedications = () => {
-    setMedications(["warfarin", "metformin", "lisinopril"]);
   };
 
   const handleCheck = async () => {
@@ -189,7 +177,6 @@ export default function DrugCheckPanel({
             onClick={() => {
               setResult(null);
               setDrugNames([]);
-              setMedications([]);
               setExpandedCandidate(null);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
@@ -317,7 +304,7 @@ export default function DrugCheckPanel({
           </div>
           <h2 className="text-lg font-semibold">Drug Safety Check</h2>
           <p className="text-sm text-muted-foreground">
-            Check drug-drug interactions and safety profiles
+            Check drug interactions against {patient.name}&apos;s medications
           </p>
         </div>
 
@@ -401,53 +388,22 @@ export default function DrugCheckPanel({
           )}
         </div>
 
-        {/* Patient Medications */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Patient&apos;s Current Medications
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={medInput}
-              onChange={(e) => setMedInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addMedication()}
-              placeholder="e.g. Warfarin, Metformin..."
-              className="flex-1 px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-            <Button variant="outline" size="sm" onClick={addMedication}>
-              Add
-            </Button>
-          </div>
-          {medications.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {medications.map((med) => (
-                <Badge
-                  key={med}
-                  variant="secondary"
-                  className="text-xs cursor-pointer hover:bg-destructive/10 capitalize"
-                  onClick={() => removeMedication(med)}
-                >
-                  {med}
-                  <X className="h-3 w-3 ml-1" />
-                </Badge>
-              ))}
+        {/* Patient Medications (from patient record) */}
+        {medications.length > 0 && (
+          <div className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <Pill className="h-4 w-4 text-indigo-500 mt-0.5" />
+              <div>
+                <p className="text-xs font-medium text-indigo-700 dark:text-indigo-400">
+                  {patient.name}&apos;s Current Medications ({medications.length})
+                </p>
+                <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 capitalize">
+                  {medications.join(", ")}
+                </p>
+              </div>
             </div>
-          )}
-
-          {/* Demo Quick-Fill — Medications */}
-          {medications.length === 0 && (
-            <button
-              onClick={loadDemoMedications}
-              className="flex items-center gap-2 text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors mt-1"
-            >
-              <Pill className="h-3 w-3" />
-              <span>
-                Try demo: Patient on <strong>warfarin</strong>, <strong>metformin</strong>, <strong>lisinopril</strong>
-              </span>
-            </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Check Button */}
         <Button
