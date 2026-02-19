@@ -58,9 +58,13 @@ export default function ChatPanel({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Reset when session changes
+  // Reset when session changes — also clear old backend session
   useEffect(() => {
     if (prevSessionRef.current !== sessionId) {
+      // Clean up old backend session to free GPU memory
+      if (prevSessionRef.current) {
+        clearChatSession(`chat_${prevSessionRef.current}`).catch(() => {});
+      }
       setMessages([]);
       setContextSent(false);
       setError(null);

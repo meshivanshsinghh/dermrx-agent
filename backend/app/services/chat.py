@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 import threading
 from dataclasses import dataclass, field
 from typing import Optional
+
+try:
+    import torch
+except ImportError:
+    torch = None  # type: ignore[assignment]
 
 from app.utils.model_loader import is_mock_mode, get_medgemma
 
@@ -13,7 +19,9 @@ logger = logging.getLogger(__name__)
 MAX_HISTORY_TURNS = 10          # keep last N user+assistant pairs
 SESSION_TTL = 3600              # 1 hour 
 CLEANUP_INTERVAL = 600          # run cleanup every 10 min
-MAX_NEW_TOKENS = 384            # keep responses concise
+MAX_NEW_TOKENS = 256            # keep responses concise
+MAX_PROMPT_CHARS = 3000         # hard cap on system prompt size
+MAX_FINDINGS_PER_DRUG = 3       # only keep top severity findings
 
 @dataclass
 class ChatMessage:
@@ -84,90 +92,102 @@ _store = SessionStore()
 
 # ── Context Builder ─────────────────────────────────────
 
+def _trunc(text: str, max_len: int = 120) -> str:
+    """Truncate text to max_len chars with ellipsis."""
+    if not text:
+        return ""
+    text = text.strip()
+    return text[:max_len] + "..." if len(text) > max_len else text
+
+
 def build_system_prompt(context: dict) -> str:
     """
-    Compress the analysis result dict into a concise system prompt.
-    Keeps it under ~600 tokens for fast inference.
+    Compress the analysis result dict into a compact system prompt.
+    Hard-capped at MAX_PROMPT_CHARS (~750 tokens) to fit in GPU memory
+    alongside the 3 loaded models.
     """
     parts = [
-        "You are MedGemma, a clinical decision-support assistant for dermatology. "
-        "You help physicians understand analysis results, drug safety evaluations, "
-        "and treatment decisions. Answer concisely and accurately based on the "
-        "case context below. If something is outside your scope, say so.\n"
+        "You are MedGemma, a concise clinical decision-support assistant for dermatology. "
+        "Answer based on the case context below. Be brief."
     ]
 
-    # Classification
+    # Classification (compact)
     cls = context.get("classification")
     if cls:
         parts.append(
-            f"DIAGNOSIS: {cls.get('display_name', 'N/A')} "
-            f"(confidence: {cls.get('confidence_level', '?')}, "
-            f"score: {cls.get('confidence', '?')}, "
-            f"tier: {cls.get('tier', '?')})"
+            f"DX: {cls.get('display_name', 'N/A')} "
+            f"(conf={cls.get('confidence', '?')}, "
+            f"tier={cls.get('tier', '?')})"
         )
         if cls.get("treatment_class"):
-            parts.append(f"Treatment class: {cls['treatment_class']}")
-        flags = cls.get("safety_flags", [])
-        if flags:
-            flag_names = [f.get("display_name", "") for f in flags]
-            parts.append(f"Safety flags: {', '.join(flag_names)}")
+            parts.append(f"Class: {cls['treatment_class']}")
         top = cls.get("top_scores", [])
         if top:
-            diff = [f"{t['display_name']} ({t['score']:.3f})" for t in top[:5]]
-            parts.append(f"Differential: {', '.join(diff)}")
+            diff = [f"{t['display_name']}({t['score']:.2f})" for t in top[:3]]
+            parts.append(f"DDx: {', '.join(diff)}")
 
     # Selected drug
     selected = context.get("selected_drug")
     if selected:
-        parts.append(f"\nSELECTED DRUG: {selected}")
+        parts.append(f"SELECTED: {selected}")
 
-    # Drug evaluations
+    # Drug evaluations — compact: status + top N Major findings only
     evals = context.get("candidates_evaluated", [])
     if evals:
         eval_lines = []
         for ev in evals:
             status = ev.get("status", "?")
             name = ev.get("drug_name", "?")
-            reason = ev.get("reason") or ""
-            findings_count = len(ev.get("findings", []))
-            line = f"  {name}: {status}"
+            reason = _trunc(ev.get("reason") or "", 80)
+            line = f"{name}:{status}"
             if reason:
                 line += f" — {reason}"
-            if findings_count:
-                line += f" ({findings_count} findings)"
             eval_lines.append(line)
 
-            # Include key findings inline
-            for f in ev.get("findings", []):
-                sev = f.get("severity", "")
-                desc = f.get("description", "")
-                ftype = f.get("finding_type", "")
-                mgmt = f.get("management") or ""
-                finding_line = f"    [{sev}] {ftype}: {desc}"
-                if mgmt:
-                    finding_line += f" | Management: {mgmt}"
-                eval_lines.append(finding_line)
+            # Only include top N findings, prioritize Major severity
+            findings = ev.get("findings", [])
+            major = [f for f in findings if f.get("severity") == "Major"]
+            moderate = [f for f in findings if f.get("severity") == "Moderate"]
+            top_findings = (major + moderate)[:MAX_FINDINGS_PER_DRUG]
+            for f in top_findings:
+                desc = _trunc(f.get("description", ""), 80)
+                eval_lines.append(f"  [{f.get('severity','')}] {desc}")
 
-        parts.append("\nDRUG EVALUATIONS:\n" + "\n".join(eval_lines))
+        parts.append("DRUGS:\n" + "\n".join(eval_lines))
 
-    # Clinical report
+    # Clinical report — compact
     report = context.get("report")
     if report:
-        parts.append(f"\nCLINICAL SUMMARY: {report.get('clinical_summary', '')}")
-        parts.append(f"RECOMMENDED TREATMENT: {report.get('recommended_treatment', '')}")
-        parts.append(f"REASONING: {report.get('reasoning_trace', '')}")
-        parts.append(f"PATIENT EXPLANATION: {report.get('patient_explanation', '')}")
+        summary = _trunc(report.get("clinical_summary", ""), 200)
+        if summary:
+            parts.append(f"SUMMARY: {summary}")
+        rec = _trunc(report.get("recommended_treatment", ""), 150)
+        if rec:
+            parts.append(f"RX: {rec}")
+        reasoning = _trunc(report.get("reasoning_trace", ""), 200)
+        if reasoning:
+            parts.append(f"REASONING: {reasoning}")
+        patient_exp = _trunc(report.get("patient_explanation", ""), 200)
+        if patient_exp:
+            parts.append(f"PATIENT_EXP: {patient_exp}")
         rejected = report.get("rejected_drugs", [])
         if rejected:
-            rej_lines = []
+            rej_names = []
             for r in rejected:
                 if isinstance(r, dict):
-                    rej_lines.append(f"  {r.get('drug', '?')}: {r.get('reason', '?')}")
+                    rej_names.append(f"{r.get('drug', '?')}({r.get('reason', '?')[:40]})")
                 else:
-                    rej_lines.append(f"  {r}")
-            parts.append("REJECTED DRUGS:\n" + "\n".join(rej_lines))
+                    rej_names.append(str(r))
+            parts.append(f"REJECTED: {', '.join(rej_names)}")
 
-    return "\n".join(parts)
+    prompt = "\n".join(parts)
+
+    # Hard cap
+    if len(prompt) > MAX_PROMPT_CHARS:
+        prompt = prompt[:MAX_PROMPT_CHARS] + "\n[context truncated]"
+        logger.warning(f"System prompt truncated to {MAX_PROMPT_CHARS} chars")
+
+    return prompt
 
 
 # ── Chat Service ─────────────────────────────────────────
@@ -222,10 +242,14 @@ class ChatService:
     def _real_generate(self, session: ChatSession) -> str:
         model, tokenizer = get_medgemma()
 
+        # Free cached GPU memory before inference
+        if torch is not None and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         # Build messages list for chat template
         messages = [
-            {"role": "user", "content": session.system_prompt + "\n\nPlease acknowledge you understand this case context. From now on, answer questions about it."},
-            {"role": "assistant", "content": "Understood. I have the full case context including diagnosis, drug evaluations, and clinical report. Ask me anything about this case."},
+            {"role": "user", "content": session.system_prompt + "\nAcknowledge this case context."},
+            {"role": "assistant", "content": "Understood. I have the case context. Go ahead."},
         ]
         for msg in session.history:
             messages.append({"role": msg.role, "content": msg.content})
@@ -234,6 +258,10 @@ class ChatService:
             messages, tokenize=False, add_generation_prompt=True
         )
         input_ids = tokenizer(formatted, return_tensors="pt").to(model.device)
+
+        # Log token count for debugging
+        n_tokens = input_ids["input_ids"].shape[1]
+        logger.info(f"Chat inference: {n_tokens} input tokens for {session.session_id}")
 
         outputs = model.generate(
             **input_ids,
@@ -246,6 +274,11 @@ class ChatService:
             outputs[0][len(input_ids["input_ids"][0]):],
             skip_special_tokens=True,
         ).strip()
+
+        # Free KV-cache immediately after generation
+        del input_ids, outputs
+        if torch is not None and torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
         logger.info(f"Chat response ({session.session_id}): {len(response)} chars")
         return response
@@ -263,19 +296,20 @@ class ChatService:
         # Extract key info from system prompt for mock responses
         import re
         
-        diagnosis_match = re.search(r"DIAGNOSIS:\s*(.+?)(?:\n|$)", ctx)
+        # Support both old (DIAGNOSIS:) and new (DX:) formats
+        diagnosis_match = re.search(r"(?:DX|DIAGNOSIS):\s*(.+?)(?:\n|$)", ctx)
         diagnosis = diagnosis_match.group(1).strip() if diagnosis_match else "the diagnosed condition"
         
-        selected_match = re.search(r"SELECTED DRUG:\s*(.+?)(?:\n|$)", ctx)
+        selected_match = re.search(r"(?:SELECTED|SELECTED DRUG):\s*(.+?)(?:\n|$)", ctx)
         selected_drug = selected_match.group(1).strip() if selected_match else "the selected drug"
         
-        summary_match = re.search(r"CLINICAL SUMMARY:\s*(.+?)(?:\n[A-Z]|$)", ctx, re.S)
+        summary_match = re.search(r"(?:SUMMARY|CLINICAL SUMMARY):\s*(.+?)(?:\n[A-Z]|$)", ctx, re.S)
         summary = summary_match.group(1).strip() if summary_match else ""
         
-        reasoning_match = re.search(r"REASONING:\s*(.+?)(?:\nPATIENT|$)", ctx, re.S)
+        reasoning_match = re.search(r"REASONING:\s*(.+?)(?:\n(?:PATIENT|RX|REJECTED)|$)", ctx, re.S)
         reasoning = reasoning_match.group(1).strip() if reasoning_match else ""
         
-        patient_match = re.search(r"PATIENT EXPLANATION:\s*(.+?)(?:\nREJECTED|$)", ctx, re.S)
+        patient_match = re.search(r"(?:PATIENT_EXP|PATIENT EXPLANATION):\s*(.+?)(?:\n(?:REJECTED|$))", ctx, re.S)
         patient_exp = patient_match.group(1).strip() if patient_match else ""
 
         # Pattern matching — order matters (more specific patterns first)
@@ -299,8 +333,8 @@ class ChatService:
             )
 
         if any(w in last_msg for w in ["alternative", "other treatment", "other drug", "options"]):
-            # Extract evaluations from system prompt
-            eval_match = re.findall(r"  (\w[\w\s]*?):\s*(SAFE|CAUTION|REJECTED)(?:\s*—\s*(.+?))?(?:\n|$)", ctx)
+            # Extract evaluations from system prompt (new format: drug:STATUS)
+            eval_match = re.findall(r"(\w[\w\s]*?):(SAFE|CAUTION|REJECTED)(?:\s*\u2014\s*(.+?))?(?:\n|$)", ctx)
             if eval_match:
                 lines = []
                 for name, status, reason in eval_match:
@@ -347,7 +381,7 @@ class ChatService:
             return "No specific food interactions were flagged for this case."
 
         if any(w in last_msg for w in ["dose", "dosage", "how much", "how to take"]):
-            rec_match = re.search(r"RECOMMENDED TREATMENT:\s*(.+?)(?:\n|$)", ctx)
+            rec_match = re.search(r"(?:RX|RECOMMENDED TREATMENT):\s*(.+?)(?:\n|$)", ctx)
             if rec_match:
                 return f"**Recommended Treatment:**\n\n{rec_match.group(1).strip()}\n\n_Please verify dosing against current prescribing guidelines._"
             return "Please refer to current prescribing guidelines for exact dosing information."

@@ -277,6 +277,39 @@ export default function Home() {
   /* ── Load a Demo Scenario ───────────────────── */
   const handleLoadDemo = useCallback(
     (scenario: (typeof DEMO_SCENARIOS)[number]) => {
+      // Check if a demo patient for this scenario already exists
+      const existingPatient = patients.find((p) => p.id.startsWith(`demo-${scenario.id}-`));
+
+      if (existingPatient) {
+        // Find their most recent session
+        const existingSessions = sessions
+          .filter((s) => s.patientId === existingPatient.id)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        if (existingSessions.length > 0) {
+          // Redirect to existing session
+          setActiveSessionId(existingSessions[0].id);
+          return;
+        }
+
+        // Patient exists but no sessions — create one
+        const newSession: PatientSession = {
+          id: generateSessionId(),
+          patientId: existingPatient.id,
+          mode: scenario.mode,
+          name: `Demo: ${scenario.title}`,
+          createdAt: new Date().toISOString(),
+          result: null,
+          imagePreview: null,
+          imagePath: scenario.imagePath,
+        };
+        saveSession(newSession);
+        setSessions((prev) => [newSession, ...prev]);
+        setActiveSessionId(newSession.id);
+        return;
+      }
+
+      // No existing demo patient — create new
       const patientId = `demo-${scenario.id}-${Date.now()}`;
       const now = new Date().toISOString();
       const newPatient: Patient = {
@@ -302,7 +335,7 @@ export default function Home() {
       setSessions((prev) => [newSession, ...prev]);
       setActiveSessionId(newSession.id);
     },
-    [],
+    [patients, sessions],
   );
 
   /* ── Startup loader gate ────────────────────── */
