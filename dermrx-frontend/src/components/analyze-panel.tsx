@@ -4,21 +4,14 @@ import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   Upload,
   X,
   AlertTriangle,
-  CheckCircle2,
   XCircle,
   Loader2,
-  ImageIcon,
   Pill,
   Brain,
-  FileText,
-  Shield,
-  ChevronDown,
-  ChevronUp,
   Circle,
   Play,
   Check,
@@ -27,11 +20,13 @@ import {
 import { analyzeImage } from "@/lib/api";
 import {
   AnalyzeResponse,
-  CandidateEvaluation,
   Patient,
   PatientSession,
+  TopScore,
+  SafetyFlag,
 } from "@/lib/type";
 import { saveSession } from "@/lib/storage";
+import DrugEvaluationResults from "@/components/drug-evaluation-results";
 
 interface AnalyzePanelProps {
   session: PatientSession;
@@ -122,9 +117,7 @@ export default function AnalyzePanel({
   const [result, setResult] = useState<AnalyzeResponse | null>(
     session.result as AnalyzeResponse | null,
   );
-  const [expandedCandidate, setExpandedCandidate] = useState<string | null>(
-    null,
-  );
+
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -193,44 +186,7 @@ export default function AnalyzePanel({
     }
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity?.toLowerCase()) {
-      case "major":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-      case "moderate":
-        return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-      case "minor":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
-      default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400";
-    }
-  };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "SAFE":
-        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
-      case "CAUTION":
-        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-      case "REJECTED":
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "SAFE":
-        return "border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400";
-      case "CAUTION":
-        return "border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400";
-      case "REJECTED":
-        return "border-red-300 text-red-600 dark:border-red-700 dark:text-red-400";
-      default:
-        return "";
-    }
-  };
 
   const getTierBadge = (tier: number) => {
     switch (tier) {
@@ -408,7 +364,6 @@ export default function AnalyzePanel({
               setFile(null);
               setPreview(null);
               setStage("idle");
-              setExpandedCandidate(null);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           >
@@ -416,119 +371,197 @@ export default function AnalyzePanel({
           </Button>
         </div>
 
-        {/* Classification Card */}
+        {/* Classification Section */}
         {result.classification && (
-          <Card className="animate-slide-in">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Brain className="h-5 w-5 text-indigo-500" />
-                <CardTitle className="text-base">Classification</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xl font-bold capitalize">
-                    {result.classification.display_name}
-                  </p>
-                  <p className="text-sm text-muted-foreground capitalize">
-                    {result.classification.treatment_class}
-                  </p>
-                </div>
-                {getTierBadge(result.classification.tier)}
-              </div>
+          <div className="animate-slide-in space-y-4">
+            {/* Image + Diagnosis Card */}
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className={`${preview ? "grid grid-cols-1 md:grid-cols-[220px_1fr]" : ""}`}>
+                  {/* Image — Left */}
+                  {preview && (
+                    <div className="bg-slate-50 dark:bg-slate-900 p-4 flex items-center justify-center md:p-5">
+                      <img
+                        src={preview}
+                        alt="Clinical image"
+                        className="rounded-xl object-cover w-full max-h-52 md:max-h-none md:h-full md:aspect-square shadow-sm"
+                      />
+                    </div>
+                  )}
 
-              {/* Confidence Visual Bar */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Confidence</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">
-                      {formatScore(result.classification.confidence)}
-                    </span>
-                    <Badge
-                      className={`text-xs ${getConfidenceBadgeColor(result.classification.confidence_level)}`}
-                    >
-                      {result.classification.confidence_level}
-                    </Badge>
+                  {/* Diagnosis — Right */}
+                  <div className="p-5 md:p-6 space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1">
+                          Diagnosis
+                        </p>
+                        <h3 className="text-xl font-bold capitalize text-foreground leading-tight">
+                          {result.classification.display_name}
+                        </h3>
+                        {result.classification.treatment_class && (
+                          <div className="mt-2">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-800/40 rounded-md px-2 py-1 capitalize">
+                              <Pill className="h-3 w-3" />
+                              {result.classification.treatment_class.replace(/_/g, " ")}
+                            </span>
+                            {(() => {
+                              const TREATMENT_INFO: Record<string, { desc: string; includes: string[] }> = {
+                                antifungal: { desc: "Medications targeting fungal organisms", includes: ["Tinea", "Ringworm", "Candidiasis"] },
+                                antibiotic: { desc: "Medications targeting bacterial pathogens", includes: ["Impetigo", "Cellulitis"] },
+                                antiviral: { desc: "Medications targeting viral replication", includes: ["Herpes", "Shingles", "Varicella"] },
+                                wart_treatment: { desc: "Targeted wart removal therapies", includes: ["Verruca", "Molluscum Contagiosum"] },
+                                topical_steroid: { desc: "Anti-inflammatory corticosteroid therapy", includes: ["Eczema", "Atopic Dermatitis", "Contact Dermatitis"] },
+                                psoriasis_treatment: { desc: "Keratolytic and immunomodulatory agents", includes: ["Plaque Psoriasis", "Pityriasis"] },
+                                acne_treatment: { desc: "Comedolytic and anti-inflammatory therapy", includes: ["Acne Vulgaris", "Rosacea", "Cystic Acne"] },
+                                antihistamine: { desc: "Histamine receptor antagonists", includes: ["Urticaria", "Hives", "Allergic Reaction"] },
+                                antiparasitic: { desc: "Agents targeting parasitic organisms", includes: ["Scabies", "Lice", "Insect Bites"] },
+                                lichen_treatment: { desc: "Immunosuppressive topical therapy", includes: ["Lichen Planus", "Lichen Sclerosus"] },
+                                nail_treatment: { desc: "Antifungal and restorative nail therapy", includes: ["Onychomycosis", "Nail Dystrophy"] },
+                              };
+                              const info = TREATMENT_INFO[result.classification!.treatment_class];
+                              if (!info) return null;
+                              return (
+                                <div className="mt-2 space-y-1">
+                                  <p className="text-xs text-muted-foreground">{info.desc}</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {info.includes.map((t) => (
+                                      <span key={t} className="text-[10px] text-muted-foreground/60 bg-muted/50 rounded px-1.5 py-0.5">
+                                        {t}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                      {getTierBadge(result.classification.tier)}
+                    </div>
+
+                    {/* Confidence */}
+                    <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                          Confidence
+                        </span>
+                        <span className="text-xl font-bold tabular-nums text-foreground">
+                          {formatScore(result.classification.confidence)}
+                        </span>
+                      </div>
+                      <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ${getConfidenceColor(result.classification.confidence_level)}`}
+                          style={{
+                            width: `${Math.min(
+                              (result.classification.confidence || 0) * 100,
+                              100,
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Safety Flags */}
+                    {result.classification.safety_flags.length > 0 && (
+                      <div className="flex gap-1.5 flex-wrap">
+                        {result.classification.safety_flags.map((flag: SafetyFlag) => (
+                          <Badge
+                            key={flag.display_name}
+                            variant="destructive"
+                            className="text-xs"
+                          >
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            {flag.display_name}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="h-3 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-1000 ${getConfidenceColor(result.classification.confidence_level)}`}
-                    style={{
-                      width: `${Math.min(
-                        (result.classification.confidence || 0) * 100,
-                        100,
-                      )}%`,
-                    }}
-                  />
-                </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              {result.classification.safety_flags.length > 0 && (
-                <div className="flex gap-1.5 flex-wrap">
-                  {result.classification.safety_flags.map((flag) => (
-                    <Badge key={flag} variant="destructive" className="text-xs">
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      {flag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              {/* Top Scores — FIXED */}
-              {result.classification.top_scores && (
-                <div className="mt-3 space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Top Predictions
+            {/* Differential Diagnosis Card */}
+            {result.classification.top_scores &&
+              (result.classification.top_scores as TopScore[]).filter(
+                (s) => s.score > 0,
+              ).length > 1 && (
+              <Card>
+                <CardContent className="p-5 space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Differential Diagnosis
                   </p>
-                  {Object.entries(result.classification.top_scores)
-                    .filter(
-                      ([, score]) =>
-                        score !== null &&
-                        score !== undefined &&
-                        !isNaN(Number(score)),
-                    )
-                    .sort(([, a], [, b]) => Number(b) - Number(a))
-                    .slice(0, 5)
-                    .map(([name, score]) => (
-                      <div key={name} className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="capitalize truncate font-medium">
-                              {name}
+                  <div className="space-y-1.5">
+                    {(result.classification.top_scores as TopScore[])
+                      .filter((s) => s.score > 0)
+                      .sort((a, b) => b.score - a.score)
+                      .slice(0, 5)
+                      .map((entry, index) => {
+                        const pct = Math.min(entry.score * 100, 100);
+                        const isTop = index === 0;
+                        return (
+                          <div
+                            key={entry.category}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${
+                              isTop
+                                ? "bg-indigo-50/80 dark:bg-indigo-950/15 border border-indigo-200/50 dark:border-indigo-800/30"
+                                : ""
+                            }`}
+                          >
+                            <span className="text-[11px] font-bold tabular-nums text-muted-foreground/40 w-5 text-right">
+                              {index + 1}
                             </span>
-                            <span className="text-muted-foreground font-mono">
-                              {formatScore(score)}
-                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`text-sm truncate ${
+                                      isTop
+                                        ? "font-semibold text-foreground"
+                                        : "font-medium text-muted-foreground"
+                                    }`}
+                                  >
+                                    {entry.display_name}
+                                  </span>
+                                  {entry.tier > 1 && (
+                                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                                      entry.tier === 2
+                                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                    }`}>
+                                      Tier {entry.tier}
+                                    </span>
+                                  )}
+                                </div>
+                                <span
+                                  className={`text-sm font-mono tabular-nums ml-2 ${
+                                    isTop
+                                      ? "font-bold text-foreground"
+                                      : "text-muted-foreground"
+                                  }`}
+                                >
+                                  {formatScore(entry.score)}
+                                </span>
+                              </div>
+                              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-700 ${
+                                    isTop ? "bg-indigo-500" : "bg-indigo-400/30"
+                                  }`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
                           </div>
-                          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-indigo-500/70 transition-all duration-700"
-                              style={{
-                                width: `${Math.min(Number(score) * 100, 100)}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-
-              {/* Image preview */}
-              {preview && (
-                <div className="mt-3">
-                  <img
-                    src={preview}
-                    alt="Uploaded skin image"
-                    className="rounded-lg max-h-48 object-cover"
-                  />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                        );
+                      })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         )}
 
         {/* ========== TIER 2 REFERRAL ========== */}
@@ -563,12 +596,12 @@ export default function AnalyzePanel({
                       Safety Flags
                     </p>
                     <div className="flex flex-wrap gap-1.5">
-                      {result.classification.safety_flags.map((flag) => (
+                      {result.classification.safety_flags.map((flag: SafetyFlag) => (
                         <Badge
-                          key={flag}
+                          key={flag.display_name}
                           className="bg-amber-100 text-amber-700 text-xs"
                         >
-                          {flag}
+                          {flag.display_name}
                         </Badge>
                       ))}
                     </div>
@@ -610,13 +643,13 @@ export default function AnalyzePanel({
                       Safety Flags
                     </p>
                     <div className="flex flex-wrap gap-1.5">
-                      {result.classification.safety_flags.map((flag) => (
+                      {result.classification.safety_flags.map((flag: SafetyFlag) => (
                         <Badge
-                          key={flag}
+                          key={flag.display_name}
                           variant="destructive"
                           className="text-xs"
                         >
-                          {flag}
+                          {flag.display_name}
                         </Badge>
                       ))}
                     </div>
@@ -643,249 +676,123 @@ export default function AnalyzePanel({
               </div>
             )}
 
-            {/* Agentic Drug Evaluation Trail */}
+            {/* Agentic Drug Evaluation */}
             {result.candidates_evaluated.length > 0 && (
-              <Card
-                className="animate-slide-in"
-                style={{ animationDelay: "0.1s" }}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-amber-500" />
-                    <CardTitle className="text-base">
-                      Agentic Drug Evaluation
-                    </CardTitle>
-                    <Badge variant="outline" className="text-xs ml-auto">
-                      {result.candidates_evaluated.length} candidates evaluated
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {result.candidates_evaluated.map(
-                    (candidate: CandidateEvaluation) => (
-                      <div
-                        key={candidate.drug_name}
-                        className={`rounded-lg border p-3 transition-all ${
-                          candidate.drug_name === result.selected_drug
-                            ? "border-emerald-300 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-900/10 ring-2 ring-emerald-200 dark:ring-emerald-900"
-                            : candidate.status === "REJECTED"
-                              ? "border-red-200 bg-red-50/30 dark:border-red-900 dark:bg-red-900/5"
-                              : "border-border"
-                        }`}
-                      >
-                        <div
-                          className="flex items-center justify-between cursor-pointer"
-                          onClick={() =>
-                            setExpandedCandidate(
-                              expandedCandidate === candidate.drug_name
-                                ? null
-                                : candidate.drug_name,
-                            )
-                          }
-                        >
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(candidate.status)}
-                            <span className="font-medium text-sm capitalize">
-                              {candidate.drug_name}
-                            </span>
-                            {candidate.drug_name === result.selected_drug && (
-                              <Badge className="bg-emerald-100 text-emerald-700 text-[10px] dark:bg-emerald-900/30 dark:text-emerald-400">
-                                ✓ SELECTED
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] ${getStatusColor(candidate.status)}`}
-                            >
-                              {candidate.status}
-                            </Badge>
-                            {expandedCandidate === candidate.drug_name ? (
-                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </div>
-                        </div>
-
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {candidate.reason}
-                        </p>
-
-                        {expandedCandidate === candidate.drug_name &&
-                          candidate.findings.length > 0 && (
-                            <div className="mt-3 space-y-2.5 pl-6 border-l-2 border-muted">
-                              {candidate.findings.map((finding, i) => (
-                                <div key={i} className="text-xs space-y-1">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <Badge
-                                      className={`text-[10px] ${getSeverityColor(
-                                        finding.severity,
-                                      )}`}
-                                    >
-                                      {finding.severity}
-                                    </Badge>
-                                    <span className="font-medium uppercase text-[10px] tracking-wide">
-                                      {finding.finding_type}
-                                    </span>
-                                    {finding.mechanism && (
-                                      <span className="text-[10px] text-muted-foreground italic">
-                                        ({finding.mechanism})
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-muted-foreground">
-                                    {finding.description}
-                                  </p>
-                                  {finding.management && (
-                                    <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded px-2 py-1.5">
-                                      <p className="text-blue-700 dark:text-blue-400 font-medium text-[10px] uppercase tracking-wide mb-0.5">Management</p>
-                                      <p className="text-blue-600 dark:text-blue-300">
-                                        {finding.management}
-                                      </p>
-                                    </div>
-                                  )}
-                                  {finding.action && !finding.management && (
-                                    <p className="text-indigo-600 dark:text-indigo-400 font-medium">
-                                      → {finding.action}
-                                    </p>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                      </div>
-                    ),
-                  )}
-                </CardContent>
-              </Card>
+              <DrugEvaluationResults
+                candidates={result.candidates_evaluated}
+                selectedDrug={result.selected_drug}
+              />
             )}
 
             {/* Clinical Report */}
             {result.report && (
               <Card
-                className="animate-slide-in"
+                className="animate-slide-in overflow-hidden"
                 style={{ animationDelay: "0.2s" }}
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-blue-500" />
-                    <CardTitle className="text-base">Clinical Report</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                <div className="px-6 pt-1 pb-6 space-y-5">
+                  <h3 className="text-[15px] font-semibold tracking-tight">
+                    Clinical Report
+                  </h3>
+
                   <div>
-                    <h4 className="text-sm font-semibold mb-1">
-                      Clinical Summary
-                    </h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                      Summary
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
                       {result.report.clinical_summary}
                     </p>
                   </div>
 
-                  <Separator />
-
-                  <div>
-                    <h4 className="text-sm font-semibold mb-1">
+                  <div className="border-l-[3px] border-emerald-500 pl-4 py-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1">
                       Recommended Treatment
-                    </h4>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Pill className="h-4 w-4 text-emerald-500" />
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400 capitalize">
-                        {result.report.drug_name}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    </p>
+                    <p className="text-base font-semibold capitalize text-foreground">
+                      {result.report.drug_name}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">
                       {result.report.recommended_treatment}
                     </p>
                   </div>
 
-                  <Separator />
-
                   <div>
-                    <h4 className="text-sm font-semibold mb-1">
-                      Reasoning Trace
-                    </h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap font-mono bg-muted/50 rounded-lg p-3 text-xs leading-relaxed">
-                      {result.report.reasoning_trace}
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                      Clinical Reasoning
                     </p>
-                  </div>
-
-                  <Separator />
-
-                  <div>
-                    <h4 className="text-sm font-semibold mb-1">
-                      Patient Explanation
-                    </h4>
-                    <div className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
-                      <p className="text-sm whitespace-pre-wrap">
-                        {result.report.patient_explanation}
+                    <div className="bg-muted/30 rounded-lg p-4">
+                      <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                        {result.report.reasoning_trace}
                       </p>
                     </div>
                   </div>
 
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                      For the Patient
+                    </p>
+                    <blockquote className="border-l-2 border-border pl-4 py-1">
+                      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                        {result.report.patient_explanation}
+                      </p>
+                    </blockquote>
+                  </div>
+
                   {result.report.rejected_drugs &&
                     result.report.rejected_drugs.length > 0 && (
-                      <>
-                        <Separator />
-                        <div>
-                          <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-                            <XCircle className="h-4 w-4 text-red-500" />
-                            Drugs Avoided
-                          </h4>
-                          <div className="space-y-2">
-                            {result.report.rejected_drugs.map(
-                              (
-                                item: string | { drug: string; reason: string },
-                                idx: number,
-                              ) => {
-                                const drugName =
-                                  typeof item === "string" ? item : item.drug;
-                                const rejectionReason =
-                                  typeof item === "string" ? null : item.reason;
-                                const candidate =
-                                  result.candidates_evaluated.find(
-                                    (c) => c.drug_name === drugName,
-                                  );
-                                return (
-                                  <div
-                                    key={drugName || idx}
-                                    className="border-l-4 border-red-400 dark:border-red-600 bg-red-50/50 dark:bg-red-900/10 rounded-r-lg p-3"
-                                  >
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                          Alternatives Considered
+                        </p>
+                        <div className="space-y-1">
+                          {result.report.rejected_drugs.map(
+                            (
+                              item: string | { drug: string; reason: string },
+                              idx: number,
+                            ) => {
+                              const drugName =
+                                typeof item === "string" ? item : item.drug;
+                              const rejectionReason =
+                                typeof item === "string" ? null : item.reason;
+                              const candidate =
+                                result.candidates_evaluated.find(
+                                  (c) => c.drug_name === drugName,
+                                );
+                              return (
+                                <div
+                                  key={drugName || idx}
+                                  className="flex items-start gap-2.5 py-1.5"
+                                >
+                                  <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                                  <div className="min-w-0">
                                     <div className="flex items-center gap-2">
-                                      <XCircle className="h-3.5 w-3.5 text-red-500" />
-                                      <span className="font-medium text-sm capitalize text-red-700 dark:text-red-400">
+                                      <span className="text-sm font-medium capitalize">
                                         {drugName}
                                       </span>
-                                      {candidate && (
-                                        <Badge
-                                          variant="outline"
-                                          className="text-[10px] border-red-300 text-red-600"
-                                        >
-                                          {candidate.status}
-                                        </Badge>
-                                      )}
+                                      <span
+                                        className={`text-[10px] uppercase tracking-widest font-bold ${
+                                          candidate?.status === "REJECTED"
+                                            ? "text-red-500"
+                                            : "text-muted-foreground"
+                                        }`}
+                                      >
+                                        {candidate?.status || "avoided"}
+                                      </span>
                                     </div>
-                                    {rejectionReason && (
-                                      <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-1 pl-5">
-                                        {rejectionReason}
-                                      </p>
-                                    )}
-                                    {!rejectionReason && candidate && (
-                                      <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-1 pl-5">
-                                        {candidate.reason}
+                                    {(rejectionReason || candidate?.reason) && (
+                                      <p className="text-xs text-muted-foreground/70 mt-0.5">
+                                        {rejectionReason || candidate?.reason}
                                       </p>
                                     )}
                                   </div>
-                                );
-                              },
-                            )}
-                          </div>
+                                </div>
+                              );
+                            },
+                          )}
                         </div>
-                      </>
+                      </div>
                     )}
-                </CardContent>
+                </div>
               </Card>
             )}
           </>
@@ -907,13 +814,6 @@ export default function AnalyzePanel({
   }
 
   // ======================== INPUT FORM ========================
-  const SAMPLE_CONDITIONS = [
-    { label: "Fungal Infection", emoji: "🦠", color: "bg-amber-100 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800" },
-    { label: "Eczema / Dermatitis", emoji: "🔴", color: "bg-rose-100 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800" },
-    { label: "Psoriasis", emoji: "🩹", color: "bg-purple-100 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800" },
-    { label: "Acne", emoji: "💊", color: "bg-blue-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" },
-  ];
-
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-lg space-y-6">
@@ -992,26 +892,6 @@ export default function AnalyzePanel({
                   <p className="text-[10px] text-muted-foreground mt-1">
                     PNG, JPG, HEIC up to 10MB
                   </p>
-                </div>
-              </div>
-
-              {/* Sample conditions hint */}
-              <div className="border-t border-dashed border-muted-foreground/10 px-6 py-4 bg-muted/30 rounded-b-xl">
-                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide mb-2.5 text-center">
-                  Supported Conditions
-                </p>
-                <div className="grid grid-cols-4 gap-2">
-                  {SAMPLE_CONDITIONS.map((cond) => (
-                    <div
-                      key={cond.label}
-                      className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg border ${cond.color} transition-colors`}
-                    >
-                      <span className="text-lg">{cond.emoji}</span>
-                      <span className="text-[10px] font-medium text-center leading-tight">
-                        {cond.label}
-                      </span>
-                    </div>
-                  ))}
                 </div>
               </div>
 

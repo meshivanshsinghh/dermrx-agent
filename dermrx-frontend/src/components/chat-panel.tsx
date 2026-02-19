@@ -10,7 +10,7 @@ import {
   User,
   Sparkles,
 } from "lucide-react";
-import { AnalyzeResponse, CandidateEvaluation } from "@/lib/type";
+import { AnalyzeResponse, CandidateEvaluation, SafetyFlag } from "@/lib/type";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -71,7 +71,7 @@ export default function ChatPanel({
         response += `\n**Treatment Class:** ${cls.treatment_class}`;
       }
       if (cls.safety_flags && cls.safety_flags.length > 0) {
-        response += `\n\n⚠️ **Safety Flags:** ${cls.safety_flags.join(", ")}`;
+        response += `\n\n⚠️ **Safety Flags:** ${cls.safety_flags.map((f: SafetyFlag) => f.display_name).join(", ")}`;
       }
       return response;
     }
@@ -164,7 +164,7 @@ export default function ChatPanel({
         currentResult.classification?.safety_flags &&
         currentResult.classification.safety_flags.length > 0
       ) {
-        response += `⚠️ **Condition safety flags:** ${currentResult.classification.safety_flags.join(", ")}\n\n`;
+        response += `⚠️ **Condition safety flags:** ${currentResult.classification.safety_flags.map((f: SafetyFlag) => f.display_name).join(", ")}\n\n`;
       }
 
       if (rejected.length > 0) {

@@ -19,15 +19,32 @@ export interface PatientSession {
   imagePreview?: string | null;
 }
 
+export interface TopScore {
+  category: string;
+  display_name: string;
+  score: number;
+  tier: number;
+}
+
+export interface SafetyFlag {
+  category: string;
+  display_name: string;
+  confidence: number;
+  urgency: string;
+}
+
 export interface Classification {
   predicted_category: string;
   display_name: string;
   tier: number;
   confidence: number;
   confidence_level: string;
-  treatment_class: string;
-  safety_flags: string[];
-  top_scores: Record<string, number>;
+  treatment_class: string | null;
+  urgency: string | null;
+  referral: string | null;
+  reason: string | null;
+  safety_flags: SafetyFlag[];
+  top_scores: TopScore[];
   all_scores?: Record<string, number>;
 }
 

@@ -6,25 +6,22 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   X,
-  AlertTriangle,
-  CheckCircle2,
   XCircle,
+  AlertTriangle,
   Loader2,
   Pill,
   Shield,
   Search,
-  ChevronDown,
-  ChevronUp,
   Zap,
 } from "lucide-react";
 import { drugCheck, searchDrugs } from "@/lib/api";
 import {
   DrugCheckResponse,
-  CandidateEvaluation,
   Patient,
   PatientSession,
 } from "@/lib/type";
 import { saveSession } from "@/lib/storage";
+import DrugEvaluationResults from "@/components/drug-evaluation-results";
 
 interface DrugCheckPanelProps {
   session: PatientSession;
@@ -50,7 +47,7 @@ export default function DrugCheckPanel({
   const [result, setResult] = useState<DrugCheckResponse | null>(
     session.result as DrugCheckResponse | null
   );
-  const [expandedCandidate, setExpandedCandidate] = useState<string | null>(null);
+
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -127,44 +124,7 @@ export default function DrugCheckPanel({
     }
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity?.toLowerCase()) {
-      case "major":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-      case "moderate":
-        return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-      case "minor":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
-      default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400";
-    }
-  };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "SAFE":
-        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
-      case "CAUTION":
-        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-      case "REJECTED":
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "SAFE":
-        return "border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400";
-      case "CAUTION":
-        return "border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400";
-      case "REJECTED":
-        return "border-red-300 text-red-600 dark:border-red-700 dark:text-red-400";
-      default:
-        return "";
-    }
-  };
 
   if (result) {
     return (
@@ -177,7 +137,6 @@ export default function DrugCheckPanel({
             onClick={() => {
               setResult(null);
               setDrugNames([]);
-              setExpandedCandidate(null);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           >
@@ -186,111 +145,11 @@ export default function DrugCheckPanel({
         </div>
 
         {result.candidates_evaluated.length > 0 && (
-          <Card className="animate-slide-in">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-amber-500" />
-                <CardTitle className="text-base">Safety Evaluation</CardTitle>
-                <Badge variant="outline" className="text-xs ml-auto">
-                  {result.candidates_evaluated.length} drugs checked
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {result.candidates_evaluated.map(
-                (candidate: CandidateEvaluation) => (
-                  <div
-                    key={candidate.drug_name}
-                    className={`rounded-lg border p-3 transition-all ${
-                      candidate.status === "REJECTED"
-                        ? "border-red-200 bg-red-50/30 dark:border-red-900 dark:bg-red-900/5"
-                        : candidate.status === "CAUTION"
-                        ? "border-amber-200 bg-amber-50/30 dark:border-amber-900 dark:bg-amber-900/5"
-                        : "border-border"
-                    }`}
-                  >
-                    <div
-                      className="flex items-center justify-between cursor-pointer"
-                      onClick={() =>
-                        setExpandedCandidate(
-                          expandedCandidate === candidate.drug_name
-                            ? null
-                            : candidate.drug_name
-                        )
-                      }
-                    >
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(candidate.status)}
-                        <span className="font-medium text-sm capitalize">
-                          {candidate.drug_name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] ${getStatusColor(candidate.status)}`}
-                        >
-                          {candidate.status}
-                        </Badge>
-                        {expandedCandidate === candidate.drug_name ? (
-                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {candidate.reason}
-                    </p>
-
-                    {expandedCandidate === candidate.drug_name &&
-                      candidate.findings.length > 0 && (
-                        <div className="mt-3 space-y-2.5 pl-6 border-l-2 border-muted">
-                          {candidate.findings.map((finding, i) => (
-                            <div key={i} className="text-xs space-y-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <Badge
-                                  className={`text-[10px] ${getSeverityColor(
-                                    finding.severity
-                                  )}`}
-                                >
-                                  {finding.severity}
-                                </Badge>
-                                <span className="font-medium uppercase text-[10px] tracking-wide">
-                                  {finding.finding_type}
-                                </span>
-                                {finding.mechanism && (
-                                  <span className="text-[10px] text-muted-foreground italic">
-                                    ({finding.mechanism})
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-muted-foreground">
-                                {finding.description}
-                              </p>
-                              {finding.management && (
-                                <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded px-2 py-1.5">
-                                  <p className="text-blue-700 dark:text-blue-400 font-medium text-[10px] uppercase tracking-wide mb-0.5">Management</p>
-                                  <p className="text-blue-600 dark:text-blue-300">
-                                    {finding.management}
-                                  </p>
-                                </div>
-                              )}
-                              {finding.action && !finding.management && (
-                                <p className="text-indigo-600 dark:text-indigo-400 font-medium">
-                                  → {finding.action}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                  </div>
-                )
-              )}
-            </CardContent>
-          </Card>
+          <DrugEvaluationResults
+            candidates={result.candidates_evaluated}
+            selectedDrug={result.selected_drug}
+            title="Safety Evaluation"
+          />
         )}
 
         {result.safety_note && (
