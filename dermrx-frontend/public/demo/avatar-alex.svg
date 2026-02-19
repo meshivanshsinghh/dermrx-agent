@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Background -->
+  <circle cx="60" cy="60" r="60" fill="#FAF5FF"/>
+  <!-- Head -->
+  <circle cx="60" cy="42" r="18" fill="#E9D5FF" stroke="#A855F7" stroke-width="1.5"/>
+  <!-- Eyes -->
+  <circle cx="53" cy="40" r="2" fill="#6B21A8"/>
+  <circle cx="67" cy="40" r="2" fill="#6B21A8"/>
+  <!-- Smile -->
+  <path d="M54 48 Q60 52 66 48" stroke="#6B21A8" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Body -->
+  <path d="M30 95 Q30 70 60 65 Q90 70 90 95" fill="#E9D5FF" stroke="#A855F7" stroke-width="1.5"/>
+  <!-- Long hair -->
+  <path d="M38 38 Q36 20 60 16 Q84 20 82 38" fill="#7C3AED" stroke="none"/>
+  <path d="M38 38 Q36 50 34 62" stroke="#7C3AED" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M82 38 Q84 50 86 62" stroke="#7C3AED" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <!-- Earrings -->
+  <circle cx="40" cy="48" r="2" fill="#A855F7"/>
+  <circle cx="80" cy="48" r="2" fill="#A855F7"/>
+  <!-- Label -->
+  <text x="60" y="112" text-anchor="middle" font-family="system-ui" font-size="9" fill="#7C3AED" font-weight="600">24 · F</text>
+</svg>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Background -->
+  <circle cx="60" cy="60" r="60" fill="#EEF2FF"/>
+  <!-- Head -->
+  <circle cx="60" cy="42" r="18" fill="#C7D2FE" stroke="#818CF8" stroke-width="1.5"/>
+  <!-- Eyes -->
+  <circle cx="53" cy="40" r="2" fill="#4F46E5"/>
+  <circle cx="67" cy="40" r="2" fill="#4F46E5"/>
+  <!-- Mouth -->
+  <path d="M54 48 Q60 52 66 48" stroke="#4F46E5" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Body -->
+  <path d="M30 95 Q30 70 60 65 Q90 70 90 95" fill="#C7D2FE" stroke="#818CF8" stroke-width="1.5"/>
+  <!-- Short hair -->
+  <path d="M42 35 Q42 24 60 22 Q78 24 78 35" fill="#6366F1" stroke="none"/>
+  <!-- Glasses -->
+  <circle cx="53" cy="40" r="6" fill="none" stroke="#4F46E5" stroke-width="1"/>
+  <circle cx="67" cy="40" r="6" fill="none" stroke="#4F46E5" stroke-width="1"/>
+  <line x1="59" y1="40" x2="61" y2="40" stroke="#4F46E5" stroke-width="1"/>
+  <!-- Age indicator: wrinkle lines -->
+  <path d="M46 52 Q48 50 50 52" stroke="#818CF8" stroke-width="0.8" fill="none"/>
+  <path d="M70 52 Q72 50 74 52" stroke="#818CF8" stroke-width="0.8" fill="none"/>
+  <!-- Label -->
+  <text x="60" y="112" text-anchor="middle" font-family="system-ui" font-size="9" fill="#6366F1" font-weight="600">68 · M</text>
+</svg>

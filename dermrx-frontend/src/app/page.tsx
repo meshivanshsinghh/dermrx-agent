@@ -6,15 +6,131 @@ import AnalyzePanel from "@/components/analyze-panel";
 import DrugCheckPanel from "@/components/drug-check-panel";
 import ChatPanel from "@/components/chat-panel";
 import NewPatientDialog from "@/components/new-patient-dialog";
+import StartupLoader from "@/components/startup-loader";
 import { Patient, PatientSession, AnalyzeResponse } from "@/lib/type";
 import {
   getPatients, getSessions, savePatient, saveSession,
   deletePatient as deletePatientStorage, deleteSession as deleteSessionStorage,
   generateSessionId,
 } from "@/lib/storage";
-import { Stethoscope, Pill, Pencil } from "lucide-react";
+import { Stethoscope, Pill, Pencil, AlertTriangle, FlaskConical, Star, Users, Home as HomeIcon } from "lucide-react";
+
+/* ─────────────────────────────────────────────
+   Demo Scenarios
+   ───────────────────────────────────────────── */
+
+const DEMO_SCENARIOS = [
+  {
+    id: "warfarin",
+    title: "The Warfarin Patient",
+    subtitle: "Flagship Demo",
+    description:
+      "68-year-old male on blood thinners presents with fungal skin infection. Watch the agent reject fluconazole and select a safe alternative.",
+    badge: "★ Recommended",
+    badgeColor:
+      "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
+    borderColor:
+      "border-indigo-300 dark:border-indigo-700 hover:border-indigo-500",
+    bgColor: "hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10",
+    accentIcon: Star,
+    patient: {
+      name: "John Doe",
+      age: 68,
+      sex: "male" as const,
+      medications: ["warfarin", "metformin", "lisinopril"],
+      notes:
+        "Atrial fibrillation, Type 2 diabetes, hypertension. On anticoagulation therapy.",
+    },
+    mode: "analyze" as const,
+    imagePath: "/demo/tinea.jpg",
+    avatarPath: "/demo/avatar-john.svg",
+    expectedResult:
+      "Rejects fluconazole (warfarin DDI), selects clotrimazole",
+    tags: ["Major DDI", "Antifungal", "Anticoagulant"],
+    tagColors: [
+      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    ],
+  },
+  {
+    id: "polypharmacy",
+    title: "Polypharmacy Elderly",
+    subtitle: "Complex Scenario",
+    description:
+      "82-year-old female on 7 medications presents with psoriasis. Multi-drug interaction navigation across specialties.",
+    badge: "Complex",
+    badgeColor:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    borderColor:
+      "border-amber-300 dark:border-amber-700 hover:border-amber-500",
+    bgColor: "hover:bg-amber-50/30 dark:hover:bg-amber-900/10",
+    accentIcon: Users,
+    patient: {
+      name: "Margaret Chen",
+      age: 82,
+      sex: "female" as const,
+      medications: [
+        "metformin",
+        "atorvastatin",
+        "metoprolol",
+        "omeprazole",
+        "aspirin",
+        "amlodipine",
+        "levothyroxine",
+      ],
+      notes:
+        "Type 2 diabetes, hyperlipidemia, hypertension, GERD, hypothyroidism. Polypharmacy patient.",
+    },
+    mode: "analyze" as const,
+    imagePath: "/demo/psoriasis.jpg",
+    avatarPath: "/demo/avatar-margaret.svg",
+    expectedResult:
+      "Navigates interactions across 7 concurrent medications",
+    tags: ["Polypharmacy", "7 Medications", "Elderly"],
+    tagColors: [
+      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400",
+    ],
+  },
+  {
+    id: "photosensitivity",
+    title: "Photosensitivity Risk",
+    subtitle: "TxGemma Demo",
+    description:
+      "24-year-old on doxycycline presents with acne. TxGemma molecular analysis flags photosensitivity risk for tretinoin.",
+    badge: "TxGemma",
+    badgeColor:
+      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    borderColor:
+      "border-purple-300 dark:border-purple-700 hover:border-purple-500",
+    bgColor: "hover:bg-purple-50/30 dark:hover:bg-purple-900/10",
+    accentIcon: FlaskConical,
+    patient: {
+      name: "Alex Rivera",
+      age: 24,
+      sex: "female" as const,
+      medications: ["doxycycline"],
+      notes: "On doxycycline for bacterial infection. Sun-sensitive skin.",
+    },
+    mode: "analyze" as const,
+    imagePath: "/demo/acne.jpg",
+    avatarPath: "/demo/avatar-alex.svg",
+    expectedResult:
+      "Flags photosensitivity risk, adds sun protection counsel",
+    tags: ["Photosensitivity", "TxGemma", "Acne"],
+    tagColors: [
+      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
+    ],
+  },
+];
 
 export default function Home() {
+  const [appReady, setAppReady] = useState(false);
+  const [isMockMode, setIsMockMode] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [sessions, setSessions] = useState<PatientSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -24,6 +140,11 @@ export default function Home() {
   const [dialogMode, setDialogMode] = useState<"analyze" | "drug_check">("analyze");
   const [dialogPatient, setDialogPatient] = useState<Patient | null>(null);
   const [dialogEditOnly, setDialogEditOnly] = useState(false);
+
+  const handleStartupReady = useCallback((mockMode: boolean) => {
+    setIsMockMode(mockMode);
+    setAppReady(true);
+  }, []);
 
   useEffect(() => {
     setPatients(getPatients());
@@ -103,6 +224,42 @@ export default function Home() {
     setSessions((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
   }, []);
 
+  /* ── Load a Demo Scenario ───────────────────── */
+  const handleLoadDemo = useCallback(
+    (scenario: (typeof DEMO_SCENARIOS)[number]) => {
+      const patientId = `demo-${scenario.id}-${Date.now()}`;
+      const now = new Date().toISOString();
+      const newPatient: Patient = {
+        id: patientId,
+        ...scenario.patient,
+        createdAt: now,
+        updatedAt: now,
+      };
+      savePatient(newPatient);
+      setPatients((prev) => [newPatient, ...prev]);
+
+      const newSession: PatientSession = {
+        id: generateSessionId(),
+        patientId,
+        mode: scenario.mode,
+        name: `Demo: ${scenario.title}`,
+        createdAt: new Date().toISOString(),
+        result: null,
+        imagePreview: null,
+        imagePath: scenario.imagePath,
+      };
+      saveSession(newSession);
+      setSessions((prev) => [newSession, ...prev]);
+      setActiveSessionId(newSession.id);
+    },
+    [],
+  );
+
+  /* ── Startup loader gate ────────────────────── */
+  if (!appReady) {
+    return <StartupLoader onReady={handleStartupReady} />;
+  }
+
   return (
     <div className="h-screen flex overflow-hidden bg-background text-foreground">
       <Sidebar
@@ -118,6 +275,14 @@ export default function Home() {
           <>
             <div className="h-14 border-b flex items-center justify-between px-6 shrink-0">
               <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setActiveSessionId(null)}
+                  className="h-7 w-7 flex items-center justify-center rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors"
+                  title="Back to Home"
+                >
+                  <HomeIcon className="h-3.5 w-3.5" />
+                </button>
+                <div className="h-4 w-px bg-border" />
                 {activeSession.mode === "analyze"
                   ? <Stethoscope className="h-4 w-4 text-indigo-500" />
                   : <Pill className="h-4 w-4 text-emerald-500" />}
@@ -148,28 +313,93 @@ export default function Home() {
             )}
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-6 shadow-lg">
-              <Stethoscope className="h-10 w-10 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold mb-2">DermRx Agent</h1>
-            <p className="text-muted-foreground max-w-md mb-8">AI-powered dermatology diagnosis and treatment recommendation with agentic drug safety evaluation.</p>
-            <div className="flex gap-4">
-              <button onClick={() => handleNewSession("analyze")}
-                className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-indigo-200 dark:border-indigo-800 hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all w-52">
-                <div className="h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                  <Stethoscope className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+          <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
+            {/* Hero */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+                <Stethoscope className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-bold leading-tight">DermRx Agent</h1>
+                  {isMockMode && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">
+                      Mock
+                    </span>
+                  )}
                 </div>
-                <div><p className="font-semibold text-sm">Analyze Image</p><p className="text-xs text-muted-foreground">Upload skin image for diagnosis</p></div>
-              </button>
-              <button onClick={() => handleNewSession("drug_check")}
-                className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-dashed border-emerald-200 dark:border-emerald-800 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all w-52">
-                <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                  <Pill className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div><p className="font-semibold text-sm">Drug Check</p><p className="text-xs text-muted-foreground">Check drug-drug interactions</p></div>
-              </button>
+                <p className="text-xs text-muted-foreground">
+                  AI-powered dermatology diagnosis &amp; agentic drug safety
+                </p>
+              </div>
             </div>
+
+            {/* Demo Scenario Cards */}
+            <div className="w-full max-w-3xl mb-8">
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-3 text-center">
+                Launch a Demo Scenario
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {DEMO_SCENARIOS.map((scenario) => {
+                  const Icon = scenario.accentIcon;
+                  return (
+                    <button
+                      key={scenario.id}
+                      onClick={() => handleLoadDemo(scenario)}
+                      className={`relative flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all ${scenario.borderColor} ${scenario.bgColor}`}
+                    >
+                      {/* Avatar + Badge row */}
+                      <div className="flex items-center justify-between w-full">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${scenario.badgeColor}`}>
+                          {scenario.badge}
+                        </span>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={scenario.avatarPath}
+                          alt={scenario.patient.name}
+                          className="h-10 w-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm object-cover bg-slate-100 dark:bg-slate-800"
+                        />
+                      </div>
+
+                      {/* Icon + Title */}
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-lg bg-white/80 dark:bg-white/10 flex items-center justify-center shadow-sm">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold leading-tight">{scenario.title}</p>
+                          <p className="text-[10px] text-muted-foreground">{scenario.subtitle}</p>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {scenario.description}
+                      </p>
+
+                      {/* Expected outcome hint */}
+                      <p className="w-full mt-auto pt-2 text-[10px] text-muted-foreground/70 italic leading-snug">
+                        {scenario.expectedResult}
+                      </p>
+
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {scenario.tags.map((tag, i) => (
+                          <span
+                            key={tag}
+                            className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${scenario.tagColors[i]}`}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+
           </div>
         )}
       </div>

@@ -131,17 +131,6 @@ export default function DrugCheckPanel({
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">Drug Safety Results</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setResult(null);
-              setDrugNames([]);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          >
-            New Check
-          </Button>
         </div>
 
         {result.candidates_evaluated.length > 0 && (

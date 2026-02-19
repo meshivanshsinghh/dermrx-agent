@@ -175,7 +175,15 @@ export default function Sidebar({
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-sidebar-foreground/40">
             <UserPlus className="h-8 w-8 mb-2" />
-            <p className="text-xs">No patients yet</p>
+            <p className="text-xs font-medium">No patients yet</p>
+            <p className="text-[10px] mt-1 max-w-[180px] text-center leading-relaxed">
+              Click <span className="font-semibold text-sidebar-foreground/70">Analyze</span> or <span className="font-semibold text-sidebar-foreground/70">Drug Check</span> above to add a patient, or pick a demo scenario.
+            </p>
+            {/* Arrow pointing up */}
+            <svg className="mt-3 animate-bounce" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 19V5" />
+              <path d="M5 12l7-7 7 7" />
+            </svg>
           </div>
         ) : (
           <div className="space-y-1">

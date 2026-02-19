@@ -17,6 +17,7 @@ export interface PatientSession {
   mode: "analyze" | "drug_check";
   result: AnalyzeResponse | DrugCheckResponse | null;
   imagePreview?: string | null;
+  imagePath?: string | null;
 }
 
 export interface TopScore {
@@ -96,5 +97,7 @@ export interface DrugCheckResponse {
 
 export interface HealthResponse {
   status: string;
-  models_loaded?: Record<string, boolean>;
+  service: string;
+  mock_mode: boolean;
+  models_loaded: Record<string, boolean>;
 }

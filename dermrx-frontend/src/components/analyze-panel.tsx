@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -118,15 +118,37 @@ export default function AnalyzePanel({
     session.result as AnalyzeResponse | null,
   );
 
-
-  const fileToBase64 = (file: File): Promise<string> => {
+  const fileToBase64 = (f: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = reject;
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(f);
     });
   };
+
+  /* ── Auto-load demo image when session.imagePath is set ── */
+  useEffect(() => {
+    if (session.imagePath && !file && !preview) {
+      fetch(session.imagePath)
+        .then((res) => {
+          if (!res.ok) throw new Error(`Failed to fetch demo image: ${res.status}`);
+          return res.blob();
+        })
+        .then((blob) => {
+          const fileName =
+            session.imagePath!.split("/").pop() || "demo-image.jpg";
+          const demoFile = new File([blob], fileName, {
+            type: blob.type || "image/jpeg",
+          });
+          setFile(demoFile);
+          return fileToBase64(demoFile);
+        })
+        .then((base64) => setPreview(base64))
+        .catch((err) => console.warn("Demo image auto-load failed:", err));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.imagePath]);
 
   const handleFileDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
@@ -154,18 +176,25 @@ export default function AnalyzePanel({
     setResult(null);
     setStage("uploading");
 
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
     try {
-      const timer1 = setTimeout(() => setStage("classifying"), 1500);
-      const timer2 = setTimeout(() => setStage("candidates"), 4000);
-      const timer3 = setTimeout(() => setStage("evaluating"), 6000);
-      const timer4 = setTimeout(() => setStage("synthesizing"), 12000);
+      // Stage-advance timers for the animation
+      timers.push(setTimeout(() => setStage("classifying"), 1500));
+      timers.push(setTimeout(() => setStage("candidates"), 4000));
+      timers.push(setTimeout(() => setStage("evaluating"), 6000));
+      timers.push(setTimeout(() => setStage("synthesizing"), 12000));
 
-      const response = await analyzeImage(file, medications);
+      // Fire the API call and a minimum-time promise in parallel.
+      // This ensures the animation plays for at least ~14s even if the
+      // backend responds instantly (mock mode).
+      const minDuration = new Promise((r) => setTimeout(r, 14500));
+      const [response] = await Promise.all([
+        analyzeImage(file, medications),
+        minDuration,
+      ]);
 
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-      clearTimeout(timer4);
+      timers.forEach(clearTimeout);
 
       setResult(response);
       setStage("complete");
@@ -181,6 +210,7 @@ export default function AnalyzePanel({
       onSessionUpdate(updatedSession);
       saveSession(updatedSession);
     } catch (err) {
+      timers.forEach(clearTimeout);
       setError(err instanceof Error ? err.message : "Analysis failed");
       setStage("error");
     }
@@ -353,22 +383,9 @@ export default function AnalyzePanel({
 
     return (
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
-        {/* Reset Button */}
+        {/* Header */}
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">Analysis Results</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setResult(null);
-              setFile(null);
-              setPreview(null);
-              setStage("idle");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          >
-            New Analysis
-          </Button>
         </div>
 
         {/* Classification Section */}
