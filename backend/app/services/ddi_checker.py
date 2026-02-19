@@ -408,7 +408,52 @@ MOCK_DDI_DATA = {
     ("Clotrimazole", "Warfarin"): {"severity": "Unknown", "description": "Minimal systemic absorption with topical use"},
 }
 
+MOCK_FOOD_DATA = {
+    "Warfarin": [
+        {"food": "Alcohol", "severity": "Major", "description": "Significantly increases bleeding risk"},
+        {"food": "Grapefruit", "severity": "Moderate", "description": "May affect warfarin metabolism via CYP enzymes"},
+        {"food": "Vitamin K foods (spinach, kale, broccoli)", "severity": "Moderate", "description": "Reduces anticoagulant effect of warfarin"},
+    ],
+    "Metformin": [
+        {"food": "Alcohol", "severity": "Major", "description": "Increased risk of lactic acidosis"},
+    ],
+    "Lisinopril": [
+        {"food": "Potassium-rich foods (bananas, oranges)", "severity": "Moderate", "description": "May cause hyperkalemia when combined with ACE inhibitors"},
+        {"food": "Salt substitutes (potassium chloride)", "severity": "Moderate", "description": "Risk of elevated potassium levels"},
+    ],
+}
 
+MOCK_DISEASE_DATA = {
+    "Fluconazole": [
+        {"disease": "Hepatic Impairment", "severity": "Major", "description": "Hepatotoxicity risk significantly increased — use with extreme caution"},
+        {"disease": "QT Prolongation", "severity": "Major", "description": "May worsen QT interval prolongation — risk of arrhythmia"},
+    ],
+    "Terbinafine": [
+        {"disease": "Hepatic Impairment", "severity": "Major", "description": "Risk of severe drug-induced liver injury — contraindicated"},
+        {"disease": "Lupus Erythematosus", "severity": "Moderate", "description": "May exacerbate or trigger subacute cutaneous lupus erythematosus"},
+    ],
+    "Clotrimazole": [
+        {"disease": "Hepatic Impairment", "severity": "Minor", "description": "Minimal systemic absorption with topical use — low risk"},
+    ],
+    "Ketoconazole": [
+        {"disease": "Hepatic Impairment", "severity": "Major", "description": "Contraindicated in liver disease — severe hepatotoxicity risk"},
+        {"disease": "Adrenal Insufficiency", "severity": "Moderate", "description": "Inhibits cortisol synthesis — may worsen adrenal suppression"},
+        {"disease": "QT Prolongation", "severity": "Major", "description": "Risk of life-threatening cardiac arrhythmia"},
+    ],
+    "Miconazole": [
+        {"disease": "Hepatic Impairment", "severity": "Moderate", "description": "Use with caution — monitor liver function"},
+    ],
+    "Isotretinoin": [
+        {"disease": "Hyperlipidemia", "severity": "Major", "description": "Significantly elevates triglycerides and cholesterol"},
+        {"disease": "Depression", "severity": "Major", "description": "Associated with worsening depression and suicidal ideation"},
+        {"disease": "Hepatic Impairment", "severity": "Major", "description": "Contraindicated — severe hepatotoxicity risk"},
+    ],
+    "Hydrocortisone": [
+        {"disease": "Diabetes Mellitus", "severity": "Moderate", "description": "May elevate blood glucose levels"},
+        {"disease": "Hypertension", "severity": "Moderate", "description": "Systemic corticosteroids can increase blood pressure"},
+        {"disease": "Osteoporosis", "severity": "Moderate", "description": "Long-term use may reduce bone density"},
+    ],
+}
 def mock_check_ddi(drug_name: str, patient_med: str) -> dict | None:
     key1 = (drug_name.title(), patient_med.title())
     key2 = (patient_med.title(), drug_name.title())

@@ -16,9 +16,14 @@ DDINTER2_CACHE_TTL = 86400
 API_PREFIX = "/api"
 APP_TITLE = "DermRx Agent API"
 APP_VERSION = "0.1.0"
+
+import os as _os
+_extra = [o.strip() for o in _os.getenv("DERMRX_EXTRA_ORIGINS", "").split(",") if o.strip()]
+
 CORS_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
+    *_extra,
 ]

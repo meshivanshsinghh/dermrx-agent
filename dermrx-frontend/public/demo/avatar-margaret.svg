@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Background -->
+  <circle cx="60" cy="60" r="60" fill="#FFF7ED"/>
+  <!-- Head -->
+  <circle cx="60" cy="42" r="18" fill="#FED7AA" stroke="#F59E0B" stroke-width="1.5"/>
+  <!-- Eyes -->
+  <circle cx="53" cy="40" r="2" fill="#92400E"/>
+  <circle cx="67" cy="40" r="2" fill="#92400E"/>
+  <!-- Smile -->
+  <path d="M54 48 Q60 53 66 48" stroke="#92400E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Body -->
+  <path d="M30 95 Q30 70 60 65 Q90 70 90 95" fill="#FED7AA" stroke="#F59E0B" stroke-width="1.5"/>
+  <!-- Hair - bun style -->
+  <path d="M42 35 Q40 20 60 18 Q80 20 78 35" fill="#9CA3AF" stroke="none"/>
+  <circle cx="60" cy="20" r="7" fill="#9CA3AF"/>
+  <!-- Glasses -->
+  <rect x="47" y="36" width="11" height="8" rx="2" fill="none" stroke="#92400E" stroke-width="1"/>
+  <rect x="62" y="36" width="11" height="8" rx="2" fill="none" stroke="#92400E" stroke-width="1"/>
+  <line x1="58" y1="40" x2="62" y2="40" stroke="#92400E" stroke-width="1"/>
+  <!-- Wrinkles -->
+  <path d="M45 52 Q47 50 49 52" stroke="#F59E0B" stroke-width="0.8" fill="none"/>
+  <path d="M71 52 Q73 50 75 52" stroke="#F59E0B" stroke-width="0.8" fill="none"/>
+  <path d="M46 54 Q48 52 50 54" stroke="#F59E0B" stroke-width="0.6" fill="none"/>
+  <!-- Necklace -->
+  <path d="M45 65 Q60 72 75 65" stroke="#F59E0B" stroke-width="1" fill="none" stroke-dasharray="2 2"/>
+  <!-- Label -->
+  <text x="60" y="112" text-anchor="middle" font-family="system-ui" font-size="9" fill="#D97706" font-weight="600">82 · F</text>
+</svg>

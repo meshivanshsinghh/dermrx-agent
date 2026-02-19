@@ -15,6 +15,8 @@ class SafetyFinding:
     severity: str
     description: str
     action: str
+    management: str | None = None
+    mechanism: str | None = None
 
 
 @dataclass
