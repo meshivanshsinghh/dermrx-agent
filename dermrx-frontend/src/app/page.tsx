@@ -7,7 +7,7 @@ import DrugCheckPanel from "@/components/drug-check-panel";
 import ChatPanel from "@/components/chat-panel";
 import NewPatientDialog from "@/components/new-patient-dialog";
 import StartupLoader from "@/components/startup-loader";
-import { Patient, PatientSession, AnalyzeResponse } from "@/lib/type";
+import { Patient, PatientSession, AnalyzeResponse, DrugCheckResponse } from "@/lib/type";
 import {
   getPatients, getSessions, savePatient, saveSession,
   deletePatient as deletePatientStorage, deleteSession as deleteSessionStorage,
@@ -203,7 +203,7 @@ export default function Home() {
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) || null;
   const activePatient = activeSession ? patients.find((p) => p.id === activeSession.patientId) || null : null;
-  const currentResult = activeSession?.result as AnalyzeResponse | null;
+  const currentResult = (activeSession?.result as AnalyzeResponse | DrugCheckResponse | null) ?? null;
 
   // New patient (opens dialog)
   const handleNewSession = useCallback((mode: "analyze" | "drug_check") => {
@@ -455,7 +455,9 @@ export default function Home() {
         )}
       </div>
 
-      <ChatPanel collapsed={chatCollapsed} onToggleCollapse={() => setChatCollapsed(!chatCollapsed)} currentResult={currentResult} />
+      {currentResult && (
+        <ChatPanel collapsed={chatCollapsed} onToggleCollapse={() => setChatCollapsed(!chatCollapsed)} currentResult={currentResult} sessionId={activeSessionId} />
+      )}
       <NewPatientDialog open={dialogOpen} onClose={() => { setDialogOpen(false); setDialogEditOnly(false); }} onSubmit={handleDialogSubmit} initialMode={dialogMode} existingPatient={dialogPatient} editOnly={dialogEditOnly} />
     </div>
   );

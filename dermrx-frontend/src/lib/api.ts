@@ -2,6 +2,7 @@ import type {
   AnalyzeResponse,
   DrugCheckResponse,
   HealthResponse,
+  ChatApiResponse,
 } from "./type";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -70,4 +71,36 @@ export async function checkHealth(): Promise<HealthResponse> {
   return res.json();
 }
 
+export async function sendChatMessage(
+  sessionId: string,
+  message: string,
+  context?: AnalyzeResponse | DrugCheckResponse | null,
+): Promise<ChatApiResponse> {
+  const body: Record<string, unknown> = {
+    session_id: sessionId,
+    message,
+  };
+  // Send context only on first message (when context is provided)
+  if (context) {
+    body.context = context;
+  }
 
+  const res = await fetch(`${API_BASE}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Chat failed (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function clearChatSession(sessionId: string): Promise<void> {
+  await fetch(`${API_BASE}/api/chat/${sessionId}`, {
+    method: "DELETE",
+  });
+}
