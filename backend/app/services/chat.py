@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import logging
 import time
 import threading
 from dataclasses import dataclass, field
+from typing import Optional
 
 from app.utils.model_loader import is_mock_mode, get_medgemma
 

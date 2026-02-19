@@ -6,6 +6,8 @@ DELETE /api/chat/{id}  →  clear a chat session
 """
 
 import logging
+from typing import Any, Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -14,7 +16,7 @@ from app.services.chat import ChatService
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["chat"])
 
-_chat_service: ChatService | None = None
+_chat_service: Optional[ChatService] = None
 
 
 def get_chat_service() -> ChatService:
@@ -29,7 +31,7 @@ def get_chat_service() -> ChatService:
 class ChatRequest(BaseModel):
     session_id: str
     message: str
-    context: dict | None = None 
+    context: Optional[dict[str, Any]] = None
 
 
 class ChatResponse(BaseModel):
@@ -41,18 +43,24 @@ class ChatResponse(BaseModel):
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(body: ChatRequest):
+    logger.info(f"Chat request: session={body.session_id}, msg_len={len(body.message)}, has_context={body.context is not None}")
+    
     if not body.message.strip():
         raise HTTPException(400, "Message cannot be empty")
 
-    svc = get_chat_service()
-    reply = svc.chat(
-        session_id=body.session_id,
-        message=body.message.strip(),
-        context=body.context,
-    )
+    try:
+        svc = get_chat_service()
+        reply = svc.chat(
+            session_id=body.session_id,
+            message=body.message.strip(),
+            context=body.context,
+        )
 
-    logger.info(f"Chat {body.session_id}: Q={body.message[:80]}... A={reply[:80]}...")
-    return ChatResponse(session_id=body.session_id, reply=reply)
+        logger.info(f"Chat {body.session_id}: Q={body.message[:80]}... A={reply[:80]}...")
+        return ChatResponse(session_id=body.session_id, reply=reply)
+    except Exception as e:
+        logger.error(f"Chat error for {body.session_id}: {e}", exc_info=True)
+        raise HTTPException(500, f"Chat generation failed: {str(e)}")
 
 
 @router.delete("/chat/{session_id}")
