@@ -63,3 +63,6 @@ adding classification score and visualization for best images from zero-shot cla
 
 NEW TODO: 
 1. if the loader fails for some reason we should have some backup data to showcase for these scenarios
+2. clicking on dermrx ai dermatology agent on left should take us on homepage.
+3. analysis for patient name should be in url session based on patient id and session id not just on the homepage. 
+4. 
