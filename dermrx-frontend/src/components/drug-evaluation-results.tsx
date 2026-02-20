@@ -204,43 +204,42 @@ const CAT_ORDER: FindingCategory[] = [
 
 function SeverityBadge({ severity }: { severity: string }) {
   const s = severity?.toLowerCase();
-  const styles =
-    s === "major"
-      ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800/50"
-      : s === "moderate"
-        ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50"
-        : s === "minor"
-          ? "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-400 dark:border-sky-800/50"
-          : "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/50 dark:text-slate-400 dark:border-slate-700";
   return (
-    <span
-      className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider shrink-0 ${styles}`}
-    >
-      {severity || "Flag"}
-    </span>
+    <div className="border-t border-border/40 px-4 sm:px-5 py-3 space-y-2">
+      <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40">
+        {label}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {sources.map((src) => (
+          <a
+            key={src.name}
+            href={src.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-2 rounded-lg border border-border/70 bg-white dark:bg-background px-2.5 py-1.5 transition-all hover:shadow-sm hover:border-border"
+          >
+            <img
+              src={src.imagePath}
+              alt={src.name}
+              className="h-4 w-4 rounded object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+            <div className="min-w-0">
+              <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 leading-none">
+                {src.name}
+              </span>
+              <span className="text-[9px] text-muted-foreground/50 ml-1 hidden sm:inline">
+                {src.detail}
+              </span>
+            </div>
+            <ExternalLink className="h-2.5 w-2.5 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </a>
+        ))}
+      </div>
+    </div>
   );
-}
-
-/* ─── Status Helpers ─── */
-
-function statusBorder(status: string) {
-  switch (status) {
-    case "REJECTED":
-      return "border-l-red-500";
-    case "CAUTION":
-      return "border-l-amber-400";
-    case "SAFE":
-      return "border-l-emerald-500";
-    default:
-      return "border-l-slate-300";
-  }
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const config = {
-    REJECTED: {
-      bg: "bg-red-50 dark:bg-red-950/30",
-      text: "text-red-700 dark:text-red-400",
       border: "border-red-200 dark:border-red-800/50",
       icon: ShieldBan,
     },
@@ -391,19 +390,19 @@ function WarningCategoryCard({
 
   return (
     <div
-      className={`rounded-xl border ${meta.borderAccent} overflow-hidden`}
+      className={`rounded-xl border border-border bg-background overflow-hidden`}
     >
       <button
         onClick={() => setOpen((v) => !v)}
         className={`w-full flex items-center gap-2.5 px-4 py-3 text-left hover:opacity-80 transition-opacity ${meta.bgAccent}`}
       >
         <div
-          className={`h-7 w-7 rounded-md ${meta.iconBg} flex items-center justify-center`}
+          className="h-7 w-7 rounded-md bg-muted flex items-center justify-center"
         >
-          <Icon className={`h-3.5 w-3.5 ${meta.accent}`} />
+          <Icon className="h-3.5 w-3.5 text-muted-foreground" />
         </div>
         <span
-          className={`text-xs font-bold uppercase tracking-wider ${meta.accent}`}
+          className="text-xs font-bold uppercase tracking-wider text-foreground"
         >
           {meta.label}
         </span>
@@ -486,14 +485,14 @@ function PatientWarnings({
   const disease = filtered.filter((f) => classifyFinding(f) === "disease");
 
   return (
-    <div className="rounded-xl border bg-card shadow-sm overflow-hidden animate-slide-in">
+    <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden animate-slide-in">
       {/* Header */}
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/30 transition-colors"
       >
-        <div className="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-          <ShieldAlert className="h-[18px] w-[18px] text-slate-600 dark:text-slate-400" />
+        <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+          <ShieldAlert className="h-[18px] w-[18px] text-muted-foreground" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground">
@@ -644,10 +643,10 @@ function DrugCard({
 
   return (
     <div
-      className={`rounded-xl border border-l-[3px] transition-all ${statusBorder(candidate.status)} ${
+      className={`rounded-xl border border-border border-l-[3px] transition-all ${statusBorder(candidate.status)} ${
         isSelected
-          ? "bg-emerald-50/30 dark:bg-emerald-950/10 shadow-sm"
-          : "bg-card hover:shadow-sm"
+          ? "bg-muted/40 shadow-sm"
+          : "bg-background hover:shadow-sm"
       }`}
     >
       {/* Header */}
@@ -767,13 +766,13 @@ export default function DrugEvaluationResults({
       <PatientWarnings candidates={candidates} />
 
       {/* Drug evaluation section */}
-      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden">
         {/* Header */}
         <div className="px-3 sm:px-5 pt-4 sm:pt-5 pb-3 sm:pb-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
-                <Shield className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-indigo-600 dark:text-indigo-400" />
+              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <Shield className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-muted-foreground" />
               </div>
               <div>
                 <h3 className="text-[15px] font-semibold tracking-tight">

@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.utils.model_loader import is_mock_mode, get_siglip, get_medgemma, get_txgemma
+from app.utils.model_loader import is_mock_mode, get_siglip, get_medgemma, get_txgemma, clear_cuda_cache
 
 router = APIRouter(prefix="/api", tags=["Health"])
 
@@ -31,4 +31,15 @@ def health_check():
         "service": "DermRx Agent API",
         "mock_mode": mock,
         "models_loaded": models_loaded,
+    }
+
+
+@router.post("/clear-cache")
+def clear_cache():
+    """Clear CUDA cache between analyses without unloading models."""
+    mem = clear_cuda_cache()
+    return {
+        "status": "ok",
+        "message": "CUDA cache cleared",
+        "memory": mem,
     }

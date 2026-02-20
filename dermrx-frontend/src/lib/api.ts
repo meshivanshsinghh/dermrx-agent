@@ -104,3 +104,11 @@ export async function clearChatSession(sessionId: string): Promise<void> {
     method: "DELETE",
   });
 }
+
+export async function clearBackendCache(): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/api/clear-cache`, { method: "POST" });
+  } catch {
+    // Non-critical — silently ignore if backend is unreachable
+  }
+}

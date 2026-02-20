@@ -97,17 +97,23 @@ class SynthesizerService:
         )
         input_ids = tokenizer(formatted, return_tensors="pt").to(model.device)
 
-        outputs = model.generate(
-            **input_ids,
-            max_new_tokens=512,
-            temperature=0.1,
-            do_sample=True,
-            repetition_penalty=1.05,
-        )
+        import torch
+        with torch.no_grad():
+            outputs = model.generate(
+                **input_ids,
+                max_new_tokens=512,
+                temperature=0.1,
+                do_sample=True,
+                repetition_penalty=1.05,
+            )
         response = tokenizer.decode(
             outputs[0][len(input_ids["input_ids"][0]):],
             skip_special_tokens=True,
         ).strip()
+
+        # Free intermediate tensors immediately
+        del input_ids, outputs
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
 
         logger.info(f"MedGemma raw response length: {len(response)} chars")
         logger.info(f"MedGemma response:\n{response}")

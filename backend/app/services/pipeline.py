@@ -9,6 +9,7 @@ from app.services.synthesizer import (
     SynthesizerService, SynthesisReport, SafetyFinding
 )
 from app.utils.model_loader import is_mock_mode
+from app.utils.model_loader import clear_cuda_cache
 from app.services.ddi_checker import mock_check_ddi
 from PIL import Image 
 
@@ -52,6 +53,9 @@ class PipelineService:
         image: Image.Image, 
         patient_medications: list[str]
     ) -> PipelineTrace: 
+        # Free leftover CUDA tensors from any previous run
+        clear_cuda_cache()
+        
         trace = PipelineTrace(mode="analyze")
         
         logger.info("Step 1: MedSigLIP classification")
@@ -105,6 +109,9 @@ class PipelineService:
             patient_medications= patient_medications
         )
         trace.report = report 
+        
+        # Free intermediate tensors after pipeline completes
+        clear_cuda_cache()
         
         return trace 
 
@@ -198,6 +205,7 @@ class PipelineService:
         drug_names: list[str], 
         patient_medications: list[str]
     ) -> PipelineTrace:
+        clear_cuda_cache()
         trace = PipelineTrace(mode="drug_check")
         
         for drug_name in drug_names:
@@ -257,8 +265,9 @@ class PipelineService:
         )
         
         trace.report = report
+        clear_cuda_cache()
         return trace
-        
+
     
     def _build_non_treatment_report(
         self, classification: ClassificationResult

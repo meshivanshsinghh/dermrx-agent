@@ -130,29 +130,36 @@ export function exportClinicalReportPDF(
     doc.setFontSize(12);
     doc.setTextColor(30, 30, 30);
     doc.text(cls.display_name, MARGIN + 3, y);
+    y += 7;
 
-    // Tier badge
+    // Tier badge on its own line
     const tierColors: Record<number, [number, number, number]> = {
       1: [16, 185, 129], // emerald
       2: [245, 158, 11], // amber
       3: [239, 68, 68],  // red
     };
     const tierLabels: Record<number, string> = {
-      1: "Tier 1 — Treatable",
-      2: "Tier 2 — Referral",
-      3: "Tier 3 — Specialist",
+      1: "Treatable",
+      2: "Safety / Referral",
+      3: "Specialist Required",
     };
     const tc = tierColors[cls.tier] || [100, 100, 100];
+    const tierText = tierLabels[cls.tier] || `Tier ${cls.tier}`;
+
+    // Draw a small pill-shaped badge
     doc.setFontSize(7);
-    doc.setTextColor(tc[0], tc[1], tc[2]);
-    doc.text(tierLabels[cls.tier] || `Tier ${cls.tier}`, MARGIN + 3 + doc.getTextWidth(cls.display_name) + 5, y);
-    y += 7;
+    const badgeText = `Tier ${cls.tier} — ${tierText}`;
+    const badgeW = doc.getTextWidth(badgeText) + 6;
+    doc.setFillColor(tc[0], tc[1], tc[2]);
+    doc.roundedRect(MARGIN + 3, y - 3.5, badgeW, 5.5, 1.5, 1.5, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.text(badgeText, MARGIN + 6, y);
+    y += 8;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(80, 80, 80);
-    doc.text(`Confidence: ${(cls.confidence * 100).toFixed(1)}% (${cls.confidence_level})`, MARGIN + 3, y);
-    y += LINE_H;
 
     if (cls.treatment_class) {
       doc.text(`Treatment Class: ${cls.treatment_class.replace(/_/g, " ")}`, MARGIN + 3, y);
@@ -246,26 +253,60 @@ export function exportClinicalReportPDF(
     y = drawWrappedText(doc, y, rpt.clinical_summary);
     y += 3;
 
-    // Recommended treatment — highlighted box
-    y = addPageIfNeeded(doc, y, 25);
-    doc.setFillColor(236, 253, 245); // emerald-50
-    doc.setDrawColor(16, 185, 129);
-    doc.roundedRect(MARGIN, y, CONTENT_W, 18, 2, 2, "FD");
+    // Recommended treatment — highlighted box (tier-aware)
+    const tier = result.classification?.tier ?? 1;
+    const isDrugTier = tier === 1 && rpt.drug_name && rpt.drug_name.toLowerCase() !== "none";
+    const boxH = isDrugTier ? 18 : 14;
+    y = addPageIfNeeded(doc, y, boxH + 6);
+
+    const treatmentFills: Record<number, [number, number, number]> = {
+      1: [236, 253, 245],  // emerald-50
+      2: [255, 251, 235],  // amber-50
+      3: [254, 242, 242],  // red-50
+    };
+    const treatmentBorders: Record<number, [number, number, number]> = {
+      1: [16, 185, 129],   // emerald-500
+      2: [245, 158, 11],   // amber-500
+      3: [239, 68, 68],    // red-500
+    };
+    const treatmentLabels: Record<number, [string, [number, number, number]]> = {
+      1: ["RECOMMENDED TREATMENT", [5, 150, 105]],
+      2: ["REFERRAL RECOMMENDATION", [180, 120, 10]],
+      3: ["URGENT RECOMMENDATION", [185, 50, 50]],
+    };
+
+    const tFill = treatmentFills[tier] || treatmentFills[1];
+    const tBorder = treatmentBorders[tier] || treatmentBorders[1];
+    const [tLabel, tLabelColor] = treatmentLabels[tier] || treatmentLabels[1];
+
+    doc.setFillColor(tFill[0], tFill[1], tFill[2]);
+    doc.setDrawColor(tBorder[0], tBorder[1], tBorder[2]);
+    doc.roundedRect(MARGIN, y, CONTENT_W, boxH, 2, 2, "FD");
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.setTextColor(5, 150, 105);
-    doc.text("RECOMMENDED TREATMENT", MARGIN + 4, y + 5);
-    doc.setFontSize(11);
-    doc.setTextColor(30, 30, 30);
-    doc.text(rpt.drug_name.charAt(0).toUpperCase() + rpt.drug_name.slice(1), MARGIN + 4, y + 12);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(80, 80, 80);
-    const treatmentLines = doc.splitTextToSize(rpt.recommended_treatment, CONTENT_W - 8);
-    if (treatmentLines.length === 1) {
-      doc.text(treatmentLines[0], MARGIN + 4, y + 16);
+    doc.setTextColor(tLabelColor[0], tLabelColor[1], tLabelColor[2]);
+    doc.text(tLabel, MARGIN + 4, y + 5);
+
+    if (isDrugTier) {
+      doc.setFontSize(11);
+      doc.setTextColor(30, 30, 30);
+      doc.text(rpt.drug_name.charAt(0).toUpperCase() + rpt.drug_name.slice(1), MARGIN + 4, y + 12);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(80, 80, 80);
+      const treatmentLines = doc.splitTextToSize(rpt.recommended_treatment, CONTENT_W - 8);
+      if (treatmentLines.length === 1) {
+        doc.text(treatmentLines[0], MARGIN + 4, y + 16);
+      }
+    } else {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(50, 50, 50);
+      const recLines = doc.splitTextToSize(rpt.recommended_treatment, CONTENT_W - 8);
+      doc.text(recLines[0], MARGIN + 4, y + 11);
     }
-    y += 24;
+    y += boxH + 6;
 
     // Clinical reasoning
     y = drawSectionHeader(doc, y, "Clinical Reasoning");
@@ -285,39 +326,66 @@ export function exportClinicalReportPDF(
     if (rpt.rejected_drugs && rpt.rejected_drugs.length > 0) {
       y = drawSectionHeader(doc, y, "Alternatives Considered");
       for (const item of rpt.rejected_drugs) {
-        y = addPageIfNeeded(doc, y, 12);
+        y = addPageIfNeeded(doc, y, 18);
         const drugName = typeof item === "string" ? item : item.drug;
         const reason = typeof item === "string" ? null : item.reason;
+        const displayName = drugName.charAt(0).toUpperCase() + drugName.slice(1);
 
-        doc.setFillColor(254, 242, 242); // red-50
-        doc.roundedRect(MARGIN + 2, y - 2, 4, 4, 1, 1, "F");
-
+        // Drug name
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
         doc.setTextColor(30, 30, 30);
-        doc.text(drugName.charAt(0).toUpperCase() + drugName.slice(1), MARGIN + 10, y + 1);
+        const nameWidth = doc.getTextWidth(displayName);
+        doc.text(displayName, MARGIN + 3, y);
 
+        // REJECTED badge — offset based on name width at current font
         doc.setFont("helvetica", "bold");
         doc.setFontSize(7);
         doc.setTextColor(239, 68, 68);
-        doc.text("REJECTED", MARGIN + 10 + doc.getTextWidth(drugName + "  "), y + 1);
+        doc.text("REJECTED", MARGIN + 3 + nameWidth + 4, y);
         y += LINE_H + 1;
 
         if (reason) {
           doc.setFont("helvetica", "normal");
           doc.setFontSize(8);
           doc.setTextColor(100, 100, 100);
-          const reasonLines = doc.splitTextToSize(reason, CONTENT_W - 15);
+          const reasonLines = doc.splitTextToSize(reason, CONTENT_W - 6);
           for (const line of reasonLines) {
             y = addPageIfNeeded(doc, y, LINE_H + 2);
-            doc.text(line, MARGIN + 10, y);
+            doc.text(line, MARGIN + 3, y);
             y += LINE_H;
           }
         }
-        y += 3;
+
+        // Light divider between alternatives
+        y += 2;
+        doc.setDrawColor(235, 235, 235);
+        doc.line(MARGIN + 3, y, MARGIN + CONTENT_W - 3, y);
+        y += 4;
       }
     }
   }
+
+  // ═══════════ DISCLAIMER BOX ═══════════
+  y = addPageIfNeeded(doc, y, 30);
+  y += 4;
+  doc.setFillColor(250, 250, 252);
+  doc.setDrawColor(200, 200, 210);
+  doc.roundedRect(MARGIN, y, CONTENT_W, 22, 2, 2, "FD");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(100, 100, 100);
+  doc.text("IMPORTANT DISCLAIMER", MARGIN + 4, y + 5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(120, 120, 120);
+  const disclaimerLines = doc.splitTextToSize(
+    "This report is generated by DermRx Agent, a research demonstration for the MedGemma Impact Challenge. " +
+    "It is NOT intended for clinical use. All treatment recommendations must be verified by a qualified healthcare professional. " +
+    "Data sources: DDInter 2.0, MED-RT (FDA/VA), PubChem, TxGemma-2B, MedGemma-4B, MedSigLIP.",
+    CONTENT_W - 8,
+  );
+  doc.text(disclaimerLines, MARGIN + 4, y + 10);
 
   // ═══════════ FOOTER ═══════════
   const pages = doc.getNumberOfPages();
