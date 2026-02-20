@@ -126,6 +126,14 @@ export default function DrugCheckPanel({
   patient,
   onSessionUpdate,
 }: DrugCheckPanelProps) {
+  // Fix for historical runs that had leaked markdown (e.g. Margaret Chen's case)
+  const cleanReportText = (text?: string | null) => {
+    if (!text) return "";
+    let clean = text.replace(/\*\*/g, ""); // Remove bold asterisks
+    clean = clean.replace(/RECOMMENDED_TREATMENT:|REASONING:|PATIENT_EXPLANATION:|CLINICAL_SUMMARY:/gi, ""); // Remove leaked headers
+    return clean.replace(/^\s*[\r\n]/gm, "").trim(); // Clean up extra line breaks
+  };
+
   const [drugNames, setDrugNames] = useState<string[]>([]);
   const [drugInput, setDrugInput] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -273,10 +281,10 @@ export default function DrugCheckPanel({
                   <div
                     key={step.id}
                     className={`h-3 w-3 rounded-full border-2 transition-all duration-300 ${status === "complete"
-                        ? "bg-emerald-500 border-emerald-500 scale-100"
-                        : status === "current"
-                          ? "bg-indigo-500 border-indigo-500 scale-125 ring-4 ring-indigo-500/20"
-                          : "bg-background border-muted-foreground/20 scale-90"
+                      ? "bg-emerald-500 border-emerald-500 scale-100"
+                      : status === "current"
+                        ? "bg-indigo-500 border-indigo-500 scale-125 ring-4 ring-indigo-500/20"
+                        : "bg-background border-muted-foreground/20 scale-90"
                       }`}
                   />
                 );
@@ -378,7 +386,7 @@ export default function DrugCheckPanel({
                   Summary
                 </p>
                 <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {result.report.clinical_summary}
+                  {cleanReportText(result.report.clinical_summary)}
                 </p>
               </div>
 
@@ -391,7 +399,7 @@ export default function DrugCheckPanel({
                 </p>
                 {result.report.recommended_treatment && (
                   <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">
-                    {result.report.recommended_treatment}
+                    {cleanReportText(result.report.recommended_treatment)}
                   </p>
                 )}
               </div>
@@ -403,7 +411,7 @@ export default function DrugCheckPanel({
                   </p>
                   <div className="bg-muted/30 rounded-lg p-4">
                     <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {result.report.reasoning_trace}
+                      {cleanReportText(result.report.reasoning_trace)}
                     </p>
                   </div>
                 </div>
@@ -416,7 +424,7 @@ export default function DrugCheckPanel({
                   </p>
                   <blockquote className="border-l-2 border-border pl-4 py-1">
                     <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {result.report.patient_explanation}
+                      {cleanReportText(result.report.patient_explanation)}
                     </p>
                   </blockquote>
                 </div>

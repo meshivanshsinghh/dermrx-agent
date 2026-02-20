@@ -303,6 +303,9 @@ function WarningCategoryCard({
   findings: DDIFinding[];
 }) {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(0);
+
   const meta = CATEGORY_META[category];
   const Icon = meta.icon;
 
@@ -321,6 +324,37 @@ function WarningCategoryCard({
       return sa - sb;
     });
   }, [findings]);
+
+  // Search and Pagination
+  const filteredGroups = useMemo(() => {
+    if (!searchQuery.trim()) return substanceGroups;
+    const q = searchQuery.toLowerCase();
+    return substanceGroups.filter(([name, groupFindings]) => {
+      if (name.toLowerCase().includes(q)) return true;
+      return groupFindings.some(
+        (f) =>
+          f.description?.toLowerCase().includes(q) ||
+          f.severity?.toLowerCase().includes(q) ||
+          f.mechanism?.toLowerCase().includes(q) ||
+          f.management?.toLowerCase().includes(q)
+      );
+    });
+  }, [substanceGroups, searchQuery]);
+
+  const GROUPS_PER_PAGE = 10;
+  // Patient Medication Warnings only ever display food & disease, 
+  // but we restrict pagination behavior to only these groups anyway
+  const isPaginated = substanceGroups.length > GROUPS_PER_PAGE;
+  const totalPages = Math.ceil(filteredGroups.length / GROUPS_PER_PAGE);
+  const displayGroups = isPaginated
+    ? filteredGroups.slice(page * GROUPS_PER_PAGE, (page + 1) * GROUPS_PER_PAGE)
+    : filteredGroups;
+
+  // Reset page when search changes
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setPage(0);
+  };
 
   return (
     <div className="rounded-xl border border-border/50 overflow-hidden">
@@ -351,14 +385,72 @@ function WarningCategoryCard({
         )}
       </button>
       {open && (
-        <div className="px-4 pb-4 pt-1 space-y-2">
-          {substanceGroups.map(([name, groupFindings]) => (
-            <SubstanceGroup
-              key={name}
-              substanceName={name}
-              findings={groupFindings}
-            />
-          ))}
+        <div className="px-4 pb-4 pt-1 space-y-3">
+          {/* Optional Search Bar */}
+          {substanceGroups.length > GROUPS_PER_PAGE && (
+            <div className="relative animate-slide-in">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder={`Search ${substanceGroups.length} substances...`}
+                value={searchQuery}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {displayGroups.length > 0 ? (
+              displayGroups.map(([name, groupFindings]) => (
+                <SubstanceGroup
+                  key={name}
+                  substanceName={name}
+                  findings={groupFindings}
+                />
+              ))
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-4">
+                No matching substances found.
+              </p>
+            )}
+          </div>
+
+          {/* Pagination Controls */}
+          {isPaginated && totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2 border-t mt-3">
+              <span className="text-[10px] text-muted-foreground">
+                Showing {page * GROUPS_PER_PAGE + 1}-
+                {Math.min((page + 1) * GROUPS_PER_PAGE, filteredGroups.length)} of {filteredGroups.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPage((p) => Math.max(0, p - 1));
+                  }}
+                  disabled={page === 0}
+                  className="h-6 w-6 rounded-md hover:bg-muted/60 disabled:opacity-30 flex items-center justify-center transition-colors"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <div className="text-[10px] font-medium tabular-nums px-1.5">
+                  {page + 1} / {totalPages}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPage((p) => Math.min(totalPages - 1, p + 1));
+                  }}
+                  disabled={page >= totalPages - 1}
+                  className="h-6 w-6 rounded-md hover:bg-muted/60 disabled:opacity-30 flex items-center justify-center transition-colors"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
