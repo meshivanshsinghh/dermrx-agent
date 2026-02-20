@@ -60,3 +60,6 @@ also make sure we have a button for judges to know that please only click yes if
 
 technical challenge getting google and aws
 adding classification score and visualization for best images from zero-shot classification in notebook 1. 
+
+
+-> cache clearning helped a lot for CUDA so that medgemma can make sure we arae fixing it correctly. 

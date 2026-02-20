@@ -90,6 +90,10 @@ class PipelineService:
         trace.selected_drug = selected_eval.drug.drug_name
         
         logger.info(f"Step 4: MedGemma synthesis for {selected_eval.drug.drug_name}")
+        
+        # Free TxGemma KV-cache before MedGemma takes over
+        clear_cuda_cache()
+        
         all_findings = []
         rejected = []
         for ev in trace.candidates_evaluated:

@@ -12,7 +12,7 @@ try:
 except ImportError:
     torch = None  # type: ignore[assignment]
 
-from app.utils.model_loader import is_mock_mode, get_medgemma
+from app.utils.model_loader import is_mock_mode, get_medgemma, clear_cuda_cache
 
 logger = logging.getLogger(__name__)
 
@@ -242,9 +242,8 @@ class ChatService:
     def _real_generate(self, session: ChatSession) -> str:
         model, tokenizer = get_medgemma()
 
-        # Free cached GPU memory before inference
-        if torch is not None and torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        # Free cached GPU memory before inference (gc.collect + empty_cache)
+        clear_cuda_cache()
 
         # Build messages list for chat template
         messages = [
@@ -263,13 +262,15 @@ class ChatService:
         n_tokens = input_ids["input_ids"].shape[1]
         logger.info(f"Chat inference: {n_tokens} input tokens for {session.session_id}")
 
-        outputs = model.generate(
-            **input_ids,
-            max_new_tokens=MAX_NEW_TOKENS,
-            temperature=0.3,
-            do_sample=True,
-            repetition_penalty=1.1,
-        )
+        import torch
+        with torch.no_grad():
+            outputs = model.generate(
+                **input_ids,
+                max_new_tokens=MAX_NEW_TOKENS,
+                temperature=0.3,
+                do_sample=True,
+                repetition_penalty=1.1,
+            )
         response = tokenizer.decode(
             outputs[0][len(input_ids["input_ids"][0]):],
             skip_special_tokens=True,
@@ -277,11 +278,11 @@ class ChatService:
 
         # Free KV-cache immediately after generation
         del input_ids, outputs
-        if torch is not None and torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        clear_cuda_cache()
 
         logger.info(f"Chat response ({session.session_id}): {len(response)} chars")
         return response
+
 
     # ── Mock generation (pattern-matched) ────────────
 

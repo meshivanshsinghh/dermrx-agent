@@ -8,6 +8,9 @@ from app.services.toxicity import ToxicityProfile
 
 logger = logging.getLogger(__name__)
 
+MAX_SYNTHESIZER_PROMPT_CHARS = 12000   # ~3K tokens — safe for L4 GPU
+MAX_FINDINGS_IN_PROMPT = 3             # per drug, Major/Moderate only
+
 
 @dataclass
 class SafetyFinding:
@@ -150,13 +153,20 @@ class SynthesizerService:
 
         findings_section = ""
         if safety_findings:
-            lines = [
-                f"- {sf.drug_name} + {sf.description} [{sf.severity}] → {sf.action}"
-                for sf in safety_findings
-            ]
-            findings_section = "SAFETY FINDINGS:\n" + "\n".join(lines)
+            # Only keep Major and Moderate findings, max N per drug
+            important = [sf for sf in safety_findings if sf.severity in ("Major", "Moderate")]
+            # Group by drug and take top N per drug
+            from collections import defaultdict
+            by_drug = defaultdict(list)
+            for sf in important:
+                by_drug[sf.drug_name].append(sf)
+            lines = []
+            for drug_name, drug_findings in by_drug.items():
+                for sf in drug_findings[:MAX_FINDINGS_IN_PROMPT]:
+                    lines.append(f"- {sf.drug_name} + {sf.description} [{sf.severity}] → {sf.action}")
+            findings_section = "SAFETY FINDINGS:\n" + "\n".join(lines) if lines else ""
 
-        return f"""You are a clinical decision-support system. Write a concise report for a primary-care physician.
+        prompt = f"""You are a clinical decision-support system. Write a concise report for a primary-care physician.
 
 DIAGNOSIS: {classification.display_name}
 Confidence: {classification.confidence_level} ({classification.confidence})
@@ -185,6 +195,15 @@ REASONING:
 
 PATIENT_EXPLANATION:
 <plain-language explanation for the patient>"""
+
+        # Hard cap to prevent OOM on complex cases
+        if len(prompt) > MAX_SYNTHESIZER_PROMPT_CHARS:
+            logger.warning(
+                f"Synthesizer prompt truncated: {len(prompt)} → {MAX_SYNTHESIZER_PROMPT_CHARS} chars"
+            )
+            prompt = prompt[:MAX_SYNTHESIZER_PROMPT_CHARS] + "\n[context truncated]"
+
+        return prompt
 
     def _parse_response(
         self,
