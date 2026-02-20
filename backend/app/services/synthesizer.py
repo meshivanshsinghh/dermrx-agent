@@ -135,52 +135,8 @@ class SynthesizerService:
         rejected_drugs: list[dict],
         patient_medications: list[str],
     ) -> str:
-        rejected_section = ""
-        if rejected_drugs:
-            lines = []
-            for rd in rejected_drugs:
-                lines.append(f"- {rd['drug']}: REJECTED — {rd['reason']}")
-            rejected_section = "REJECTED TREATMENTS:\n" + "\n".join(lines)
-
-        toxicity_section = ""
-        if toxicity_profile:
-            flags = [p for p in toxicity_profile.predictions if p.is_flagged]
-            if flags:
-                lines = [f"- {p.task}: {p.label}" for p in flags]
-                toxicity_section = (
-                    f"MOLECULAR ANALYSIS ({selected_drug}):\n" + "\n".join(lines)
-                )
-
-        findings_section = ""
-        if safety_findings:
-            # Only keep Major and Moderate findings, max N per drug
-            important = [sf for sf in safety_findings if sf.severity in ("Major", "Moderate")]
-            # Group by drug and take top N per drug
-            from collections import defaultdict
-            by_drug = defaultdict(list)
-            for sf in important:
-                by_drug[sf.drug_name].append(sf)
-            lines = []
-            for drug_name, drug_findings in by_drug.items():
-                for sf in drug_findings[:MAX_FINDINGS_IN_PROMPT]:
-                    lines.append(f"- {sf.drug_name} + {sf.description} [{sf.severity}] → {sf.action}")
-            findings_section = "SAFETY FINDINGS:\n" + "\n".join(lines) if lines else ""
-
-        prompt = f"""You are a clinical decision-support system. Write a concise report for a primary-care physician.
-
-DIAGNOSIS: {classification.display_name}
-Confidence: {classification.confidence_level} ({classification.confidence})
-Classification Tier: {classification.tier}
-
-PATIENT MEDICATIONS: {', '.join(patient_medications)}
-
-RECOMMENDED TREATMENT: {selected_drug}
-
-{rejected_section}
-
-{findings_section}
-
-{toxicity_section}
+        # ── Immutable instruction frame (always included) ──
+        instructions = f"""You are a clinical decision-support system. Write a concise report for a primary-care physician.
 
 Return EXACTLY the four sections below. Use the EXACT headers shown (all-caps, underscores, colon). No markdown, no bullet-points, no extra headers.
 
@@ -194,16 +150,65 @@ REASONING:
 <why this drug; what was rejected and why>
 
 PATIENT_EXPLANATION:
-<plain-language explanation for the patient>"""
+<plain-language explanation for the patient>
 
-        # Hard cap to prevent OOM on complex cases
-        if len(prompt) > MAX_SYNTHESIZER_PROMPT_CHARS:
+--- CASE DATA ---
+
+DIAGNOSIS: {classification.display_name}
+Confidence: {classification.confidence_level} ({classification.confidence})
+Classification Tier: {classification.tier}
+
+PATIENT MEDICATIONS: {', '.join(patient_medications)}
+
+RECOMMENDED TREATMENT: {selected_drug}"""
+
+        # ── Variable data sections (may be truncated) ──
+        data_parts = []
+
+        if rejected_drugs:
+            lines = []
+            for rd in rejected_drugs:
+                reason = rd['reason']
+                # Truncate long rejection reasons
+                if len(reason) > 200:
+                    reason = reason[:200] + "..."
+                lines.append(f"- {rd['drug']}: REJECTED — {reason}")
+            data_parts.append("REJECTED TREATMENTS:\n" + "\n".join(lines))
+
+        if safety_findings:
+            # Only keep Major and Moderate, max N per drug
+            important = [sf for sf in safety_findings if sf.severity in ("Major", "Moderate")]
+            from collections import defaultdict
+            by_drug: dict[str, list] = defaultdict(list)
+            for sf in important:
+                by_drug[sf.drug_name].append(sf)
+            lines = []
+            for drug_name, drug_findings in by_drug.items():
+                for sf in drug_findings[:MAX_FINDINGS_IN_PROMPT]:
+                    desc = sf.description[:150] + "..." if len(sf.description) > 150 else sf.description
+                    lines.append(f"- {sf.drug_name} + {desc} [{sf.severity}] → {sf.action}")
+            if lines:
+                data_parts.append("SAFETY FINDINGS:\n" + "\n".join(lines))
+
+        if toxicity_profile:
+            flags = [p for p in toxicity_profile.predictions if p.is_flagged]
+            if flags:
+                lines = [f"- {p.task}: {p.label}" for p in flags]
+                data_parts.append(f"MOLECULAR ANALYSIS ({selected_drug}):\n" + "\n".join(lines))
+
+        # ── Assemble prompt, respecting char budget ──
+        data_text = "\n\n".join(data_parts)
+        budget = MAX_SYNTHESIZER_PROMPT_CHARS - len(instructions) - 10  # 10 for separators
+
+        if len(data_text) > budget:
             logger.warning(
-                f"Synthesizer prompt truncated: {len(prompt)} → {MAX_SYNTHESIZER_PROMPT_CHARS} chars"
+                f"Synthesizer data truncated: {len(data_text)} → {budget} chars"
             )
-            prompt = prompt[:MAX_SYNTHESIZER_PROMPT_CHARS] + "\n[context truncated]"
+            data_text = data_text[:budget] + "\n[data truncated]"
 
+        prompt = instructions + "\n\n" + data_text
         return prompt
+
 
     def _parse_response(
         self,

@@ -167,10 +167,377 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 /* ─────────────────────────────────────────────
-   Finding Card — individual warning/finding
+   Finding Card — individual warning/finding (within substance group)
    ───────────────────────────────────────────── */
 
 function FindingCard({ finding }: { finding: DDIFinding }) {
+  const [expanded, setExpanded] = useState(false);
+  const TEXT_LIMIT = 180;
+  const descParts = finding.description?.split(" — ") || [];
+  // Show just the interaction detail, not the substance name (already in header)
+  const detail = descParts.length > 1 ? descParts.slice(1).join(" — ") : finding.description;
+  const descriptionLong = (detail?.length || 0) > TEXT_LIMIT;
+  const displayDescription =
+    descriptionLong && !expanded
+      ? detail.slice(0, TEXT_LIMIT) + "..."
+      : detail;
+
+  return (
+    <div className="rounded-lg bg-muted/30 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground/80">
+      <p>
+        {displayDescription}
+        {descriptionLong && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="ml-1 text-[13px] font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline transition-colors"
+          >
+            {expanded ? "Show Less" : "Read More"}
+          </button>
+        )}
+      </p>
+      {finding.mechanism && (
+        <p className="text-xs text-muted-foreground/60 italic mt-1">
+          {finding.mechanism}
+        </p>
+      )}
+      {finding.management && (
+        <p className="text-xs text-muted-foreground/70 mt-1.5 border-l-2 border-indigo-200 dark:border-indigo-800 pl-2.5 py-0.5">
+          {finding.management}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Substance Group — groups findings by substance name
+   ───────────────────────────────────────────── */
+
+const SEVERITY_ORDER: Record<string, number> = { major: 0, moderate: 1, minor: 2 };
+
+function getSubstanceName(description: string): string {
+  // Extract substance name from "substance — details" format
+  const parts = description.split(" — ");
+  return parts[0]?.trim() || description;
+}
+
+function getHighestSeverity(findings: DDIFinding[]): string {
+  let highest = "minor";
+  for (const f of findings) {
+    const s = f.severity?.toLowerCase() || "minor";
+    if ((SEVERITY_ORDER[s] ?? 2) < (SEVERITY_ORDER[highest] ?? 2)) {
+      highest = s;
+    }
+  }
+  return highest;
+}
+
+function SubstanceGroup({
+  substanceName,
+  findings,
+}: {
+  substanceName: string;
+  findings: DDIFinding[];
+}) {
+  const [open, setOpen] = useState(false);
+  const highest = getHighestSeverity(findings);
+
+  const borderColor =
+    highest === "major"
+      ? "border-l-red-400 dark:border-l-red-500"
+      : highest === "moderate"
+        ? "border-l-amber-400 dark:border-l-amber-500"
+        : "border-l-slate-300 dark:border-l-slate-600";
+
+  return (
+    <div
+      className={`rounded-lg border border-border/40 border-l-[3px] ${borderColor} bg-background overflow-hidden transition-all hover:shadow-sm`}
+    >
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 px-4 py-3 text-left"
+      >
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-medium text-foreground capitalize">
+            {substanceName}
+          </span>
+          {findings.length > 1 && (
+            <span className="ml-2 text-[10px] text-muted-foreground/50">
+              {findings.length} interactions
+            </span>
+          )}
+        </div>
+        <SeverityBadge severity={highest} />
+        {open ? (
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
+        )}
+      </button>
+      {open && (
+        <div className="px-4 pb-3 space-y-2 border-t border-border/30">
+          <div className="pt-2 space-y-2">
+            {findings.map((f, i) => (
+              <FindingCard key={i} finding={f} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Warning Category Card (food / disease)
+   ───────────────────────────────────────────── */
+
+function WarningCategoryCard({
+  category,
+  findings,
+}: {
+  category: FindingCategory;
+  findings: DDIFinding[];
+}) {
+  const [open, setOpen] = useState(false);
+  const meta = CATEGORY_META[category];
+  const Icon = meta.icon;
+
+  // Group by substance name
+  const substanceGroups = useMemo(() => {
+    const groups: Record<string, DDIFinding[]> = {};
+    for (const f of findings) {
+      const name = getSubstanceName(f.description || "Unknown");
+      if (!groups[name]) groups[name] = [];
+      groups[name].push(f);
+    }
+    // Sort by highest severity
+    return Object.entries(groups).sort(([, a], [, b]) => {
+      const sa = SEVERITY_ORDER[getHighestSeverity(a)] ?? 2;
+      const sb = SEVERITY_ORDER[getHighestSeverity(b)] ?? 2;
+      return sa - sb;
+    });
+  }, [findings]);
+
+  return (
+    <div className="rounded-xl border border-border/50 overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-2.5 px-4 py-3 text-left hover:bg-muted/20 transition-colors"
+      >
+        <div
+          className={`h-7 w-7 rounded-md ${meta.iconBg} flex items-center justify-center`}
+        >
+          <Icon className={`h-3.5 w-3.5 ${meta.accent}`} />
+        </div>
+        <span
+          className={`text-xs font-bold uppercase tracking-wider ${meta.accent}`}
+        >
+          {meta.label}
+        </span>
+        <span className="ml-1 text-[10px] text-muted-foreground/50">
+          {substanceGroups.length} {substanceGroups.length === 1 ? "substance" : "substances"}
+        </span>
+        <span className="ml-auto text-[11px] tabular-nums text-muted-foreground font-medium">
+          {findings.length}
+        </span>
+        {open ? (
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+        )}
+      </button>
+      {open && (
+        <div className="px-4 pb-4 pt-1 space-y-2">
+          {substanceGroups.map(([name, groupFindings]) => (
+            <SubstanceGroup
+              key={name}
+              substanceName={name}
+              findings={groupFindings}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Patient Warnings (food/disease, deduplicated)
+   ───────────────────────────────────────────── */
+
+function PatientWarnings({
+  candidates,
+}: {
+  candidates: CandidateEvaluation[];
+}) {
+  const warnings = useMemo(() => {
+    const seen = new Set<string>();
+    const items: DDIFinding[] = [];
+    for (const c of candidates) {
+      for (const f of c.findings) {
+        const cat = classifyFinding(f);
+        if (cat === "food" || cat === "disease") {
+          // Deduplicate by substance + description combo
+          const substance = getSubstanceName(f.description || "");
+          const detail = f.description?.split(" — ").slice(1).join(" — ") || "";
+          const key = `${cat}:${substance}:${detail.slice(0, 80)}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            items.push(f);
+          }
+        }
+      }
+    }
+    return items;
+  }, [candidates]);
+
+  const [open, setOpen] = useState(true);
+  const [filter, setFilter] = useState<SeverityFilter>("all");
+
+  if (warnings.length === 0) return null;
+
+  const majorCount = warnings.filter(
+    (w) => w.severity?.toLowerCase() === "major",
+  ).length;
+  const moderateCount = warnings.filter(
+    (w) => w.severity?.toLowerCase() === "moderate",
+  ).length;
+  const minorCount = warnings.filter(
+    (w) => {
+      const s = w.severity?.toLowerCase();
+      return s && s !== "major" && s !== "moderate";
+    },
+  ).length;
+
+  const filtered =
+    filter === "all"
+      ? warnings
+      : filter === "minor"
+        ? warnings.filter((w) => {
+          const s = w.severity?.toLowerCase();
+          return s && s !== "major" && s !== "moderate";
+        })
+        : warnings.filter((w) => w.severity?.toLowerCase() === filter);
+
+  const food = filtered.filter((f) => classifyFinding(f) === "food");
+  const disease = filtered.filter((f) => classifyFinding(f) === "disease");
+
+  // Count unique substances
+  const uniqueSubstances = new Set(
+    warnings.map((w) => getSubstanceName(w.description || ""))
+  ).size;
+
+  return (
+    <div className="rounded-xl border bg-card shadow-sm overflow-hidden animate-slide-in">
+      {/* Header */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/20 transition-colors"
+      >
+        <div className="h-9 w-9 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center shrink-0">
+          <ShieldAlert className="h-[18px] w-[18px] text-indigo-600 dark:text-indigo-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">
+            Patient Medication Warnings
+          </p>
+          <div className="flex items-center gap-3 mt-0.5">
+            {majorCount > 0 && (
+              <span className="flex items-center gap-1 text-[11px] text-red-600 dark:text-red-400 font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                {majorCount} major
+              </span>
+            )}
+            {moderateCount > 0 && (
+              <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                {moderateCount} moderate
+              </span>
+            )}
+            {minorCount > 0 && (
+              <span className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                {minorCount} minor
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] text-muted-foreground/50">
+            {uniqueSubstances} {uniqueSubstances === 1 ? "substance" : "substances"}
+          </span>
+          <span className="text-xs tabular-nums text-muted-foreground font-medium bg-muted rounded-full px-2.5 py-1">
+            {warnings.length}
+          </span>
+          {open ? (
+            <ChevronDown className="h-4 w-4 text-muted-foreground/50" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+          )}
+        </div>
+      </button>
+
+      {/* Expanded Content */}
+      {open && (
+        <div className="border-t px-5 pb-5 pt-4 space-y-4">
+          {/* Severity Filter */}
+          <div className="flex gap-1.5">
+            {(["all", "major", "moderate", "minor"] as SeverityFilter[]).map((f) => {
+              const count =
+                f === "all"
+                  ? warnings.length
+                  : f === "major"
+                    ? majorCount
+                    : f === "moderate"
+                      ? moderateCount
+                      : minorCount;
+              return (
+                <button
+                  key={f}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFilter(f);
+                  }}
+                  disabled={count === 0}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] rounded-lg font-medium capitalize transition-all ${filter === f
+                    ? "bg-indigo-600 text-white shadow-sm dark:bg-indigo-500"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+                    }`}
+                >
+                  {f}
+                  <span className={`text-[10px] ${filter === f ? "opacity-70" : "opacity-50"}`}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Warning Categories */}
+          <div className="space-y-3">
+            {food.length > 0 && (
+              <WarningCategoryCard category="food" findings={food} />
+            )}
+            {disease.length > 0 && (
+              <WarningCategoryCard category="disease" findings={disease} />
+            )}
+          </div>
+
+          {filtered.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No {filter} severity warnings found.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+/* ─────────────────────────────────────────────
+   FindingCardDrug — used inside DrugCard (shows full desc)
+   ───────────────────────────────────────────── */
+
+function FindingCardDrug({ finding }: { finding: DDIFinding }) {
   const [expanded, setExpanded] = useState(false);
   const TEXT_LIMIT = 200;
   const descriptionLong = (finding.description?.length || 0) > TEXT_LIMIT;
@@ -187,7 +554,7 @@ function FindingCard({ finding }: { finding: DDIFinding }) {
           {descriptionLong && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="ml-1 text-[13px] font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors"
+              className="ml-1 text-[13px] font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline transition-colors"
             >
               {expanded ? "Show Less" : "Read More"}
             </button>
@@ -199,7 +566,7 @@ function FindingCard({ finding }: { finding: DDIFinding }) {
           </p>
         )}
         {finding.management && (
-          <p className="text-xs text-muted-foreground/80 mt-1.5 border-l-2 border-border pl-2.5 py-0.5">
+          <p className="text-xs text-muted-foreground/80 mt-1.5 border-l-2 border-indigo-200 dark:border-indigo-800 pl-2.5 py-0.5">
             {finding.management}
           </p>
         )}
@@ -217,7 +584,7 @@ function FindingCard({ finding }: { finding: DDIFinding }) {
 }
 
 /* ─────────────────────────────────────────────
-   Category Section (collapsible, within drug)
+   Category Section (collapsible, within drug card)
    ───────────────────────────────────────────── */
 
 function CategorySection({
@@ -258,220 +625,8 @@ function CategorySection({
       {open && (
         <div className="ml-6 space-y-2 pb-2">
           {findings.map((f, i) => (
-            <FindingCard key={i} finding={f} />
+            <FindingCardDrug key={i} finding={f} />
           ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   Warning Category Card (food / disease)
-   ───────────────────────────────────────────── */
-
-function WarningCategoryCard({
-  category,
-  findings,
-}: {
-  category: FindingCategory;
-  findings: DDIFinding[];
-}) {
-  const [open, setOpen] = useState(false);
-  const meta = CATEGORY_META[category];
-  const Icon = meta.icon;
-
-  return (
-    <div
-      className={`rounded-xl border ${meta.borderAccent} overflow-hidden`}
-    >
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className={`w-full flex items-center gap-2.5 px-4 py-3 text-left hover:opacity-80 transition-opacity ${meta.bgAccent}`}
-      >
-        <div
-          className={`h-7 w-7 rounded-md ${meta.iconBg} flex items-center justify-center`}
-        >
-          <Icon className={`h-3.5 w-3.5 ${meta.accent}`} />
-        </div>
-        <span
-          className={`text-xs font-bold uppercase tracking-wider ${meta.accent}`}
-        >
-          {meta.label}
-        </span>
-        <span className="ml-auto text-[11px] tabular-nums text-muted-foreground font-medium">
-          {findings.length}
-        </span>
-        {open ? (
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50" />
-        ) : (
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-        )}
-      </button>
-      {open && (
-        <div className="p-3 space-y-2">
-          {findings.map((f, i) => (
-            <FindingCard key={i} finding={f} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   Patient Warnings (food/disease, deduplicated)
-   ───────────────────────────────────────────── */
-
-function PatientWarnings({
-  candidates,
-}: {
-  candidates: CandidateEvaluation[];
-}) {
-  const warnings = useMemo(() => {
-    const seen = new Set<string>();
-    const items: DDIFinding[] = [];
-    for (const c of candidates) {
-      for (const f of c.findings) {
-        const cat = classifyFinding(f);
-        if (cat === "food" || cat === "disease") {
-          const key = `${f.finding_type}:${f.description}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            items.push(f);
-          }
-        }
-      }
-    }
-    return items;
-  }, [candidates]);
-
-  const [open, setOpen] = useState(true);
-  const [filter, setFilter] = useState<SeverityFilter>("all");
-
-  if (warnings.length === 0) return null;
-
-  const majorCount = warnings.filter(
-    (w) => w.severity?.toLowerCase() === "major",
-  ).length;
-  const moderateCount = warnings.filter(
-    (w) => w.severity?.toLowerCase() === "moderate",
-  ).length;
-  const minorCount = warnings.filter(
-    (w) => {
-      const s = w.severity?.toLowerCase();
-      return s && s !== "major" && s !== "moderate";
-    },
-  ).length;
-
-  const filtered =
-    filter === "all"
-      ? warnings
-      : filter === "minor"
-        ? warnings.filter((w) => {
-            const s = w.severity?.toLowerCase();
-            return s && s !== "major" && s !== "moderate";
-          })
-        : warnings.filter((w) => w.severity?.toLowerCase() === filter);
-
-  const food = filtered.filter((f) => classifyFinding(f) === "food");
-  const disease = filtered.filter((f) => classifyFinding(f) === "disease");
-
-  return (
-    <div className="rounded-xl border bg-card shadow-sm overflow-hidden animate-slide-in">
-      {/* Header */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/30 transition-colors"
-      >
-        <div className="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-          <ShieldAlert className="h-[18px] w-[18px] text-slate-600 dark:text-slate-400" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground">
-            Patient Medication Warnings
-          </p>
-          <div className="flex items-center gap-3 mt-0.5">
-            {majorCount > 0 && (
-              <span className="flex items-center gap-1 text-[11px] text-red-600 dark:text-red-400 font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                {majorCount} major
-              </span>
-            )}
-            {moderateCount > 0 && (
-              <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                {moderateCount} moderate
-              </span>
-            )}
-            {minorCount > 0 && (
-              <span className="flex items-center gap-1 text-[11px] text-sky-600 dark:text-sky-400 font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-                {minorCount} minor
-              </span>
-            )}
-          </div>
-        </div>
-        <span className="text-xs tabular-nums text-muted-foreground font-medium bg-muted rounded-full px-2.5 py-1">
-          {warnings.length}
-        </span>
-        {open ? (
-          <ChevronDown className="h-4 w-4 text-muted-foreground/50" />
-        ) : (
-          <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-        )}
-      </button>
-
-      {/* Expanded Content */}
-      {open && (
-        <div className="border-t px-5 pb-5 pt-4 space-y-4">
-          {/* Severity Filter */}
-          <div className="flex gap-1.5">
-            {(["all", "major", "moderate", "minor"] as SeverityFilter[]).map((f) => {
-              const count =
-                f === "all"
-                  ? warnings.length
-                  : f === "major"
-                    ? majorCount
-                    : f === "moderate"
-                      ? moderateCount
-                      : minorCount;
-              return (
-                <button
-                  key={f}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setFilter(f);
-                  }}
-                  disabled={count === 0}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] rounded-lg font-medium capitalize transition-all ${
-                    filter === f
-                      ? "bg-foreground text-background shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
-                  }`}
-                >
-                  {f}
-                  <span className="text-[10px] opacity-60">{count}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Warning Categories */}
-          <div className="space-y-4">
-            {food.length > 0 && (
-              <WarningCategoryCard category="food" findings={food} />
-            )}
-            {disease.length > 0 && (
-              <WarningCategoryCard category="disease" findings={disease} />
-            )}
-          </div>
-
-          {filtered.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No {filter} severity warnings found.
-            </p>
-          )}
         </div>
       )}
     </div>
@@ -509,8 +664,8 @@ function DrugCard({
       filter === "all"
         ? drugFindings
         : drugFindings.filter(
-            (f) => f.severity?.toLowerCase() === filter,
-          ),
+          (f) => f.severity?.toLowerCase() === filter,
+        ),
     [drugFindings, filter],
   );
 
@@ -533,11 +688,10 @@ function DrugCard({
 
   return (
     <div
-      className={`rounded-xl border border-l-[3px] transition-all ${statusBorder(candidate.status)} ${
-        isSelected
-          ? "bg-emerald-50/30 dark:bg-emerald-950/10 shadow-sm"
-          : "bg-card hover:shadow-sm"
-      }`}
+      className={`rounded-xl border border-l-[3px] transition-all ${statusBorder(candidate.status)} ${isSelected
+        ? "bg-emerald-50/30 dark:bg-emerald-950/10 shadow-sm"
+        : "bg-card hover:shadow-sm"
+        }`}
     >
       {/* Header */}
       <div
@@ -718,11 +872,10 @@ export default function DrugEvaluationResults({
                 key={f}
                 onClick={() => setFilter(f)}
                 disabled={!hasFilter(f)}
-                className={`px-3 py-1.5 text-[11px] rounded-lg font-medium capitalize transition-all ${
-                  filter === f
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
-                }`}
+                className={`px-3 py-1.5 text-[11px] rounded-lg font-medium capitalize transition-all ${filter === f
+                  ? "bg-foreground text-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+                  }`}
               >
                 {f}
               </button>
