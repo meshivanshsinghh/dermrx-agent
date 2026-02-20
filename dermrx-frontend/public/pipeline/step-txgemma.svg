@@ -16,5 +16,5 @@
   <text x="138" y="118" text-anchor="middle" font-family="system-ui" font-size="8" fill="#16a34a">✓</text>
   <rect x="158" y="100" width="25" height="30" rx="4" fill="#dcfce7" stroke="#86efac" stroke-width="1"/>
   <text x="170" y="118" text-anchor="middle" font-family="system-ui" font-size="8" fill="#16a34a">✓</text>
-  <text x="100" y="148" text-anchor="middle" font-family="system-ui" font-size="9" fill="#d97706">Place TxGemma/DDInter image</text>
+  <text x="100" y="148" text-anchor="middle" font-family="system-ui" font-size="9" fill="#d97706">TxGemma/DDInter image</text>
 </svg>

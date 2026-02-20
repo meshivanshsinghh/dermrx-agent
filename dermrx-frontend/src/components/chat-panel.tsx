@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { AnalyzeResponse, DrugCheckResponse } from "@/lib/type";
 import { sendChatMessage, clearChatSession } from "@/lib/api";
+import { getSessions, saveSession } from "@/lib/storage";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -63,15 +64,38 @@ export default function ChatPanel({
     if (prevSessionRef.current !== sessionId) {
       // Clean up old backend session to free GPU memory
       if (prevSessionRef.current) {
-        clearChatSession(`chat_${prevSessionRef.current}`).catch(() => {});
+        clearChatSession(`chat_${prevSessionRef.current}`).catch(() => { });
       }
-      setMessages([]);
-      setContextSent(false);
+
+      let initialMessages: ChatMessage[] = [];
+      let initialContextSent = false;
+
+      if (sessionId) {
+        const sessions = getSessions();
+        const session = sessions.find((s) => s.id === sessionId);
+        if (session && session.chatHistory) {
+          initialMessages = session.chatHistory;
+          initialContextSent = session.chatHistory.length > 0;
+        }
+      }
+
+      setMessages(initialMessages);
+      setContextSent(initialContextSent);
       setError(null);
       setInput("");
       prevSessionRef.current = sessionId;
     }
   }, [sessionId]);
+
+  const updateSessionHistory = (newMessages: ChatMessage[]) => {
+    if (!sessionId) return;
+    const sessions = getSessions();
+    const session = sessions.find((s) => s.id === sessionId);
+    if (session) {
+      session.chatHistory = newMessages;
+      saveSession(session);
+    }
+  };
 
   const handleSend = useCallback(
     async (text?: string) => {
@@ -83,7 +107,11 @@ export default function ChatPanel({
 
       // Add user message immediately
       const userMsg: ChatMessage = { role: "user", content: message };
-      setMessages((prev) => [...prev, userMsg]);
+      setMessages((prev) => {
+        const next = [...prev, userMsg];
+        updateSessionHistory(next);
+        return next;
+      });
       setIsLoading(true);
 
       try {
@@ -97,13 +125,21 @@ export default function ChatPanel({
           role: "assistant",
           content: response.reply,
         };
-        setMessages((prev) => [...prev, assistantMsg]);
+        setMessages((prev) => {
+          const next = [...prev, assistantMsg];
+          updateSessionHistory(next);
+          return next;
+        });
       } catch (err) {
         const errMsg =
           err instanceof Error ? err.message : "Failed to get response";
         setError(errMsg);
         // Remove the user message on error so they can retry
-        setMessages((prev) => prev.slice(0, -1));
+        setMessages((prev) => {
+          const next = prev.slice(0, -1);
+          updateSessionHistory(next);
+          return next;
+        });
         setInput(message);
       } finally {
         setIsLoading(false);
@@ -121,10 +157,11 @@ export default function ChatPanel({
       }
     }
     setMessages([]);
+    updateSessionHistory([]);
     setContextSent(false);
     setError(null);
     setInput("");
-  }, [chatSessionId]);
+  }, [chatSessionId, sessionId]);
 
   // ── Collapsed state ──────────────────────────────
   if (collapsed) {
@@ -150,18 +187,16 @@ export default function ChatPanel({
       <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div
-            className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-              hasResult
+            className={`h-8 w-8 rounded-lg flex items-center justify-center ${hasResult
                 ? "bg-blue-100 dark:bg-blue-900/30"
                 : "bg-muted"
-            }`}
+              }`}
           >
             <Bot
-              className={`h-4 w-4 ${
-                hasResult
+              className={`h-4 w-4 ${hasResult
                   ? "text-blue-600 dark:text-blue-400"
                   : "text-muted-foreground"
-              }`}
+                }`}
             />
           </div>
           <div>
@@ -232,9 +267,8 @@ export default function ChatPanel({
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex gap-2 ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                } animate-slide-in`}
+                className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"
+                  } animate-slide-in`}
               >
                 {msg.role === "assistant" && (
                   <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 mt-1">
@@ -242,11 +276,10 @@ export default function ChatPanel({
                   </div>
                 )}
                 <div
-                  className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-                    msg.role === "user"
+                  className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${msg.role === "user"
                       ? "bg-indigo-600 text-white"
                       : "bg-muted"
-                  }`}
+                    }`}
                 >
                   {msg.role === "assistant" ? (
                     <div className="whitespace-pre-wrap text-xs leading-relaxed">

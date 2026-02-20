@@ -18,6 +18,7 @@ export interface PatientSession {
   result: AnalyzeResponse | DrugCheckResponse | null;
   imagePreview?: string | null;
   imagePath?: string | null;
+  chatHistory?: Array<{ role: "user" | "assistant"; content: string }>;
 }
 
 export interface TopScore {

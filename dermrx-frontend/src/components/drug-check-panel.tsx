@@ -14,6 +14,11 @@ import {
   Search,
   Zap,
   Brain,
+  Check,
+  ArrowRight,
+  Database,
+  Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import { drugCheck, searchDrugs } from "@/lib/api";
 import {
@@ -23,6 +28,92 @@ import {
 } from "@/lib/type";
 import { saveSession } from "@/lib/storage";
 import DrugEvaluationResults from "@/components/drug-evaluation-results";
+
+type PipelineStage =
+  | "idle"
+  | "checking"
+  | "evaluating"
+  | "synthesizing"
+  | "complete"
+  | "error";
+
+interface PipelineStep {
+  id: PipelineStage;
+  label: string;
+  description: string;
+  agentAction: string;
+  detail: string;
+  subSteps: string[];
+  icon: any;
+  imagePath: string;
+  source: string;
+  accentColor: string;
+  bgColor: string;
+  borderColor: string;
+}
+
+const PIPELINE_STEPS: PipelineStep[] = [
+  {
+    id: "checking",
+    label: "Cross-Referencing Databases",
+    description: "Querying evidence-based databases for candidates",
+    agentAction: "Checking drug combinations against patient record",
+    detail: "The agent queries MED-RT and DDInter 2.0 to identify known drug-drug, food, and disease interactions. All candidates are evaluated against the patient's current medication list.",
+    subSteps: ["Querying DDInter 2.0 API", "Filtering known interactions", "Mapping to severity tiers"],
+    icon: Database,
+    imagePath: "/pipeline/step-medrt.svg",
+    source: "MED-RT + DDInter 2.0",
+    accentColor: "text-blue-600 dark:text-blue-400",
+    bgColor: "bg-blue-50 dark:bg-blue-900/20",
+    borderColor: "border-blue-200 dark:border-blue-800",
+  },
+  {
+    id: "evaluating",
+    label: "Agentic Drug Safety Loop",
+    description: "Evaluating each candidate for drug interactions & toxicity",
+    agentAction: "Agent evaluating each drug candidate for safety",
+    detail: "For each candidate, the agent runs TxGemma-2B molecular toxicity prediction using PubChem SMILES strings across 6 safety endpoints.",
+    subSteps: ["Running TxGemma-2B on PubChem SMILES (6 endpoints)", "Evaluating: Skin Reaction, DILI, CYP2C9, CYP3A4, hERG, ClinTox", "Rejecting unsafe → flagging precautions"],
+    icon: ShieldCheck,
+    imagePath: "/pipeline/step-txgemma.svg",
+    source: "TxGemma-2B + PubChem",
+    accentColor: "text-amber-600 dark:text-amber-400",
+    bgColor: "bg-amber-50 dark:bg-amber-900/20",
+    borderColor: "border-amber-200 dark:border-amber-800",
+  },
+  {
+    id: "synthesizing",
+    label: "MedGemma Clinical Synthesis",
+    description: "Generating clinical report from safety findings",
+    agentAction: "MedGemma synthesizing clinical safety report",
+    detail: "Google's MedGemma-4B receives the pipeline context — the checked drugs, findings, and toxicities — and generates a structured clinical report.",
+    subSteps: ["Assembling safety context", "Generating clinical reasoning", "Formatting patient explanation"],
+    icon: Sparkles,
+    imagePath: "/pipeline/step-medgemma.svg",
+    source: "google/medgemma-4b-it",
+    accentColor: "text-emerald-600 dark:text-emerald-400",
+    bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
+    borderColor: "border-emerald-200 dark:border-emerald-800",
+  },
+];
+
+const STAGE_ORDER: PipelineStage[] = [
+  "checking",
+  "evaluating",
+  "synthesizing",
+  "complete",
+];
+
+function getStepStatus(
+  step: PipelineStage,
+  current: PipelineStage,
+): "pending" | "current" | "complete" {
+  const stepIdx = STAGE_ORDER.indexOf(step);
+  const currentIdx = STAGE_ORDER.indexOf(current);
+  if (stepIdx < currentIdx) return "complete";
+  if (stepIdx === currentIdx) return "current";
+  return "pending";
+}
 
 interface DrugCheckPanelProps {
   session: PatientSession;
@@ -44,6 +135,9 @@ export default function DrugCheckPanel({
   const medications = patient.medications;
 
   const [loading, setLoading] = useState(false);
+  const [stage, setStage] = useState<PipelineStage>(
+    session.result ? "complete" : "idle"
+  );
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<DrugCheckResponse | null>(
     session.result as DrugCheckResponse | null
@@ -105,11 +199,26 @@ export default function DrugCheckPanel({
     if (drugNames.length === 0) return;
 
     setError(null);
+    setResult(null);
     setLoading(true);
+    setStage("checking");
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
     try {
-      const response = await drugCheck(drugNames, medications);
+      timers.push(setTimeout(() => setStage("evaluating"), 3500));
+      timers.push(setTimeout(() => setStage("synthesizing"), 7000));
+
+      const minDuration = new Promise((r) => setTimeout(r, 10000));
+      const [response] = await Promise.all([
+        drugCheck(drugNames, medications),
+        minDuration,
+      ]);
+
+      timers.forEach(clearTimeout);
+
       setResult(response);
+      setStage("complete");
 
       const updatedSession: PatientSession = {
         ...session,
@@ -119,11 +228,122 @@ export default function DrugCheckPanel({
       onSessionUpdate(updatedSession);
       saveSession(updatedSession);
     } catch (err) {
+      timers.forEach(clearTimeout);
       setError(err instanceof Error ? err.message : "Drug check failed");
+      setStage("error");
     } finally {
       setLoading(false);
     }
   };
+
+  // ======================== LOADING STATE ========================
+  if (
+    stage !== "idle" &&
+    stage !== "complete" &&
+    stage !== "error" &&
+    !result
+  ) {
+    const currentStep = PIPELINE_STEPS.find((s) => s.id === stage) || PIPELINE_STEPS[0];
+    const currentIdx = STAGE_ORDER.indexOf(stage);
+    const StepIcon = currentStep.icon;
+
+    return (
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8">
+        <div className="w-full max-w-3xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="text-center space-y-1">
+            <h2 className="text-lg font-semibold tracking-tight">Agentic Pipeline</h2>
+            <p className="text-sm text-muted-foreground">
+              Step {currentIdx + 1} of {PIPELINE_STEPS.length} — {currentStep.agentAction}
+            </p>
+          </div>
+
+          {/* Progress bar */}
+          <div className="relative">
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-1000 ease-out"
+                style={{ width: `${((currentIdx + 0.5) / PIPELINE_STEPS.length) * 100}%` }}
+              />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-between px-0">
+              {PIPELINE_STEPS.map((step) => {
+                const status = getStepStatus(step.id, stage);
+                return (
+                  <div
+                    key={step.id}
+                    className={`h-3 w-3 rounded-full border-2 transition-all duration-300 ${status === "complete"
+                        ? "bg-emerald-500 border-emerald-500 scale-100"
+                        : status === "current"
+                          ? "bg-indigo-500 border-indigo-500 scale-125 ring-4 ring-indigo-500/20"
+                          : "bg-background border-muted-foreground/20 scale-90"
+                      }`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Active Step Card */}
+          <div className={`rounded-2xl border-2 ${currentStep.borderColor} ${currentStep.bgColor} overflow-hidden animate-slide-in transition-all duration-500`} key={currentStep.id}>
+            <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`h-10 w-10 rounded-xl ${currentStep.bgColor} border ${currentStep.borderColor} flex items-center justify-center`}>
+                  <StepIcon className={`h-5 w-5 ${currentStep.accentColor}`} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className={`text-sm font-bold ${currentStep.accentColor}`}>{currentStep.label}</h3>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">{currentStep.source}</p>
+                </div>
+              </div>
+              <Loader2 className={`h-5 w-5 animate-spin ${currentStep.accentColor}`} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-0">
+              <div className="bg-muted/30 flex items-center justify-center p-6 md:border-r border-border/30 min-h-[180px]">
+                <img
+                  src={currentStep.imagePath}
+                  alt={currentStep.label}
+                  className="max-h-40 max-w-full object-contain rounded-lg"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${currentStep.accentColor} mb-1.5`}>
+                    What the agent is doing
+                  </p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {currentStep.detail}
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  {currentStep.subSteps.map((sub, i) => (
+                    <div key={i} className="flex items-center gap-2 animate-slide-in" style={{ animationDelay: `${i * 0.3}s` }}>
+                      <ArrowRight className={`h-3 w-3 ${currentStep.accentColor} shrink-0 animate-pulse-dot`} style={{ animationDelay: `${i * 0.5}s` }} />
+                      <span className="text-xs text-muted-foreground">{sub}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ======================== RESULTS STATE ========================
 
 
 
@@ -221,9 +441,8 @@ export default function DrugCheckPanel({
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium capitalize">{drugName}</span>
-                                <span className={`text-[10px] uppercase tracking-widest font-bold ${
-                                  candidate?.status === "REJECTED" ? "text-red-500" : "text-muted-foreground"
-                                }`}>
+                                <span className={`text-[10px] uppercase tracking-widest font-bold ${candidate?.status === "REJECTED" ? "text-red-500" : "text-muted-foreground"
+                                  }`}>
                                   {candidate?.status || "avoided"}
                                 </span>
                               </div>
@@ -272,11 +491,24 @@ export default function DrugCheckPanel({
           </p>
         </div>
 
-        {error && (
+        {error && stage === "error" && (
           <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div className="flex items-start gap-2">
               <XCircle className="h-4 w-4 text-red-500 mt-0.5" />
-              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+              <div>
+                <p className="text-sm font-medium text-red-700 dark:text-red-400">{error}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 text-xs"
+                  onClick={() => {
+                    setError(null);
+                    setStage("idle");
+                  }}
+                >
+                  Try again
+                </Button>
+              </div>
             </div>
           </div>
         )}

@@ -217,6 +217,13 @@ RECOMMENDED TREATMENT: {selected_drug}"""
         safety_findings: list[SafetyFinding],
         rejected_drugs: list[dict],
     ) -> SynthesisReport:
+        # Strip markdown artifacts that MedGemma sometimes adds despite instructions
+        cleaned = response
+        cleaned = re.sub(r'\*\*', '', cleaned)     # **bold** markers
+        cleaned = re.sub(r'^---+\s*$', '', cleaned, flags=re.M)  # --- separators
+        cleaned = re.sub(r'^#+\s+', '', cleaned, flags=re.M)     # # headings
+        cleaned = cleaned.strip()
+
         tags = [
             "CLINICAL_SUMMARY",
             "RECOMMENDED_TREATMENT",
@@ -228,10 +235,13 @@ RECOMMENDED TREATMENT: {selected_drug}"""
         def extract(tag: str) -> str:
             m = re.search(
                 rf"{tag}:\s*(.*?)(?=\n(?:{tag_pattern}):|$)",
-                response,
+                cleaned,
                 re.S,
             )
-            return m.group(1).strip() if m else ""
+            val = m.group(1).strip() if m else ""
+            # Strip any remaining markdown artifacts from the value
+            val = val.strip('*').strip()
+            return val
 
         return SynthesisReport(
             clinical_summary=extract("CLINICAL_SUMMARY"),
@@ -242,6 +252,7 @@ RECOMMENDED TREATMENT: {selected_drug}"""
             safety_findings=safety_findings,
             rejected_drugs=rejected_drugs,
         )
+
 
     def _mock_synthesize(
         self,

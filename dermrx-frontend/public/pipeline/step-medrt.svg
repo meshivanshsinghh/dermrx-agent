@@ -8,5 +8,5 @@
   <path d="M40 85 L55 85 L55 80 L70 90 L55 100 L55 95 L40 95 Z" fill="#3b82f6" opacity="0.3"/>
   <rect x="80" y="80" width="90" height="30" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1"/>
   <text x="125" y="98" text-anchor="middle" font-family="system-ui" font-size="9" fill="#3b82f6">MED-RT Verified</text>
-  <text x="100" y="148" text-anchor="middle" font-family="system-ui" font-size="9" fill="#3b82f6">Place MED-RT/FDA image</text>
+  <text x="100" y="148" text-anchor="middle" font-family="system-ui" font-size="9" fill="#3b82f6">MED-RT/FDA</text>
 </svg>

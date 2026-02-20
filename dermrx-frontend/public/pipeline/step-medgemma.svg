@@ -10,5 +10,5 @@
   <text x="60" y="103" text-anchor="middle" font-family="system-ui" font-size="7" fill="#16a34a">Reasoning</text>
   <rect x="30" y="112" width="140" height="6" rx="2" fill="#d1fae5" opacity="0.4"/>
   <rect x="30" y="122" width="110" height="6" rx="2" fill="#d1fae5" opacity="0.3"/>
-  <text x="100" y="148" text-anchor="middle" font-family="system-ui" font-size="9" fill="#16a34a">Place MedGemma image</text>
+  <text x="100" y="148" text-anchor="middle" font-family="system-ui" font-size="9" fill="#16a34a">MedGemma</text>
 </svg>

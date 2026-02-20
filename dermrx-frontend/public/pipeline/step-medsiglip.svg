@@ -7,5 +7,5 @@
   <rect x="30" y="95" width="90" height="10" rx="5" fill="#8b5cf6" opacity="0.6"/>
   <rect x="30" y="115" width="140" height="10" rx="5" fill="#ede9fe"/>
   <rect x="30" y="115" width="50" height="10" rx="5" fill="#8b5cf6" opacity="0.3"/>
-  <text x="100" y="148" text-anchor="middle" font-family="system-ui" font-size="9" fill="#8b5cf6">Place MedSigLIP image</text>
+  <text x="100" y="148" text-anchor="middle" font-family="system-ui" font-size="9" fill="#8b5cf6">MedSigLIP image</text>
 </svg>

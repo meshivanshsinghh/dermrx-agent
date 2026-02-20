@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import {
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Utensils,
   HeartPulse,
   FlaskConical,
@@ -12,6 +13,9 @@ import {
   Shield,
   ShieldCheck,
   ShieldBan,
+  Search,
+  Database,
+  ExternalLink,
 } from "lucide-react";
 import { CandidateEvaluation, DDIFinding } from "@/lib/type";
 
@@ -585,7 +589,10 @@ function FindingCardDrug({ finding }: { finding: DDIFinding }) {
 
 /* ─────────────────────────────────────────────
    Category Section (collapsible, within drug card)
+   Includes pagination + search for food/disease with >10 items
    ───────────────────────────────────────────── */
+
+const PAGE_SIZE = 10;
 
 function CategorySection({
   category,
@@ -597,8 +604,35 @@ function CategorySection({
   defaultOpen: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(0);
   const meta = CATEGORY_META[category];
   const Icon = meta.icon;
+
+  const isPaginated = (category === "food" || category === "disease") && findings.length > PAGE_SIZE;
+
+  const filteredFindings = useMemo(() => {
+    if (!searchQuery.trim()) return findings;
+    const q = searchQuery.toLowerCase();
+    return findings.filter(
+      (f) =>
+        f.description?.toLowerCase().includes(q) ||
+        f.severity?.toLowerCase().includes(q) ||
+        f.mechanism?.toLowerCase().includes(q) ||
+        f.management?.toLowerCase().includes(q)
+    );
+  }, [findings, searchQuery]);
+
+  const totalPages = Math.ceil(filteredFindings.length / PAGE_SIZE);
+  const displayFindings = isPaginated
+    ? filteredFindings.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+    : filteredFindings;
+
+  // Reset page when search changes
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setPage(0);
+  };
 
   return (
     <div>
@@ -623,10 +657,61 @@ function CategorySection({
         </span>
       </button>
       {open && (
-        <div className="ml-6 space-y-2 pb-2">
-          {findings.map((f, i) => (
-            <FindingCardDrug key={i} finding={f} />
-          ))}
+        <div className="ml-6 pb-2">
+          {/* Search bar — only for food/disease with many entries */}
+          {isPaginated && (
+            <div className="relative mb-2">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder={`Search ${meta.label.toLowerCase()}...`}
+                className="w-full text-xs pl-7 pr-3 py-1.5 rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/40"
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {displayFindings.map((f, i) => (
+              <FindingCardDrug key={`${page}-${i}`} finding={f} />
+            ))}
+          </div>
+
+          {/* Pagination controls */}
+          {isPaginated && totalPages > 1 && (
+            <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/30">
+              <button
+                onClick={(e) => { e.stopPropagation(); setPage((p) => Math.max(0, p - 1)); }}
+                disabled={page === 0}
+                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="h-3 w-3" /> Previous
+              </button>
+              <span className="text-[10px] tabular-nums text-muted-foreground">
+                {page + 1} / {totalPages}
+                {searchQuery && (
+                  <span className="ml-1 text-muted-foreground/50">
+                    ({filteredFindings.length} results)
+                  </span>
+                )}
+              </span>
+              <button
+                onClick={(e) => { e.stopPropagation(); setPage((p) => Math.min(totalPages - 1, p + 1)); }}
+                disabled={page >= totalPages - 1}
+                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                Next <ChevronRight className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+
+          {/* No results state */}
+          {isPaginated && searchQuery && filteredFindings.length === 0 && (
+            <p className="text-xs text-muted-foreground/50 text-center py-2">
+              No matches for &ldquo;{searchQuery}&rdquo;
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -757,6 +842,81 @@ function DrugCard({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Data Sources — shows which APIs/models powered the analysis
+   ───────────────────────────────────────────── */
+
+const DATA_SOURCES = [
+  {
+    name: "DDInter 2.0",
+    description: "Drug-drug, food & disease interaction database",
+    icon: "/sources/ddinter.svg",
+    url: "http://ddinter.scbdd.com/",
+  },
+  {
+    name: "MED-RT",
+    description: "FDA/VA drug classification & therapy ontology",
+    icon: "/sources/medrt.svg",
+    url: "https://www.nlm.nih.gov/research/umls/rxnorm/",
+  },
+  {
+    name: "PubChem",
+    description: "NIH molecular structure & SMILES strings",
+    icon: "/sources/pubchem.svg",
+    url: "https://pubchem.ncbi.nlm.nih.gov/",
+  },
+  {
+    name: "TxGemma",
+    description: "Google AI molecular toxicity prediction model",
+    icon: "/sources/txgemma.svg",
+    url: "https://huggingface.co/google/txgemma-2b-predict",
+  },
+];
+
+function DataSources() {
+  return (
+    <div className="rounded-xl border bg-card shadow-sm overflow-hidden animate-slide-in">
+      <div className="px-5 pt-4 pb-3 flex items-center gap-3">
+        <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center">
+          <Database className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+        </div>
+        <div>
+          <h3 className="text-[13px] font-semibold tracking-tight">Data Sources</h3>
+          <p className="text-[10px] text-muted-foreground/60">Models &amp; databases powering this analysis</p>
+        </div>
+      </div>
+      <div className="px-4 pb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {DATA_SOURCES.map((source) => (
+            <a
+              key={source.name}
+              href={source.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex flex-col items-center gap-2 rounded-lg border border-border/40 bg-muted/20 px-3 py-3 hover:bg-muted/40 hover:border-border/60 hover:shadow-sm transition-all"
+            >
+              <img
+                src={source.icon}
+                alt={source.name}
+                className="h-10 w-10 object-contain"
+              />
+              <div className="text-center">
+                <p className="text-[11px] font-semibold text-foreground flex items-center gap-1 justify-center">
+                  {source.name}
+                  <ExternalLink className="h-2.5 w-2.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                </p>
+                <p className="text-[9px] text-muted-foreground/60 leading-tight mt-0.5">
+                  {source.description}
+                </p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -899,6 +1059,9 @@ export default function DrugEvaluationResults({
           ))}
         </div>
       </div>
+
+      {/* Data Sources */}
+      <DataSources />
     </div>
   );
 }
