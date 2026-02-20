@@ -129,7 +129,7 @@ export default function ChatPanel({
   // ── Collapsed state ──────────────────────────────
   if (collapsed) {
     return (
-      <div className="w-14 bg-sidebar-background border-l border-sidebar-border flex flex-col items-center py-4">
+      <div className="w-14 bg-sidebar-background border-l border-sidebar-border hidden lg:flex flex-col items-center py-4">
         <Button variant="ghost" size="icon" onClick={onToggleCollapse}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -145,7 +145,7 @@ export default function ChatPanel({
 
   // ── Expanded state ───────────────────────────────
   return (
-    <div className="w-80 bg-sidebar-background border-l border-sidebar-border flex flex-col h-full">
+    <div className="w-full lg:w-80 bg-sidebar-background lg:border-l border-sidebar-border flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
         <div className="flex items-center gap-2">

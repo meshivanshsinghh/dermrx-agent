@@ -13,7 +13,8 @@ import {
   deletePatient as deletePatientStorage, deleteSession as deleteSessionStorage,
   generateSessionId,
 } from "@/lib/storage";
-import { Stethoscope, Pill, Pencil, AlertTriangle, FlaskConical, Star, Users, Home as HomeIcon } from "lucide-react";
+import { Stethoscope, Pill, Pencil, AlertTriangle, FlaskConical, Star, Users, Home as HomeIcon, Menu, MessageSquare, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /* ─────────────────────────────────────────────
    Demo Scenarios
@@ -136,6 +137,8 @@ export default function Home() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [chatCollapsed, setChatCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"analyze" | "drug_check">("analyze");
   const [dialogPatient, setDialogPatient] = useState<Patient | null>(null);
@@ -235,15 +238,33 @@ export default function Home() {
 
   // Dialog submit → save patient + optionally create session
   const handleDialogSubmit = useCallback((patient: Patient, mode: "analyze" | "drug_check") => {
-    savePatient(patient);
+    // Check if a patient with the same name already exists (case-insensitive)
+    const existingPatient = patients.find(
+      (p) => p.id !== patient.id && p.name.trim().toLowerCase() === patient.name.trim().toLowerCase()
+    );
+
+    let finalPatient = patient;
+    if (existingPatient && !dialogEditOnly) {
+      // Merge: update existing patient with new details but keep their ID
+      finalPatient = {
+        ...existingPatient,
+        age: patient.age ?? existingPatient.age,
+        sex: patient.sex ?? existingPatient.sex,
+        medications: patient.medications.length > 0 ? patient.medications : existingPatient.medications,
+        notes: patient.notes ?? existingPatient.notes,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    savePatient(finalPatient);
     setPatients((prev) => {
-      const idx = prev.findIndex((p) => p.id === patient.id);
-      if (idx >= 0) { const next = [...prev]; next[idx] = patient; return next; }
-      return [patient, ...prev];
+      const idx = prev.findIndex((p) => p.id === finalPatient.id);
+      if (idx >= 0) { const next = [...prev]; next[idx] = finalPatient; return next; }
+      return [finalPatient, ...prev];
     });
     if (!dialogEditOnly) {
       const newSession: PatientSession = {
-        id: generateSessionId(), patientId: patient.id, mode,
+        id: generateSessionId(), patientId: finalPatient.id, mode,
         name: mode === "analyze" ? "New Analysis" : "New Drug Check",
         createdAt: new Date().toISOString(), result: null, imagePreview: null,
       };
@@ -253,7 +274,7 @@ export default function Home() {
     }
     setDialogOpen(false);
     setDialogEditOnly(false);
-  }, [dialogEditOnly]);
+  }, [dialogEditOnly, patients]);
 
   const handleDeleteSession = useCallback((id: string) => {
     deleteSessionStorage(id);
@@ -345,48 +366,87 @@ export default function Home() {
 
   return (
     <div className="h-screen flex overflow-hidden bg-background text-foreground">
-      <Sidebar
-        patients={patients} sessions={sessions} activeSessionId={activeSessionId}
-        onSelectSession={setActiveSessionId} onNewSession={handleNewSession}
-        onNewSessionForPatient={handleNewSessionForPatient}
-        onDeleteSession={handleDeleteSession} onDeletePatient={handleDeletePatient}
-        collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        onGoHome={() => setActiveSessionId(null)}
-      />
+      {/* ── Mobile sidebar overlay ── */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
+          <div className="absolute inset-y-0 left-0 w-72 z-50">
+            <Sidebar
+              patients={patients} sessions={sessions} activeSessionId={activeSessionId}
+              onSelectSession={(id) => { setActiveSessionId(id); setMobileSidebarOpen(false); }}
+              onNewSession={(mode) => { handleNewSession(mode); setMobileSidebarOpen(false); }}
+              onNewSessionForPatient={(pid, mode) => { handleNewSessionForPatient(pid, mode); setMobileSidebarOpen(false); }}
+              onDeleteSession={handleDeleteSession} onDeletePatient={handleDeletePatient}
+              collapsed={false} onToggleCollapse={() => setMobileSidebarOpen(false)}
+              onGoHome={() => { setActiveSessionId(null); setMobileSidebarOpen(false); }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Desktop sidebar (hidden on mobile) ── */}
+      <div className="hidden lg:block">
+        <Sidebar
+          patients={patients} sessions={sessions} activeSessionId={activeSessionId}
+          onSelectSession={setActiveSessionId} onNewSession={handleNewSession}
+          onNewSessionForPatient={handleNewSessionForPatient}
+          onDeleteSession={handleDeleteSession} onDeletePatient={handleDeletePatient}
+          collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onGoHome={() => setActiveSessionId(null)}
+        />
+      </div>
 
       <div className="flex-1 flex flex-col min-w-0">
         {activeSession && activePatient ? (
           <>
-            <div className="h-14 border-b flex items-center justify-between px-6 shrink-0">
-              <div className="flex items-center gap-3">
+            <div className="h-14 border-b flex items-center justify-between px-3 sm:px-6 shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                {/* Mobile hamburger */}
+                <Button
+                  variant="ghost" size="icon"
+                  className="lg:hidden h-8 w-8 shrink-0"
+                  onClick={() => setMobileSidebarOpen(true)}
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
                 <button
                   onClick={() => setActiveSessionId(null)}
-                  className="h-7 w-7 flex items-center justify-center rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors"
+                  className="hidden sm:flex h-7 w-7 items-center justify-center rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors shrink-0"
                   title="Back to Home"
                 >
                   <HomeIcon className="h-3.5 w-3.5" />
                 </button>
-                <div className="h-4 w-px bg-border" />
+                <div className="hidden sm:block h-4 w-px bg-border" />
                 {activeSession.mode === "analyze"
-                  ? <Stethoscope className="h-4 w-4 text-indigo-500" />
-                  : <Pill className="h-4 w-4 text-emerald-500" />}
-                <div>
+                  ? <Stethoscope className="h-4 w-4 text-indigo-500 shrink-0" />
+                  : <Pill className="h-4 w-4 text-emerald-500 shrink-0" />}
+                <div className="min-w-0">
                   <h2 className="text-sm font-semibold truncate">{activePatient.name}</h2>
-                  <p className="text-[10px] text-muted-foreground">
-                    {activeSession.name} · {activePatient.medications.length > 0 ? activePatient.medications.join(", ") : "No medications"}
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {activeSession.name} · {activePatient.medications.length > 0 ? activePatient.medications.slice(0, 3).join(", ") + (activePatient.medications.length > 3 ? ` +${activePatient.medications.length - 3}` : "") : "No medications"}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 <button
                   onClick={() => handleEditPatient(activePatient)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                  className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                   title="Edit patient details & medications"
                 >
                   <Pencil className="h-3 w-3" />
-                  Edit Patient
+                  <span className="hidden sm:inline">Edit Patient</span>
                 </button>
-                <span className="text-xs text-muted-foreground">{new Date(activeSession.createdAt).toLocaleString()}</span>
+                <span className="hidden md:inline text-xs text-muted-foreground">{new Date(activeSession.createdAt).toLocaleString()}</span>
+                {/* Mobile chat toggle */}
+                {currentResult && (
+                  <Button
+                    variant="ghost" size="icon"
+                    className="lg:hidden h-8 w-8"
+                    onClick={() => setMobileChatOpen(true)}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -397,10 +457,17 @@ export default function Home() {
             )}
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
+          <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 overflow-y-auto">
+            {/* Mobile hamburger on home */}
+            <div className="lg:hidden self-start mb-4">
+              <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(true)}>
+                <Menu className="h-5 w-5" />
+              </Button>
+            </div>
+
             {/* Hero */}
             <div className="flex items-center gap-3 mb-6">
-              <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+              <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shrink-0">
                 <Stethoscope className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -423,7 +490,7 @@ export default function Home() {
               <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-3 text-center">
                 Launch a Demo Scenario
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {DEMO_SCENARIOS.map((scenario) => {
                   const Icon = scenario.accentIcon;
                   return (
@@ -488,9 +555,23 @@ export default function Home() {
         )}
       </div>
 
+      {/* ── Desktop chat panel (hidden on mobile) ── */}
       {currentResult && (
-        <ChatPanel collapsed={chatCollapsed} onToggleCollapse={() => setChatCollapsed(!chatCollapsed)} currentResult={currentResult} sessionId={activeSessionId} />
+        <div className="hidden lg:block">
+          <ChatPanel collapsed={chatCollapsed} onToggleCollapse={() => setChatCollapsed(!chatCollapsed)} currentResult={currentResult} sessionId={activeSessionId} />
+        </div>
       )}
+
+      {/* ── Mobile chat overlay ── */}
+      {mobileChatOpen && currentResult && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileChatOpen(false)} />
+          <div className="absolute inset-x-0 bottom-0 h-[80vh] z-50 rounded-t-2xl overflow-hidden shadow-2xl">
+            <ChatPanel collapsed={false} onToggleCollapse={() => setMobileChatOpen(false)} currentResult={currentResult} sessionId={activeSessionId} />
+          </div>
+        </div>
+      )}
+
       <NewPatientDialog open={dialogOpen} onClose={() => { setDialogOpen(false); setDialogEditOnly(false); }} onSubmit={handleDialogSubmit} initialMode={dialogMode} existingPatient={dialogPatient} editOnly={dialogEditOnly} />
     </div>
   );

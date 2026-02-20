@@ -12,8 +12,116 @@ import {
   Shield,
   ShieldCheck,
   ShieldBan,
+  ExternalLink,
 } from "lucide-react";
 import { CandidateEvaluation, DDIFinding } from "@/lib/type";
+
+/* ─────────────────────────────────────────────
+   Source Attribution Badge
+   ───────────────────────────────────────────── */
+
+interface SourceInfo {
+  name: string;
+  detail: string;
+  imagePath: string;  // placeholder: drop your image in public/sources/
+  url?: string;
+  accentColor: string;
+  bgColor: string;
+}
+
+const DDI_SOURCES: SourceInfo[] = [
+  {
+    name: "DDInter 2.0",
+    detail: "302K drug interactions",
+    imagePath: "/sources/ddinter.svg",
+    url: "https://ddinter2.scbdd.com",
+    accentColor: "text-rose-600 dark:text-rose-400",
+    bgColor: "bg-rose-50 dark:bg-rose-950/20",
+  },
+  {
+    name: "MED-RT",
+    detail: "FDA/VA drug database",
+    imagePath: "/sources/medrt.svg",
+    url: "https://mor.nlm.nih.gov/RxClass/",
+    accentColor: "text-blue-600 dark:text-blue-400",
+    bgColor: "bg-blue-50 dark:bg-blue-950/20",
+  },
+];
+
+const EVAL_SOURCES: SourceInfo[] = [
+  {
+    name: "DDInter 2.0",
+    detail: "Drug-drug interactions",
+    imagePath: "/sources/ddinter.svg",
+    url: "https://ddinter2.scbdd.com",
+    accentColor: "text-rose-600 dark:text-rose-400",
+    bgColor: "bg-rose-50 dark:bg-rose-950/20",
+  },
+  {
+    name: "TxGemma-2B",
+    detail: "Molecular toxicity prediction",
+    imagePath: "/sources/txgemma.svg",
+    url: "https://huggingface.co/google/txgemma-2b-predict",
+    accentColor: "text-purple-600 dark:text-purple-400",
+    bgColor: "bg-purple-50 dark:bg-purple-950/20",
+  },
+  {
+    name: "PubChem",
+    detail: "SMILES molecular strings",
+    imagePath: "/sources/pubchem.svg",
+    url: "https://pubchem.ncbi.nlm.nih.gov",
+    accentColor: "text-sky-600 dark:text-sky-400",
+    bgColor: "bg-sky-50 dark:bg-sky-950/20",
+  },
+  {
+    name: "MED-RT",
+    detail: "FDA/VA drug candidates",
+    imagePath: "/sources/medrt.svg",
+    url: "https://mor.nlm.nih.gov/RxClass/",
+    accentColor: "text-blue-600 dark:text-blue-400",
+    bgColor: "bg-blue-50 dark:bg-blue-950/20",
+  },
+];
+
+function SourceBadges({ sources, label }: { sources: SourceInfo[]; label: string }) {
+  return (
+    <div className="border-t border-border/40 px-4 sm:px-5 py-3 space-y-2">
+      <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40">
+        {label}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {sources.map((src) => (
+          <a
+            key={src.name}
+            href={src.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`group flex items-center gap-2 rounded-lg border border-border/50 ${src.bgColor} px-2.5 py-1.5 transition-all hover:shadow-sm hover:border-border`}
+          >
+            <img
+              src={src.imagePath}
+              alt={src.name}
+              className="h-4 w-4 rounded object-contain"
+              onError={(e) => {
+                // Hide broken image, show text-only
+                e.currentTarget.style.display = "none";
+              }}
+            />
+            <div className="min-w-0">
+              <span className={`text-[10px] font-semibold ${src.accentColor} leading-none`}>
+                {src.name}
+              </span>
+              <span className="text-[9px] text-muted-foreground/50 ml-1 hidden sm:inline">
+                {src.detail}
+              </span>
+            </div>
+            <ExternalLink className="h-2.5 w-2.5 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ─────────────────────────────────────────────
    Classification & Style Helpers
@@ -256,7 +364,7 @@ function CategorySection({
         </span>
       </button>
       {open && (
-        <div className="ml-6 space-y-2 pb-2">
+        <div className="ml-3 sm:ml-6 space-y-2 pb-2">
           {findings.map((f, i) => (
             <FindingCard key={i} finding={f} />
           ))}
@@ -426,7 +534,7 @@ function PatientWarnings({
       {open && (
         <div className="border-t px-5 pb-5 pt-4 space-y-4">
           {/* Severity Filter */}
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
             {(["all", "major", "moderate", "minor"] as SeverityFilter[]).map((f) => {
               const count =
                 f === "all"
@@ -474,6 +582,9 @@ function PatientWarnings({
           )}
         </div>
       )}
+
+      {/* Source attribution */}
+      <SourceBadges sources={DDI_SOURCES} label="Data Sources" />
     </div>
   );
 }
@@ -658,11 +769,11 @@ export default function DrugEvaluationResults({
       {/* Drug evaluation section */}
       <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="px-5 pt-5 pb-4 space-y-3">
+        <div className="px-3 sm:px-5 pt-4 sm:pt-5 pb-3 sm:pb-4 space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                <Shield className="h-[18px] w-[18px] text-indigo-600 dark:text-indigo-400" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
+                <Shield className="h-4 w-4 sm:h-[18px] sm:w-[18px] text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
                 <h3 className="text-[15px] font-semibold tracking-tight">
@@ -684,7 +795,7 @@ export default function DrugEvaluationResults({
           </div>
 
           {/* Summary counters */}
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs">
             {counts.REJECTED > 0 && (
               <span className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
@@ -712,7 +823,7 @@ export default function DrugEvaluationResults({
           </div>
 
           {/* Severity filter */}
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
             {(["all", "major", "moderate"] as SeverityFilter[]).map((f) => (
               <button
                 key={f}
@@ -745,6 +856,9 @@ export default function DrugEvaluationResults({
             />
           ))}
         </div>
+
+        {/* Source attribution */}
+        <SourceBadges sources={EVAL_SOURCES} label="Data Sources" />
       </div>
     </div>
   );

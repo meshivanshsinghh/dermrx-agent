@@ -129,9 +129,9 @@ export default function DrugCheckPanel({
 
   if (result) {
     return (
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-4 sm:space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Drug Safety Results</h2>
+          <h2 className="text-base sm:text-lg font-semibold">Drug Safety Results</h2>
         </div>
 
         {result.candidates_evaluated.length > 0 && (
@@ -145,7 +145,7 @@ export default function DrugCheckPanel({
         {/* Clinical Report from MedGemma */}
         {result.report && (
           <Card className="animate-slide-in overflow-hidden" style={{ animationDelay: "0.2s" }}>
-            <div className="px-6 pt-1 pb-6 space-y-5">
+            <div className="px-4 sm:px-6 pt-1 pb-4 sm:pb-6 space-y-4 sm:space-y-5">
               <div className="flex items-center gap-2">
                 <Brain className="h-4 w-4 text-indigo-500" />
                 <h3 className="text-[15px] font-semibold tracking-tight">
@@ -260,8 +260,8 @@ export default function DrugCheckPanel({
 
   // Input form
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-lg space-y-6">
+    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-lg space-y-4 sm:space-y-6">
         <div className="text-center space-y-1">
           <div className="mx-auto h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3">
             <Pill className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />

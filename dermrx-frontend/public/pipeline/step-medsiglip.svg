@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160" fill="none" viewBox="0 0 200 160">
+  <rect width="200" height="160" rx="12" fill="#faf5ff"/>
+  <rect x="30" y="25" width="60" height="60" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1.5"/>
+  <circle cx="60" cy="55" r="15" fill="#c4b5fd" opacity="0.5"/>
+  <path d="M110 35 H170 M110 50 H160 M110 65 H155" stroke="#c4b5fd" stroke-width="3" stroke-linecap="round"/>
+  <rect x="30" y="95" width="140" height="10" rx="5" fill="#ede9fe"/>
+  <rect x="30" y="95" width="90" height="10" rx="5" fill="#8b5cf6" opacity="0.6"/>
+  <rect x="30" y="115" width="140" height="10" rx="5" fill="#ede9fe"/>
+  <rect x="30" y="115" width="50" height="10" rx="5" fill="#8b5cf6" opacity="0.3"/>
+  <text x="100" y="148" text-anchor="middle" font-family="system-ui" font-size="9" fill="#8b5cf6">Place MedSigLIP image</text>
+</svg>

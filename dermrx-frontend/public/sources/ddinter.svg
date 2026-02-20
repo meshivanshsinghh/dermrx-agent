@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="12" fill="#EFF6FF"/>
+  <rect x="2" y="2" width="60" height="60" rx="10" stroke="#3B82F6" stroke-width="2" stroke-opacity="0.3"/>
+  <!-- Drug interaction arrows -->
+  <circle cx="22" cy="32" r="10" fill="#3B82F6" fill-opacity="0.15" stroke="#3B82F6" stroke-width="1.5"/>
+  <circle cx="42" cy="32" r="10" fill="#3B82F6" fill-opacity="0.15" stroke="#3B82F6" stroke-width="1.5"/>
+  <!-- Overlap region -->
+  <path d="M32 24.5c3.5 2.5 3.5 12.5 0 15" fill="#3B82F6" fill-opacity="0.2"/>
+  <!-- Arrows -->
+  <line x1="26" y1="32" x2="38" y2="32" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round"/>
+  <polyline points="35,29 38,32 35,35" fill="none" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Text -->
+  <text x="32" y="54" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7" font-weight="700" fill="#3B82F6">DDInter</text>
+</svg>
