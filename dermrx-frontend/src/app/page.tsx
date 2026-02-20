@@ -132,6 +132,7 @@ const DEMO_SCENARIOS = [
 export default function Home() {
   const [appReady, setAppReady] = useState(false);
   const [isMockMode, setIsMockMode] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [sessions, setSessions] = useState<PatientSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -144,8 +145,23 @@ export default function Home() {
   const [dialogPatient, setDialogPatient] = useState<Patient | null>(null);
   const [dialogEditOnly, setDialogEditOnly] = useState(false);
 
-  const handleStartupReady = useCallback((mockMode: boolean) => {
+  const handleStartupReady = useCallback(async (mockMode: boolean, demoMode?: boolean) => {
     setIsMockMode(mockMode);
+
+    if (demoMode) {
+      setIsDemoMode(true);
+      try {
+        const res = await fetch("/demo-data.json");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.patients) setPatients(data.patients);
+          if (data.sessions) setSessions(data.sessions);
+        }
+      } catch (err) {
+        console.error("Failed to load demo data", err);
+      }
+    }
+
     setAppReady(true);
   }, []);
 
@@ -365,214 +381,227 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen flex overflow-hidden bg-background text-foreground">
-      {/* ── Mobile sidebar overlay ── */}
-      {mobileSidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-72 z-50">
-            <Sidebar
-              patients={patients} sessions={sessions} activeSessionId={activeSessionId}
-              onSelectSession={(id) => { setActiveSessionId(id); setMobileSidebarOpen(false); }}
-              onNewSession={(mode) => { handleNewSession(mode); setMobileSidebarOpen(false); }}
-              onNewSessionForPatient={(pid, mode) => { handleNewSessionForPatient(pid, mode); setMobileSidebarOpen(false); }}
-              onDeleteSession={handleDeleteSession} onDeletePatient={handleDeletePatient}
-              collapsed={false} onToggleCollapse={() => setMobileSidebarOpen(false)}
-              onGoHome={() => { setActiveSessionId(null); setMobileSidebarOpen(false); }}
-            />
-          </div>
+    <div className="h-screen flex flex-col overflow-hidden bg-background text-foreground">
+      {/* ── GLOBAL DEMO MODE BANNER ── */}
+      {isDemoMode && (
+        <div className="bg-amber-500 text-white px-4 py-2 text-center text-xs sm:text-sm font-medium shrink-0 flex items-center justify-center gap-2 relative z-[60]">
+          <AlertTriangle className="h-4 w-4" />
+          <span>
+            <strong>Read-Only Demo Mode Active:</strong> The live AI backend has been paused for the judging period. You are viewing pre-computed capabilities. Note: Patient creation and live chats are disabled.
+          </span>
         </div>
       )}
 
-      {/* ── Desktop sidebar (hidden on mobile) ── */}
-      <div className="hidden lg:block">
-        <Sidebar
-          patients={patients} sessions={sessions} activeSessionId={activeSessionId}
-          onSelectSession={setActiveSessionId} onNewSession={handleNewSession}
-          onNewSessionForPatient={handleNewSessionForPatient}
-          onDeleteSession={handleDeleteSession} onDeletePatient={handleDeletePatient}
-          collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          onGoHome={() => setActiveSessionId(null)}
-        />
-      </div>
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* ── Mobile sidebar overlay ── */}
+        {mobileSidebarOpen && (
+          <div className="fixed inset-0 z-40 lg:hidden">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
+            <div className="absolute inset-y-0 left-0 w-72 z-50">
+              <Sidebar
+                patients={patients} sessions={sessions} activeSessionId={activeSessionId}
+                onSelectSession={(id) => { setActiveSessionId(id); setMobileSidebarOpen(false); }}
+                onNewSession={(mode) => { handleNewSession(mode); setMobileSidebarOpen(false); }}
+                onNewSessionForPatient={(pid, mode) => { handleNewSessionForPatient(pid, mode); setMobileSidebarOpen(false); }}
+                onDeleteSession={handleDeleteSession} onDeletePatient={handleDeletePatient}
+                collapsed={false} onToggleCollapse={() => setMobileSidebarOpen(false)}
+                onGoHome={() => { setActiveSessionId(null); setMobileSidebarOpen(false); }}
+              />
+            </div>
+          </div>
+        )}
 
-      <div className="flex-1 flex flex-col min-w-0">
-        {activeSession && activePatient ? (
-          <>
-            <div className="h-14 border-b flex items-center justify-between px-3 sm:px-6 shrink-0">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                {/* Mobile hamburger */}
-                <Button
-                  variant="ghost" size="icon"
-                  className="lg:hidden h-8 w-8 shrink-0"
-                  onClick={() => setMobileSidebarOpen(true)}
-                >
-                  <Menu className="h-4 w-4" />
+        {/* ── Desktop sidebar (hidden on mobile) ── */}
+        <div className="hidden lg:block">
+          <Sidebar
+            patients={patients} sessions={sessions} activeSessionId={activeSessionId}
+            onSelectSession={setActiveSessionId}
+            onNewSession={(mode) => { if (!isDemoMode) { handleNewSession(mode); } else { alert("Patient creation is disabled in Read-Only Demo Mode."); } }}
+            onNewSessionForPatient={(pid, mode) => { if (!isDemoMode) { handleNewSessionForPatient(pid, mode); } else { alert("New analysis runs are disabled in Read-Only Demo Mode."); } }}
+            onDeleteSession={handleDeleteSession} onDeletePatient={handleDeletePatient}
+            collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onGoHome={() => setActiveSessionId(null)}
+          />
+        </div>
+
+        <div className="flex-1 flex flex-col min-w-0">
+          {activeSession && activePatient ? (
+            <>
+              <div className="h-14 border-b flex items-center justify-between px-3 sm:px-6 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  {/* Mobile hamburger */}
+                  <Button
+                    variant="ghost" size="icon"
+                    className="lg:hidden h-8 w-8 shrink-0"
+                    onClick={() => setMobileSidebarOpen(true)}
+                  >
+                    <Menu className="h-4 w-4" />
+                  </Button>
+                  <button
+                    onClick={() => setActiveSessionId(null)}
+                    className="hidden sm:flex h-7 w-7 items-center justify-center rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors shrink-0"
+                    title="Back to Home"
+                  >
+                    <HomeIcon className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="hidden sm:block h-4 w-px bg-border" />
+                  {activeSession.mode === "analyze"
+                    ? <Stethoscope className="h-4 w-4 text-indigo-500 shrink-0" />
+                    : <Pill className="h-4 w-4 text-emerald-500 shrink-0" />}
+                  <div className="min-w-0">
+                    <h2 className="text-sm font-semibold truncate">{activePatient.name}</h2>
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {activeSession.name} · {activePatient.medications.length > 0 ? activePatient.medications.slice(0, 3).join(", ") + (activePatient.medications.length > 3 ? ` +${activePatient.medications.length - 3}` : "") : "No medications"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                  <button
+                    onClick={() => { if (!isDemoMode) handleEditPatient(activePatient); else alert("Editing patients is disabled in Read-Only Demo Mode."); }}
+                    className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                    title="Edit patient details & medications"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    <span className="hidden sm:inline">Edit Patient</span>
+                  </button>
+                  <span className="hidden md:inline text-xs text-muted-foreground">{new Date(activeSession.createdAt).toLocaleString()}</span>
+                  {/* Mobile chat toggle */}
+                  {currentResult && (
+                    <Button
+                      variant="ghost" size="icon"
+                      className="lg:hidden h-8 w-8"
+                      onClick={() => setMobileChatOpen(true)}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {activeSession.mode === "analyze" ? (
+                <AnalyzePanel key={activeSession.id} session={activeSession} patient={activePatient} onSessionUpdate={handleSessionUpdate} isDemoMode={isDemoMode} />
+              ) : (
+                <DrugCheckPanel key={activeSession.id} session={activeSession} patient={activePatient} onSessionUpdate={handleSessionUpdate} isDemoMode={isDemoMode} />
+              )}
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 overflow-y-auto">
+              {/* Mobile hamburger on home */}
+              <div className="lg:hidden self-start mb-4">
+                <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(true)}>
+                  <Menu className="h-5 w-5" />
                 </Button>
-                <button
-                  onClick={() => setActiveSessionId(null)}
-                  className="hidden sm:flex h-7 w-7 items-center justify-center rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors shrink-0"
-                  title="Back to Home"
-                >
-                  <HomeIcon className="h-3.5 w-3.5" />
-                </button>
-                <div className="hidden sm:block h-4 w-px bg-border" />
-                {activeSession.mode === "analyze"
-                  ? <Stethoscope className="h-4 w-4 text-indigo-500 shrink-0" />
-                  : <Pill className="h-4 w-4 text-emerald-500 shrink-0" />}
-                <div className="min-w-0">
-                  <h2 className="text-sm font-semibold truncate">{activePatient.name}</h2>
-                  <p className="text-[10px] text-muted-foreground truncate">
-                    {activeSession.name} · {activePatient.medications.length > 0 ? activePatient.medications.slice(0, 3).join(", ") + (activePatient.medications.length > 3 ? ` +${activePatient.medications.length - 3}` : "") : "No medications"}
+              </div>
+
+              {/* Hero */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shrink-0">
+                  <Stethoscope className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-lg font-bold leading-tight">DermRx Agent</h1>
+                    {isMockMode && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">
+                        Mock
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    AI-powered dermatology diagnosis &amp; agentic drug safety
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                <button
-                  onClick={() => handleEditPatient(activePatient)}
-                  className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
-                  title="Edit patient details & medications"
-                >
-                  <Pencil className="h-3 w-3" />
-                  <span className="hidden sm:inline">Edit Patient</span>
-                </button>
-                <span className="hidden md:inline text-xs text-muted-foreground">{new Date(activeSession.createdAt).toLocaleString()}</span>
-                {/* Mobile chat toggle */}
-                {currentResult && (
-                  <Button
-                    variant="ghost" size="icon"
-                    className="lg:hidden h-8 w-8"
-                    onClick={() => setMobileChatOpen(true)}
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
 
-            {activeSession.mode === "analyze" ? (
-              <AnalyzePanel key={activeSession.id} session={activeSession} patient={activePatient} onSessionUpdate={handleSessionUpdate} />
-            ) : (
-              <DrugCheckPanel key={activeSession.id} session={activeSession} patient={activePatient} onSessionUpdate={handleSessionUpdate} />
-            )}
-          </>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 overflow-y-auto">
-            {/* Mobile hamburger on home */}
-            <div className="lg:hidden self-start mb-4">
-              <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(true)}>
-                <Menu className="h-5 w-5" />
-              </Button>
-            </div>
-
-            {/* Hero */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shrink-0">
-                <Stethoscope className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-bold leading-tight">DermRx Agent</h1>
-                  {isMockMode && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">
-                      Mock
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  AI-powered dermatology diagnosis &amp; agentic drug safety
+              {/* Demo Scenario Cards */}
+              <div className="w-full max-w-3xl mb-8">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-3 text-center">
+                  Launch a Demo Scenario
                 </p>
-              </div>
-            </div>
-
-            {/* Demo Scenario Cards */}
-            <div className="w-full max-w-3xl mb-8">
-              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-3 text-center">
-                Launch a Demo Scenario
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                {DEMO_SCENARIOS.map((scenario) => {
-                  const Icon = scenario.accentIcon;
-                  return (
-                    <button
-                      key={scenario.id}
-                      onClick={() => handleLoadDemo(scenario)}
-                      className={`relative flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all ${scenario.borderColor} ${scenario.bgColor}`}
-                    >
-                      {/* Avatar + Badge row */}
-                      <div className="flex items-center justify-between w-full">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${scenario.badgeColor}`}>
-                          {scenario.badge}
-                        </span>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={scenario.avatarPath}
-                          alt={scenario.patient.name}
-                          className="h-10 w-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm object-cover bg-slate-100 dark:bg-slate-800"
-                        />
-                      </div>
-
-                      {/* Icon + Title */}
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-lg bg-white/80 dark:bg-white/10 flex items-center justify-center shadow-sm">
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold leading-tight">{scenario.title}</p>
-                          <p className="text-[10px] text-muted-foreground">{scenario.subtitle}</p>
-                        </div>
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {scenario.description}
-                      </p>
-
-                      {/* Expected outcome hint */}
-                      <p className="w-full mt-auto pt-2 text-[10px] text-muted-foreground/70 italic leading-snug">
-                        {scenario.expectedResult}
-                      </p>
-
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {scenario.tags.map((tag, i) => (
-                          <span
-                            key={tag}
-                            className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${scenario.tagColors[i]}`}
-                          >
-                            {tag}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                  {DEMO_SCENARIOS.map((scenario) => {
+                    const Icon = scenario.accentIcon;
+                    return (
+                      <button
+                        key={scenario.id}
+                        onClick={() => handleLoadDemo(scenario)}
+                        className={`relative flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all ${scenario.borderColor} ${scenario.bgColor}`}
+                      >
+                        {/* Avatar + Badge row */}
+                        <div className="flex items-center justify-between w-full">
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${scenario.badgeColor}`}>
+                            {scenario.badge}
                           </span>
-                        ))}
-                      </div>
-                    </button>
-                  );
-                })}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={scenario.avatarPath}
+                            alt={scenario.patient.name}
+                            className="h-10 w-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm object-cover bg-slate-100 dark:bg-slate-800"
+                          />
+                        </div>
+
+                        {/* Icon + Title */}
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-lg bg-white/80 dark:bg-white/10 flex items-center justify-center shadow-sm">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold leading-tight">{scenario.title}</p>
+                            <p className="text-[10px] text-muted-foreground">{scenario.subtitle}</p>
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {scenario.description}
+                        </p>
+
+                        {/* Expected outcome hint */}
+                        <p className="w-full mt-auto pt-2 text-[10px] text-muted-foreground/70 italic leading-snug">
+                          {scenario.expectedResult}
+                        </p>
+
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {scenario.tags.map((tag, i) => (
+                            <span
+                              key={tag}
+                              className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${scenario.tagColors[i]}`}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
+
             </div>
+          )}
+        </div>
 
-
+        {/* ── Desktop chat panel (hidden on mobile) ── */}
+        {currentResult && (
+          <div className="hidden lg:block">
+            <ChatPanel collapsed={chatCollapsed} onToggleCollapse={() => setChatCollapsed(!chatCollapsed)} currentResult={currentResult} sessionId={activeSessionId} isDemoMode={isDemoMode} />
           </div>
         )}
-      </div>
 
-      {/* ── Desktop chat panel (hidden on mobile) ── */}
-      {currentResult && (
-        <div className="hidden lg:block">
-          <ChatPanel collapsed={chatCollapsed} onToggleCollapse={() => setChatCollapsed(!chatCollapsed)} currentResult={currentResult} sessionId={activeSessionId} />
-        </div>
-      )}
-
-      {/* ── Mobile chat overlay ── */}
-      {mobileChatOpen && currentResult && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileChatOpen(false)} />
-          <div className="absolute inset-x-0 bottom-0 h-[80vh] z-50 rounded-t-2xl overflow-hidden shadow-2xl">
-            <ChatPanel collapsed={false} onToggleCollapse={() => setMobileChatOpen(false)} currentResult={currentResult} sessionId={activeSessionId} />
+        {/* ── Mobile chat overlay ── */}
+        {mobileChatOpen && currentResult && (
+          <div className="fixed inset-0 z-40 lg:hidden">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setMobileChatOpen(false)} />
+            <div className="absolute inset-x-0 bottom-0 h-[80vh] z-50 rounded-t-2xl overflow-hidden shadow-2xl">
+              <ChatPanel collapsed={false} onToggleCollapse={() => setMobileChatOpen(false)} currentResult={currentResult} sessionId={activeSessionId} isDemoMode={isDemoMode} />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <NewPatientDialog open={dialogOpen} onClose={() => { setDialogOpen(false); setDialogEditOnly(false); }} onSubmit={handleDialogSubmit} initialMode={dialogMode} existingPatient={dialogPatient} editOnly={dialogEditOnly} />
+        <NewPatientDialog open={dialogOpen} onClose={() => { setDialogOpen(false); setDialogEditOnly(false); }} onSubmit={handleDialogSubmit} initialMode={dialogMode} existingPatient={dialogPatient} editOnly={dialogEditOnly} />
+      </div>
     </div>
   );
 }

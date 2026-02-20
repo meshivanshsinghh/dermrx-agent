@@ -27,6 +27,7 @@ interface ChatPanelProps {
   onToggleCollapse: () => void;
   currentResult: AnalyzeResponse | DrugCheckResponse | null;
   sessionId: string | null;
+  isDemoMode?: boolean;
 }
 
 const SUGGESTIONS = [
@@ -43,6 +44,7 @@ export default function ChatPanel({
   onToggleCollapse,
   currentResult,
   sessionId,
+  isDemoMode,
 }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -346,9 +348,9 @@ export default function ChatPanel({
                     .map((suggestion) => (
                       <button
                         key={suggestion}
-                        className="text-[10px] px-2 py-1 rounded-full border border-border hover:bg-accent transition-colors"
+                        className="text-[10px] px-2 py-1 rounded-full border border-border hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => handleSend(suggestion)}
-                        disabled={isLoading}
+                        disabled={isLoading || isDemoMode}
                       >
                         {suggestion}
                       </button>
@@ -378,15 +380,15 @@ export default function ChatPanel({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !isLoading && handleSend()}
             placeholder={
-              hasResult ? "Ask MedGemma..." : "Analysis required..."
+              isDemoMode ? "Live chat is disabled in Demo Mode." : hasResult ? "Ask MedGemma..." : "Analysis required..."
             }
-            disabled={!hasResult || isLoading}
+            disabled={!hasResult || isLoading || isDemoMode}
             className="flex-1 px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <Button
             size="icon"
             onClick={() => handleSend()}
-            disabled={!input.trim() || !hasResult || isLoading}
+            disabled={!input.trim() || !hasResult || isLoading || isDemoMode}
             className="shrink-0"
           >
             {isLoading ? (

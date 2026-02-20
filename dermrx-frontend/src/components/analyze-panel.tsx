@@ -43,6 +43,7 @@ interface AnalyzePanelProps {
   session: PatientSession;
   patient: Patient;
   onSessionUpdate: (session: PatientSession) => void;
+  isDemoMode?: boolean;
 }
 
 type PipelineStage =
@@ -167,6 +168,7 @@ export default function AnalyzePanel({
   session,
   patient,
   onSessionUpdate,
+  isDemoMode,
 }: AnalyzePanelProps) {
   // Fix for historical runs that had leaked markdown (e.g. Margaret Chen's case)
   const cleanReportText = (text?: string | null) => {
@@ -1079,12 +1081,12 @@ export default function AnalyzePanel({
 
         {/* Upload Area */}
         <div
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleFileDrop}
+          onDragOver={(e) => { if (!isDemoMode) e.preventDefault(); }}
+          onDrop={(e) => { if (!isDemoMode) handleFileDrop(e); }}
           className={`border-2 border-dashed rounded-xl transition-colors ${preview
             ? "border-border bg-muted/30 p-6"
             : "border-muted-foreground/20 hover:border-foreground/30 hover:bg-muted/20 p-0"
-            }`}
+            } ${isDemoMode ? "opacity-50 pointer-events-none" : ""}`}
         >
           {preview ? (
             <div className="space-y-3 text-center">
@@ -1133,6 +1135,7 @@ export default function AnalyzePanel({
                 type="file"
                 accept="image/*"
                 className="hidden"
+                disabled={isDemoMode}
                 onChange={handleFileSelect}
               />
             </label>
@@ -1159,12 +1162,12 @@ export default function AnalyzePanel({
         {/* Analyze Button */}
         <Button
           onClick={handleAnalyze}
-          disabled={!file || (stage !== "idle" && stage !== "error")}
+          disabled={!file || (stage !== "idle" && stage !== "error") || isDemoMode}
           className="w-full bg-foreground hover:bg-foreground/90 text-background"
           size="lg"
         >
           <Upload className="h-4 w-4 mr-2" />
-          Analyze Skin Image
+          {isDemoMode ? "Analysis Disabled in Demo Mode" : "Analyze Skin Image"}
         </Button>
 
         <p className="text-[10px] text-center text-muted-foreground">

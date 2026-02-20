@@ -97,6 +97,13 @@ const PIPELINE_STEPS: PipelineStep[] = [
   },
 ];
 
+interface DrugCheckPanelProps {
+  session: PatientSession;
+  patient: Patient;
+  onSessionUpdate: (session: PatientSession) => void;
+  isDemoMode?: boolean;
+}
+
 const STAGE_ORDER: PipelineStage[] = [
   "checking",
   "evaluating",
@@ -125,6 +132,7 @@ export default function DrugCheckPanel({
   session,
   patient,
   onSessionUpdate,
+  isDemoMode,
 }: DrugCheckPanelProps) {
   // Fix for historical runs that had leaked markdown (e.g. Margaret Chen's case)
   const cleanReportText = (text?: string | null) => {
@@ -539,10 +547,11 @@ export default function DrugCheckPanel({
                     suggestions.length > 0 && setShowSuggestions(true)
                   }
                   placeholder="Search drug name..."
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                  disabled={isDemoMode}
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
-              <Button variant="outline" size="sm" onClick={() => addDrug()}>
+              <Button variant="outline" size="sm" onClick={() => addDrug()} disabled={isDemoMode}>
                 Add
               </Button>
             </div>
@@ -612,7 +621,7 @@ export default function DrugCheckPanel({
         {/* Check Button */}
         <Button
           onClick={handleCheck}
-          disabled={drugNames.length === 0 || loading}
+          disabled={drugNames.length === 0 || loading || isDemoMode}
           className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
           size="lg"
         >
@@ -621,7 +630,7 @@ export default function DrugCheckPanel({
           ) : (
             <Shield className="h-4 w-4 mr-2" />
           )}
-          Check Drug Safety
+          {isDemoMode ? "Checks Disabled in Demo Mode" : "Check Drug Safety"}
         </Button>
 
         <p className="text-[10px] text-center text-muted-foreground">

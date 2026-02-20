@@ -16,7 +16,7 @@ import {
 import { checkHealth } from "@/lib/api";
 
 interface StartupLoaderProps {
-  onReady: (mockMode: boolean) => void;
+  onReady: (mockMode: boolean, demoMode?: boolean) => void;
 }
 
 interface LoadingStep {
@@ -104,7 +104,7 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
           return;
         }
         setError(
-          "Cannot connect to the DermRx backend. Make sure the server is running on port 8000.",
+          "Cannot connect to the live AI backend. The server may be paused for the judging period.",
         );
         return;
       }
@@ -187,9 +187,8 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-500 ${
-        fadeOut ? "opacity-0" : "opacity-100"
-      }`}
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-500 ${fadeOut ? "opacity-0" : "opacity-100"
+        }`}
     >
       {/* Subtle animated background */}
       <div className="absolute inset-0 overflow-hidden">
@@ -222,19 +221,35 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
           </div>
         </div>
 
-        {/* Error state */}
+        {/* Error state & Demo Mode Fallback */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-xl p-4 text-center space-y-2">
-            <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-            <button
-              onClick={() => {
-                setError(null);
-                setRetryCount(0);
-              }}
-              className="text-xs font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 underline"
-            >
-              Retry connection
-            </button>
+          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-5 text-center space-y-4">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-amber-800 dark:text-amber-400">Backend Offline</p>
+              <p className="text-xs text-amber-700/80 dark:text-amber-400/80">{error}</p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  setFadeOut(true);
+                  setTimeout(() => onReady(false, true), 500);
+                }}
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+              >
+                Launch Demo Mode (Read-Only)
+              </button>
+
+              <button
+                onClick={() => {
+                  setError(null);
+                  setRetryCount(0);
+                }}
+                className="text-xs font-medium text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 underline py-1"
+              >
+                Retry connection
+              </button>
+            </div>
           </div>
         )}
 
@@ -247,13 +262,12 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
               return (
                 <div
                   key={step.id}
-                  className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-500 ${
-                    status === "current"
+                  className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-500 ${status === "current"
                       ? "bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800"
                       : status === "complete"
                         ? "bg-emerald-50/50 dark:bg-emerald-900/5"
                         : ""
-                  }`}
+                    }`}
                   style={{
                     opacity: status === "pending" ? 0.4 : 1,
                     transform: status === "pending" ? "translateX(4px)" : "translateX(0)",
@@ -278,22 +292,20 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <Icon
-                        className={`h-3.5 w-3.5 ${
-                          status === "complete"
+                        className={`h-3.5 w-3.5 ${status === "complete"
                             ? "text-emerald-500"
                             : status === "current"
                               ? "text-indigo-600 dark:text-indigo-400"
                               : "text-muted-foreground/40"
-                        }`}
+                          }`}
                       />
                       <p
-                        className={`text-sm font-medium ${
-                          status === "complete"
+                        className={`text-sm font-medium ${status === "complete"
                             ? "text-emerald-600 dark:text-emerald-400"
                             : status === "current"
                               ? "text-indigo-700 dark:text-indigo-300"
                               : "text-muted-foreground/50"
-                        }`}
+                          }`}
                       >
                         {step.label}
                       </p>
