@@ -97,3 +97,64 @@ def _get_device():
     elif torch.backends.mps.is_available():
         return "mps"
     return "cpu"
+
+
+def clear_cuda_cache() -> dict:
+    """Clear CUDA cache and KV tensors without unloading model weights.
+    
+    Returns dict with memory stats (or empty if not CUDA).
+    """
+    import gc
+    gc.collect()
+
+    try:
+        import torch
+        if torch.cuda.is_available():
+            before = torch.cuda.memory_allocated()
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+            after = torch.cuda.memory_allocated()
+            freed = before - after
+            logger.info(
+                f"CUDA cache cleared: freed {freed / 1e6:.1f} MB, "
+                f"allocated {after / 1e6:.0f} MB / "
+                f"reserved {torch.cuda.memory_reserved() / 1e6:.0f} MB"
+            )
+            return {
+                "freed_mb": round(freed / 1e6, 1),
+                "allocated_mb": round(after / 1e6, 0),
+                "reserved_mb": round(torch.cuda.memory_reserved() / 1e6, 0),
+            }
+    except Exception as e:
+        logger.warning(f"CUDA cache clear failed: {e}")
+
+    return {}
+
+
+def clear_cuda_cache():
+    """
+    Free intermediate CUDA tensors and KV-cache without touching
+    the already-loaded model weights.  Safe to call between analyses.
+    """
+    import gc
+    gc.collect()
+
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+            allocated = torch.cuda.memory_allocated() / 1e9
+            reserved = torch.cuda.memory_reserved() / 1e9
+            logger.info(
+                f"CUDA cache cleared — allocated: {allocated:.2f} GB, "
+                f"reserved: {reserved:.2f} GB"
+            )
+            return {
+                "allocated_gb": round(allocated, 2),
+                "reserved_gb": round(reserved, 2),
+            }
+    except Exception as e:
+        logger.warning(f"CUDA cache clear error: {e}")
+
+    return {"allocated_gb": 0, "reserved_gb": 0}

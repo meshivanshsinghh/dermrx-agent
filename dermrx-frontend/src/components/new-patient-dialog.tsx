@@ -84,7 +84,7 @@ export default function NewPatientDialog({
   };
 
   const loadDemo = () => {
-    setName("John Doe"); setAge("45"); setSex("male");
+    setName("Jack Alto"); setAge("45"); setSex("male");
     setMedications(["warfarin", "metformin", "lisinopril"]);
     setNotes("Type 2 diabetes, hypertension, history of DVT");
   };

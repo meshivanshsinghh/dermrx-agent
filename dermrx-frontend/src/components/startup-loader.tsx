@@ -196,7 +196,7 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
         <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-100/40 via-transparent to-transparent dark:from-indigo-900/20 animate-slow-spin" />
       </div>
 
-      <div className="relative w-full max-w-md px-8 space-y-8">
+      <div className="relative w-full max-w-md px-4 sm:px-8 space-y-6 sm:space-y-8">
         {/* Logo */}
         <div className="text-center space-y-3">
           <div className="relative mx-auto w-fit">

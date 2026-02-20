@@ -101,3 +101,8 @@ export interface HealthResponse {
   mock_mode: boolean;
   models_loaded: Record<string, boolean>;
 }
+
+export interface ChatApiResponse {
+  session_id: string;
+  reply: string;
+}

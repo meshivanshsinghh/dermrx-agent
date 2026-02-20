@@ -16,6 +16,16 @@ import {
   Play,
   Check,
   Info,
+  Eye,
+  FlaskConical,
+  Search,
+  ShieldCheck,
+  FileText,
+  ArrowRight,
+  Database,
+  Microscope,
+  Sparkles,
+  Download,
 } from "lucide-react";
 import { analyzeImage } from "@/lib/api";
 import {
@@ -27,6 +37,7 @@ import {
 } from "@/lib/type";
 import { saveSession } from "@/lib/storage";
 import DrugEvaluationResults from "@/components/drug-evaluation-results";
+import { exportClinicalReportPDF } from "@/lib/pdf-export";
 
 interface AnalyzePanelProps {
   session: PatientSession;
@@ -48,33 +59,87 @@ interface PipelineStep {
   id: PipelineStage;
   label: string;
   description: string;
+  agentAction: string;
+  detail: string;
+  subSteps: string[];
+  icon: typeof Brain;
+  imagePath: string;
+  source: string;
+  accentColor: string;
+  bgColor: string;
+  borderColor: string;
 }
 
 const PIPELINE_STEPS: PipelineStep[] = [
   {
     id: "uploading",
     label: "Image Received",
-    description: "Processing uploaded image",
+    description: "Processing uploaded dermatological image",
+    agentAction: "Preparing clinical image for analysis",
+    detail: "The agent validates image quality, normalizes resolution, and prepares the input tensor for MedSigLIP's vision encoder.",
+    subSteps: ["Validating image format & quality", "Normalizing resolution for model input", "Preparing vision encoder tensor"],
+    icon: Upload,
+    imagePath: "/pipeline/step-upload.svg",
+    source: "Input Processing",
+    accentColor: "text-slate-600 dark:text-slate-400",
+    bgColor: "bg-slate-50 dark:bg-slate-900/20",
+    borderColor: "border-slate-200 dark:border-slate-800",
   },
   {
     id: "classifying",
-    label: "MedSigLIP Classifying",
-    description: "Zero-shot skin condition classification",
+    label: "MedSigLIP Classification",
+    description: "Zero-shot skin condition classification across 76 clinical prompts",
+    agentAction: "Running MedSigLIP across 22 dermatological conditions",
+    detail: "Google's MedSigLIP model performs zero-shot classification by matching the clinical image against 76 curated medical text prompts spanning 22 skin conditions across 3 clinical tiers.",
+    subSteps: ["Encoding image with MedSigLIP vision encoder", "Matching against 76 clinical text prompts", "Aggregating scores across 22 conditions", "Applying confidence thresholds (HIGH/MED/LOW)"],
+    icon: Eye,
+    imagePath: "/pipeline/step-medsiglip.svg",
+    source: "google/medsiglip-448",
+    accentColor: "text-violet-600 dark:text-violet-400",
+    bgColor: "bg-violet-50 dark:bg-violet-900/20",
+    borderColor: "border-violet-200 dark:border-violet-800",
   },
   {
     id: "candidates",
-    label: "Retrieving Candidates",
-    description: "Looking up treatment options from clinical database",
+    label: "Treatment Candidate Retrieval",
+    description: "Querying evidence-based treatment database for drug candidates",
+    agentAction: "Matching diagnosis to clinically-ranked drug candidates",
+    detail: "The agent queries a curated treatment table built from MED-RT (FDA/VA National Library of Medicine) and cross-referenced with DDInter 2.0. Candidates are ranked by clinical priority and verified for drug interaction data availability.",
+    subSteps: ["Mapping condition → treatment class", "Retrieving MED-RT verified drug candidates", "Ranking by clinical priority order", "Filtering for DDInter-verified drugs only"],
+    icon: Database,
+    imagePath: "/pipeline/step-medrt.svg",
+    source: "MED-RT (FDA/VA) + DDInter 2.0",
+    accentColor: "text-blue-600 dark:text-blue-400",
+    bgColor: "bg-blue-50 dark:bg-blue-900/20",
+    borderColor: "border-blue-200 dark:border-blue-800",
   },
   {
     id: "evaluating",
-    label: "DDInter + TxGemma Safety",
-    description: "Agentic drug-drug interaction & toxicity checks",
+    label: "Agentic Drug Safety Loop",
+    description: "Evaluating each candidate for drug interactions & molecular toxicity",
+    agentAction: "Agent evaluating each drug candidate for safety",
+    detail: "For each candidate, the agent: (1) checks DDInter 2.0 for drug-drug, food, and disease interactions against patient medications, (2) runs TxGemma-2B molecular toxicity prediction using PubChem SMILES strings across 6 safety endpoints. Unsafe drugs are rejected; the first safe drug is selected.",
+    subSteps: ["Checking DDInter 2.0 drug-drug interactions", "Scraping food & disease contraindications", "Running TxGemma-2B on PubChem SMILES (6 endpoints)", "Evaluating: Skin Reaction, DILI, CYP2C9, CYP3A4, hERG, ClinTox", "Rejecting unsafe → selecting safest candidate"],
+    icon: ShieldCheck,
+    imagePath: "/pipeline/step-txgemma.svg",
+    source: "DDInter 2.0 + google/txgemma-2b-predict + PubChem",
+    accentColor: "text-amber-600 dark:text-amber-400",
+    bgColor: "bg-amber-50 dark:bg-amber-900/20",
+    borderColor: "border-amber-200 dark:border-amber-800",
   },
   {
     id: "synthesizing",
-    label: "MedGemma Synthesizing",
-    description: "Generating clinical report & patient explanation",
+    label: "MedGemma Clinical Synthesis",
+    description: "Generating clinical report from all pipeline findings",
+    agentAction: "MedGemma synthesizing clinical report & patient explanation",
+    detail: "Google's MedGemma-4B receives the complete pipeline context — diagnosis, selected drug, all safety findings, rejected alternatives — and generates a structured clinical report with reasoning trace and plain-language patient explanation.",
+    subSteps: ["Assembling full pipeline context", "Generating clinical summary & reasoning", "Writing patient-friendly explanation", "Compiling rejected alternatives with reasons"],
+    icon: Sparkles,
+    imagePath: "/pipeline/step-medgemma.svg",
+    source: "google/medgemma-4b-it",
+    accentColor: "text-emerald-600 dark:text-emerald-400",
+    bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
+    borderColor: "border-emerald-200 dark:border-emerald-800",
   },
 ];
 
@@ -269,15 +334,6 @@ export default function AnalyzePanel({
     }
   };
 
-  const formatScore = (score: unknown): string => {
-    if (score === null || score === undefined) return "—";
-    const num = Number(score);
-    if (isNaN(num)) return "—";
-    return `${(num * 100).toFixed(1)}%`;
-  };
-
-  const capitalize = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
-
   // ======================== LOADING STATE ========================
   if (
     stage !== "idle" &&
@@ -285,87 +341,214 @@ export default function AnalyzePanel({
     stage !== "error" &&
     !result
   ) {
+    const currentStep = PIPELINE_STEPS.find((s) => s.id === stage) || PIPELINE_STEPS[0];
+    const currentIdx = STAGE_ORDER.indexOf(stage);
+    const StepIcon = currentStep.icon;
+
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8">
+        <div className="w-full max-w-3xl mx-auto space-y-6">
           {/* Header */}
-          <div className="text-center space-y-2">
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mx-auto shadow-lg">
-              <Brain className="h-8 w-8 text-white animate-pulse" />
-            </div>
-            <h2 className="text-lg font-semibold">Analyzing Image</h2>
+          <div className="text-center space-y-1">
+            <h2 className="text-lg font-semibold tracking-tight">Agentic Diagnostic Pipeline</h2>
             <p className="text-sm text-muted-foreground">
-              Running agentic diagnostic pipeline...
+              Step {currentIdx + 1} of {PIPELINE_STEPS.length} — {currentStep.agentAction}
             </p>
           </div>
 
-          {/* Pipeline Steps */}
-          <div className="space-y-1">
+          {/* Progress bar */}
+          <div className="relative">
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-1000 ease-out"
+                style={{ width: `${((currentIdx + 0.5) / PIPELINE_STEPS.length) * 100}%` }}
+              />
+            </div>
+            {/* Step dots on progress bar */}
+            <div className="absolute inset-0 flex items-center justify-between px-0">
+              {PIPELINE_STEPS.map((step, i) => {
+                const status = getStepStatus(step.id, stage);
+                return (
+                  <div
+                    key={step.id}
+                    className={`h-3 w-3 rounded-full border-2 transition-all duration-300 ${
+                      status === "complete"
+                        ? "bg-emerald-500 border-emerald-500 scale-100"
+                        : status === "current"
+                          ? "bg-indigo-500 border-indigo-500 scale-125 ring-4 ring-indigo-500/20"
+                          : "bg-background border-muted-foreground/20 scale-90"
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Step labels row */}
+          <div className="grid grid-cols-5 gap-1 -mt-2">
             {PIPELINE_STEPS.map((step, i) => {
               const status = getStepStatus(step.id, stage);
               return (
-                <div
-                  key={step.id}
-                  className={`flex items-start gap-3 p-3 rounded-lg transition-all duration-300 ${
-                    status === "current"
-                      ? "bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800"
-                      : status === "complete"
-                        ? "bg-emerald-50/50 dark:bg-emerald-900/5"
-                        : ""
-                  }`}
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                >
-                  <div className="mt-0.5">
-                    {status === "complete" ? (
-                      <div className="h-5 w-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                        <Check className="h-3 w-3 text-white" />
-                      </div>
-                    ) : status === "current" ? (
-                      <div className="h-5 w-5 rounded-full bg-indigo-500 flex items-center justify-center animate-pulse">
-                        <Play className="h-3 w-3 text-white fill-white" />
-                      </div>
-                    ) : (
-                      <div className="h-5 w-5 rounded-full border-2 border-slate-200 dark:border-slate-700">
-                        <Circle className="h-full w-full text-transparent" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={`text-sm font-medium ${
-                        status === "complete"
-                          ? "text-emerald-600 dark:text-emerald-400 line-through"
-                          : status === "current"
-                            ? "text-indigo-700 dark:text-indigo-300"
-                            : "text-slate-400 dark:text-slate-600"
-                      }`}
-                    >
-                      {step.label}
-                    </p>
-                    {status === "current" && (
-                      <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-0.5">
-                        {step.description}
-                      </p>
-                    )}
-                  </div>
-                  {status === "current" && (
-                    <Loader2 className="h-4 w-4 animate-spin text-indigo-500 mt-0.5" />
-                  )}
+                <div key={step.id} className="text-center">
+                  <p className={`text-[9px] sm:text-[10px] font-medium leading-tight ${
+                    status === "complete"
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : status === "current"
+                        ? "text-indigo-700 dark:text-indigo-300 font-semibold"
+                        : "text-muted-foreground/40"
+                  }`}>
+                    {step.label.split(" ").slice(0, 2).join(" ")}
+                  </p>
                 </div>
               );
             })}
           </div>
 
-          {/* Preview thumbnail */}
-          {preview && (
-            <div className="flex justify-center">
+          {/* ═══ Active Step Card ═══ */}
+          <div className={`rounded-2xl border-2 ${currentStep.borderColor} ${currentStep.bgColor} overflow-hidden animate-slide-in transition-all duration-500`} key={currentStep.id}>
+            {/* Card header */}
+            <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`h-10 w-10 rounded-xl ${currentStep.bgColor} border ${currentStep.borderColor} flex items-center justify-center`}>
+                  <StepIcon className={`h-5 w-5 ${currentStep.accentColor}`} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className={`text-sm font-bold ${currentStep.accentColor}`}>{currentStep.label}</h3>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">{currentStep.source}</p>
+                </div>
+              </div>
+              <Loader2 className={`h-5 w-5 animate-spin ${currentStep.accentColor}`} />
+            </div>
+
+            {/* Card body — image + details side by side */}
+            <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-0">
+              {/* Image placeholder */}
+              <div className="bg-muted/30 flex items-center justify-center p-6 md:border-r border-border/30 min-h-[180px]">
+                <img
+                  src={currentStep.imagePath}
+                  alt={currentStep.label}
+                  className="max-h-40 max-w-full object-contain rounded-lg"
+                  onError={(e) => {
+                    // Fallback: show icon if image not found
+                    const target = e.currentTarget;
+                    target.style.display = "none";
+                    target.parentElement?.classList.add("pipeline-img-fallback");
+                  }}
+                />
+                {/* Fallback shown via CSS when image fails */}
+                <div className="pipeline-img-placeholder hidden flex-col items-center gap-3 text-center">
+                  <div className={`h-16 w-16 rounded-2xl ${currentStep.bgColor} border ${currentStep.borderColor} flex items-center justify-center`}>
+                    <StepIcon className={`h-8 w-8 ${currentStep.accentColor} opacity-60`} />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground/50 max-w-[160px]">
+                    Place your image at<br />
+                    <code className="text-[9px] bg-muted px-1 py-0.5 rounded">{currentStep.imagePath}</code>
+                  </p>
+                </div>
+              </div>
+
+              {/* Details */}
+              <div className="p-5 space-y-4">
+                {/* What the agent is doing */}
+                <div>
+                  <p className={`text-xs font-bold uppercase tracking-wider ${currentStep.accentColor} mb-1.5`}>
+                    What the agent is doing
+                  </p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {currentStep.detail}
+                  </p>
+                </div>
+
+                {/* Animated sub-steps */}
+                <div className="space-y-1.5">
+                  {currentStep.subSteps.map((sub, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 animate-slide-in"
+                      style={{ animationDelay: `${i * 0.3}s` }}
+                    >
+                      <ArrowRight className={`h-3 w-3 ${currentStep.accentColor} shrink-0 animate-pulse-dot`}
+                        style={{ animationDelay: `${i * 0.5}s` }}
+                      />
+                      <span className="text-xs text-muted-foreground">{sub}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ═══ Completed Steps Summary ═══ */}
+          {currentIdx > 0 && (
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">Completed Steps</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {PIPELINE_STEPS.slice(0, currentIdx).map((step) => {
+                  const Icon = step.icon;
+                  return (
+                    <div
+                      key={step.id}
+                      className="flex items-center gap-2.5 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30 bg-emerald-50/30 dark:bg-emerald-900/5 px-3 py-2"
+                    >
+                      <div className="h-6 w-6 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                        <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate">{step.label}</p>
+                        <p className="text-[10px] text-emerald-600/60 dark:text-emerald-400/50 truncate">{step.source}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ═══ Pending Steps ═══ */}
+          {currentIdx < PIPELINE_STEPS.length - 1 && (
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">Next Steps</p>
+              <div className="flex flex-wrap gap-2">
+                {PIPELINE_STEPS.slice(currentIdx + 1).map((step) => {
+                  const Icon = step.icon;
+                  return (
+                    <div
+                      key={step.id}
+                      className="flex items-center gap-2 rounded-lg border border-border/40 bg-muted/10 px-3 py-1.5"
+                    >
+                      <Icon className="h-3.5 w-3.5 text-muted-foreground/30" />
+                      <span className="text-[11px] text-muted-foreground/40">{step.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Patient / image context */}
+          <div className="flex items-center justify-center gap-4 pt-2">
+            {preview && (
               <img
                 src={preview}
                 alt="Analyzing"
-                className="h-20 w-20 rounded-lg object-cover opacity-60"
+                className="h-12 w-12 rounded-lg object-cover opacity-50 ring-1 ring-border"
               />
-            </div>
-          )}
+            )}
+            {medications.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Pill className="h-3.5 w-3.5 text-muted-foreground/40" />
+                <span className="text-[10px] text-muted-foreground/40 capitalize">
+                  {medications.slice(0, 3).join(", ")}{medications.length > 3 ? ` +${medications.length - 3} more` : ""}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -382,10 +565,10 @@ export default function AnalyzePanel({
         result.report.rejected_drugs.length === 0);
 
     return (
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Analysis Results</h2>
+          <h2 className="text-base sm:text-lg font-semibold">Analysis Results</h2>
         </div>
 
         {/* Classification Section */}
@@ -394,7 +577,7 @@ export default function AnalyzePanel({
             {/* Image + Diagnosis Card */}
             <Card className="overflow-hidden">
               <CardContent className="p-0">
-                <div className={`${preview ? "grid grid-cols-1 md:grid-cols-[220px_1fr]" : ""}`}>
+                <div className={`${preview ? "grid grid-cols-1 md:grid-cols-[200px_1fr] lg:grid-cols-[220px_1fr]" : ""}`}>
                   {/* Image — Left */}
                   {preview && (
                     <div className="bg-slate-50 dark:bg-slate-900 p-4 flex items-center justify-center md:p-5">
@@ -407,8 +590,8 @@ export default function AnalyzePanel({
                   )}
 
                   {/* Diagnosis — Right */}
-                  <div className="p-5 md:p-6 space-y-4">
-                    <div className="flex items-start justify-between gap-3">
+                  <div className="p-4 sm:p-5 md:p-6 space-y-3 sm:space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3">
                       <div>
                         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1">
                           Diagnosis
@@ -418,7 +601,7 @@ export default function AnalyzePanel({
                         </h3>
                         {result.classification.treatment_class && (
                           <div className="mt-2">
-                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-800/40 rounded-md px-2 py-1 capitalize">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/60 border border-border/60 rounded-md px-2 py-1 capitalize">
                               <Pill className="h-3 w-3" />
                               {result.classification.treatment_class.replace(/_/g, " ")}
                             </span>
@@ -462,32 +645,34 @@ export default function AnalyzePanel({
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                            Diagnostic Signal
+                            Diagnostic Confidence
                           </span>
-                          <Badge className={`text-[9px] px-1.5 py-0 ${getConfidenceBadgeColor(result.classification.confidence_level)}`}>
-                            {result.classification.confidence_level}
-                          </Badge>
                         </div>
-                        <span className="text-lg font-bold tabular-nums text-muted-foreground/60">
-                          {formatScore(result.classification.confidence)}
-                        </span>
+                        <Badge className={`text-[10px] px-2 py-0.5 ${getConfidenceBadgeColor(result.classification.confidence_level)}`}>
+                          {result.classification.confidence_level === "HIGH" ? "Strong Match"
+                            : result.classification.confidence_level === "MODERATE" ? "Moderate Match"
+                            : "Low Match"}
+                        </Badge>
                       </div>
                       <div className="relative h-2 rounded-full bg-muted overflow-hidden">
                         <div
                           className={`absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ${getConfidenceColor(result.classification.confidence_level)}`}
                           style={{
-                            width: `${Math.min(
-                              (result.classification.confidence || 0) * 100,
-                              100,
-                            )}%`,
+                            width: `${
+                              result.classification.confidence_level === "HIGH" ? 85
+                                : result.classification.confidence_level === "MODERATE" ? 55
+                                : 25
+                            }%`,
                           }}
                         />
                       </div>
-                      {(result.classification.confidence || 0) > 0.15 && (
-                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
-                          Raw score &gt;15% indicates strong diagnostic signal for zero-shot classification
-                        </p>
-                      )}
+                      <p className="text-[10px] text-muted-foreground/70">
+                        {result.classification.confidence_level === "HIGH"
+                          ? "High confidence in this diagnosis — proceeding with treatment evaluation."
+                          : result.classification.confidence_level === "MODERATE"
+                          ? "Moderate confidence — clinical correlation recommended."
+                          : "Low confidence — specialist evaluation suggested."}
+                      </p>
                     </div>
 
                     {/* Safety Flags */}
@@ -529,18 +714,17 @@ export default function AnalyzePanel({
                       const maxScore = sorted[0]?.score || 1;
                       return sorted.map((entry, index) => {
                         const normalizedPct = Math.round((entry.score / maxScore) * 100);
-                        const rawPct = (entry.score * 100).toFixed(1);
                         const isTop = index === 0;
                         return (
                           <div
                             key={entry.category}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${
+                            className={`flex items-center gap-2 sm:gap-3 rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 ${
                               isTop
-                                ? "bg-indigo-50/80 dark:bg-indigo-950/15 border border-indigo-200/50 dark:border-indigo-800/30"
+                                ? "bg-muted/40 border border-border/50"
                                 : ""
                             }`}
                           >
-                            <span className="text-[11px] font-bold tabular-nums text-muted-foreground/40 w-5 text-right">
+                            <span className="text-[11px] font-bold tabular-nums text-muted-foreground/40 w-5 text-right shrink-0">
                               {index + 1}
                             </span>
                             <div className="flex-1 min-w-0">
@@ -565,8 +749,8 @@ export default function AnalyzePanel({
                                     </span>
                                   )}
                                   {isTop && (
-                                    <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[9px] px-1.5 py-0">
-                                      HIGH
+                                    <Badge className="bg-muted text-muted-foreground text-[9px] px-1.5 py-0">
+                                      Top Match
                                     </Badge>
                                   )}
                                 </div>
@@ -580,15 +764,12 @@ export default function AnalyzePanel({
                                   >
                                     {normalizedPct}%
                                   </span>
-                                  <span className="text-[10px] text-muted-foreground/40 tabular-nums">
-                                    ({rawPct}%)
-                                  </span>
                                 </div>
                               </div>
                               <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                                 <div
                                   className={`h-full rounded-full transition-all duration-700 ${
-                                    isTop ? "bg-indigo-500" : "bg-indigo-400/30"
+                                    isTop ? "bg-foreground/70" : "bg-foreground/15"
                                   }`}
                                   style={{ width: `${normalizedPct}%` }}
                                 />
@@ -600,7 +781,7 @@ export default function AnalyzePanel({
                     })()}
                   </div>
                   <p className="text-[10px] text-muted-foreground/50 mt-2">
-                    Bars show relative signal strength (top prediction = 100%). Raw scores in parentheses. Scores above 15% indicate strong diagnostic signal.
+                    Relative match strength across differential diagnoses. Top prediction normalized to 100%.
                   </p>
                 </CardContent>
               </Card>
@@ -703,7 +884,7 @@ export default function AnalyzePanel({
           </Card>
         )}
 
-        {/* ========== TIER 1 — DRUG EVALUATION + REPORT ========== */}
+        {/* ========== TIER 1 — DRUG EVALUATION ========== */}
         {isTier1 && (
           <>
             {/* No medications notice */}
@@ -727,119 +908,135 @@ export default function AnalyzePanel({
                 selectedDrug={result.selected_drug}
               />
             )}
+          </>
+        )}
 
-            {/* Clinical Report */}
-            {result.report && (
-              <Card
-                className="animate-slide-in overflow-hidden"
-                style={{ animationDelay: "0.2s" }}
-              >
-                <div className="px-6 pt-1 pb-6 space-y-5">
-                  <h3 className="text-[15px] font-semibold tracking-tight">
-                    Clinical Report
-                  </h3>
+        {/* ========== CLINICAL REPORT (ALL TIERS) ========== */}
+        {result.report && (
+          <Card
+            className="animate-slide-in overflow-hidden"
+            style={{ animationDelay: "0.2s" }}
+          >
+            <div className="px-4 sm:px-6 pt-1 pb-4 sm:pb-6 space-y-4 sm:space-y-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[15px] font-semibold tracking-tight">
+                  Clinical Report
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={() => exportClinicalReportPDF(result, patient, preview)}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Download PDF</span>
+                  <span className="sm:hidden">PDF</span>
+                </Button>
+              </div>
 
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                  Summary
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {result.report.clinical_summary}
+                </p>
+              </div>
+
+              <div className={`border-l-[3px] pl-4 py-1 ${
+                isTier1 ? "border-emerald-500" : isTier2 ? "border-amber-500" : "border-red-500"
+              }`}>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1">
+                  {isTier1 ? "Recommended Treatment" : "Recommendation"}
+                </p>
+                {isTier1 && result.report.drug_name && result.report.drug_name !== "none" && (
+                  <p className="text-base font-semibold capitalize text-foreground">
+                    {result.report.drug_name}
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">
+                  {result.report.recommended_treatment}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                  Clinical Reasoning
+                </p>
+                <div className="bg-muted/30 rounded-lg p-4">
+                  <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {result.report.reasoning_trace}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+                  For the Patient
+                </p>
+                <blockquote className="border-l-2 border-border pl-4 py-1">
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {result.report.patient_explanation}
+                  </p>
+                </blockquote>
+              </div>
+
+              {result.report.rejected_drugs &&
+                result.report.rejected_drugs.length > 0 && (
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
-                      Summary
+                      Alternatives Considered
                     </p>
-                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {result.report.clinical_summary}
-                    </p>
-                  </div>
-
-                  <div className="border-l-[3px] border-emerald-500 pl-4 py-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1">
-                      Recommended Treatment
-                    </p>
-                    <p className="text-base font-semibold capitalize text-foreground">
-                      {result.report.drug_name}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">
-                      {result.report.recommended_treatment}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
-                      Clinical Reasoning
-                    </p>
-                    <div className="bg-muted/30 rounded-lg p-4">
-                      <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                        {result.report.reasoning_trace}
-                      </p>
+                    <div className="space-y-1">
+                      {result.report.rejected_drugs.map(
+                        (
+                          item: string | { drug: string; reason: string },
+                          idx: number,
+                        ) => {
+                          const drugName =
+                            typeof item === "string" ? item : item.drug;
+                          const rejectionReason =
+                            typeof item === "string" ? null : item.reason;
+                          const candidate =
+                            result.candidates_evaluated.find(
+                              (c) => c.drug_name === drugName,
+                            );
+                          return (
+                            <div
+                              key={drugName || idx}
+                              className="flex items-start gap-2.5 py-1.5"
+                            >
+                              <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium capitalize">
+                                    {drugName}
+                                  </span>
+                                  <span
+                                    className={`text-[10px] uppercase tracking-widest font-bold ${
+                                      candidate?.status === "REJECTED"
+                                        ? "text-red-500"
+                                        : "text-muted-foreground"
+                                    }`}
+                                  >
+                                    {candidate?.status || "avoided"}
+                                  </span>
+                                </div>
+                                {(rejectionReason || candidate?.reason) && (
+                                  <p className="text-xs text-muted-foreground/70 mt-0.5">
+                                    {rejectionReason || candidate?.reason}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        },
+                      )}
                     </div>
                   </div>
-
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
-                      For the Patient
-                    </p>
-                    <blockquote className="border-l-2 border-border pl-4 py-1">
-                      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                        {result.report.patient_explanation}
-                      </p>
-                    </blockquote>
-                  </div>
-
-                  {result.report.rejected_drugs &&
-                    result.report.rejected_drugs.length > 0 && (
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
-                          Alternatives Considered
-                        </p>
-                        <div className="space-y-1">
-                          {result.report.rejected_drugs.map(
-                            (
-                              item: string | { drug: string; reason: string },
-                              idx: number,
-                            ) => {
-                              const drugName =
-                                typeof item === "string" ? item : item.drug;
-                              const rejectionReason =
-                                typeof item === "string" ? null : item.reason;
-                              const candidate =
-                                result.candidates_evaluated.find(
-                                  (c) => c.drug_name === drugName,
-                                );
-                              return (
-                                <div
-                                  key={drugName || idx}
-                                  className="flex items-start gap-2.5 py-1.5"
-                                >
-                                  <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm font-medium capitalize">
-                                        {drugName}
-                                      </span>
-                                      <span
-                                        className={`text-[10px] uppercase tracking-widest font-bold ${
-                                          candidate?.status === "REJECTED"
-                                            ? "text-red-500"
-                                            : "text-muted-foreground"
-                                        }`}
-                                      >
-                                        {candidate?.status || "avoided"}
-                                      </span>
-                                    </div>
-                                    {(rejectionReason || candidate?.reason) && (
-                                      <p className="text-xs text-muted-foreground/70 mt-0.5">
-                                        {rejectionReason || candidate?.reason}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            },
-                          )}
-                        </div>
-                      </div>
-                    )}
-                </div>
-              </Card>
-            )}
-          </>
+                )}
+            </div>
+          </Card>
         )}
 
         {/* Safety Note */}
@@ -859,8 +1056,8 @@ export default function AnalyzePanel({
 
   // ======================== INPUT FORM ========================
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-lg space-y-6">
+    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-lg space-y-4 sm:space-y-6">
         {/* Error */}
         {error && (
           <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -892,8 +1089,8 @@ export default function AnalyzePanel({
           onDrop={handleFileDrop}
           className={`border-2 border-dashed rounded-xl transition-colors ${
             preview
-              ? "border-indigo-300 bg-indigo-50/50 dark:border-indigo-700 dark:bg-indigo-900/10 p-6"
-              : "border-muted-foreground/20 hover:border-indigo-300 hover:bg-indigo-50/30 p-0"
+              ? "border-border bg-muted/30 p-6"
+              : "border-muted-foreground/20 hover:border-foreground/30 hover:bg-muted/20 p-0"
           }`}
         >
           {preview ? (
@@ -920,8 +1117,8 @@ export default function AnalyzePanel({
             <label className="cursor-pointer block">
               {/* Main upload zone */}
               <div className="p-8 text-center space-y-4">
-                <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center shadow-sm">
-                  <Upload className="h-7 w-7 text-indigo-500" />
+                <div className="mx-auto h-16 w-16 rounded-2xl bg-muted flex items-center justify-center shadow-sm">
+                  <Upload className="h-7 w-7 text-muted-foreground" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold">
@@ -929,7 +1126,7 @@ export default function AnalyzePanel({
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Drag & drop or{" "}
-                    <span className="text-indigo-600 dark:text-indigo-400 font-medium">
+                    <span className="text-foreground font-medium">
                       click to browse
                     </span>
                   </p>
@@ -951,14 +1148,14 @@ export default function AnalyzePanel({
 
         {/* Patient Medications (from patient record) */}
         {medications.length > 0 && (
-          <div className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
+          <div className="bg-muted/40 border border-border rounded-lg p-3">
             <div className="flex items-start gap-2">
-              <Pill className="h-4 w-4 text-indigo-500 mt-0.5" />
+              <Pill className="h-4 w-4 text-muted-foreground mt-0.5" />
               <div>
-                <p className="text-xs font-medium text-indigo-700 dark:text-indigo-400">
+                <p className="text-xs font-medium text-foreground">
                   {patient.name}&apos;s Medications ({medications.length})
                 </p>
-                <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 capitalize">
+                <p className="text-xs text-muted-foreground capitalize">
                   {medications.join(", ")}
                 </p>
               </div>
@@ -970,7 +1167,7 @@ export default function AnalyzePanel({
         <Button
           onClick={handleAnalyze}
           disabled={!file || (stage !== "idle" && stage !== "error")}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+          className="w-full bg-foreground hover:bg-foreground/90 text-background"
           size="lg"
         >
           <Upload className="h-4 w-4 mr-2" />

@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import APP_TITLE, APP_VERSION, CORS_ORIGINS
-from app.routers import health, ddi, analyze
+from app.routers import health, ddi, analyze, chat
 from contextlib import asynccontextmanager
 from app.utils.model_loader import load_all_models
 
@@ -35,6 +35,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(ddi.router)
 app.include_router(analyze.router)
+app.include_router(chat.router)
 
 @app.get("/")
 def root():

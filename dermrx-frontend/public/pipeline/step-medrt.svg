@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160" fill="none" viewBox="0 0 200 160">
+  <rect width="200" height="160" rx="12" fill="#eff6ff"/>
+  <rect x="30" y="20" width="50" height="50" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="55" y="50" text-anchor="middle" font-family="system-ui" font-size="20" fill="#3b82f6">💊</text>
+  <rect x="90" y="20" width="80" height="12" rx="3" fill="#bfdbfe"/>
+  <rect x="90" y="38" width="60" height="12" rx="3" fill="#bfdbfe" opacity="0.6"/>
+  <rect x="90" y="56" width="70" height="12" rx="3" fill="#bfdbfe" opacity="0.4"/>
+  <path d="M40 85 L55 85 L55 80 L70 90 L55 100 L55 95 L40 95 Z" fill="#3b82f6" opacity="0.3"/>
+  <rect x="80" y="80" width="90" height="30" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1"/>
+  <text x="125" y="98" text-anchor="middle" font-family="system-ui" font-size="9" fill="#3b82f6">MED-RT Verified</text>
+  <text x="100" y="148" text-anchor="middle" font-family="system-ui" font-size="9" fill="#3b82f6">Place MED-RT/FDA image</text>
+</svg>

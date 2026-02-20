@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160" fill="none" viewBox="0 0 200 160">
+  <rect width="200" height="160" rx="12" fill="#f8fafc"/>
+  <rect x="50" y="30" width="100" height="80" rx="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 4"/>
+  <path d="M100 55 L115 75 H105 V90 H95 V75 H85 Z" fill="#94a3b8"/>
+  <text x="100" y="130" text-anchor="middle" font-family="system-ui" font-size="10" fill="#94a3b8">Upload image here</text>
+</svg>

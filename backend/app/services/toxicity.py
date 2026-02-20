@@ -79,12 +79,18 @@ class ToxicityService:
         predictions = []
         for task_name, task_info in TOXICITY_TASKS.items():
             prompt = tdc_prompts[task_name].replace("{Drug SMILES}", smiles)
+            import torch
             input_ids = tokenizer(prompt, return_tensors="pt").to(model.device)
-            outputs = model.generate(**input_ids, max_new_tokens=8)
+            with torch.no_grad():
+                outputs = model.generate(**input_ids, max_new_tokens=8)
             response = tokenizer.decode(
                 outputs[0][len(input_ids["input_ids"][0]):],
                 skip_special_tokens=True,
             ).strip()
+
+            # Free intermediate tensors per-task
+            del input_ids, outputs
+            torch.cuda.empty_cache() if torch.cuda.is_available() else None
 
             # parse: look for A or B in the response
             is_flagged = "B" in response

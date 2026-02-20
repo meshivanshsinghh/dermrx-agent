@@ -21,64 +21,42 @@ model performance analysis too if also a criteria <- so we need to make sure we 
 9. getting personal feedback from dermatologist too and sharing their update on landing page. [asking what do you think how impactful this can be?]
 link notebooks together on kaggle on some folder, and maybe list the link for other notebooks in starting.
 
-llm chat intergation
-check if the safety measurement is working where it runs simulatenously
 maybe showing this measurement in technical difficulty. 
-
-scraper for extracting information from pubchem and rxclass too.
 
 deployment scripts too and testing scripts too 
 postman collection too
-
-refer specialist list. 
-
-
 we initally thought of taking suggestions from MedGemma but we didn't do that. 
-
-
-maybe downloading the model on the gpu and then trying to understand if we can make quick calls. 
-good ui for TxGemma predictions
 link to writeup when including notebooks and links in each notebook and also maybe the live demo?
 tell i analyzed lot of things in other notebooks and created a final notebook. 
 
 
 
-MANUAL METHOD without DETECTION and also DRUG SAFETY check
 
 
-also show in frontend when showing this is fungal infection what type of things are included in fungal infection? 
 
 
-show how we handlded the Tier 2 safety thing. 
+
+ 
+   
 
 
-The response structure in the handoff shows candidates_evaluated as an array with status/findings per drug — the frontend needs to render that evaluation trail clearly, since that's the visual proof of the agentic loop (which is what wins the Agentic Prize).
-The Tier 2/3 routing is important — the frontend needs to handle the "show referral, don't show treatment pipeline" branch properly, or it'll look broken during the demo.
-What do you want to tackle first? I'm guessing the frontend, but tell me specifically — are you starting from scratch with the Next.js project, or do you already have a repo initialized? And are you planning to build all three pages this session or start with one?
-de
 
+-> make it a bit responsive
+-> and add medgemma assistant capabilities
+-> export pdf with patient details
+-> make sure the sidebar for dermRx agent on left is not collapsable in tablet and desktop only in mobile. 
+-> a case with Safety Flag [WHAT WILL HAPPEN HERE?] -> check if it is running simulationously
+-> a case with unknown treatment [WHAT WILL HAPPEN HERE? WHAT REFERRAL??]
+-> chatbot panel is only shown when analysis is done. not before. 
+-> if the loader fails for some reason we should have some backup data to showcase for these scenarios
+-> storing output for demo showing only if the initial load failed. 
+-> and telling to watch the demo video for us? 
 
-adding classification score and visualization for best images from zero-shot classification in notebook 1. 
-
-
-NEW TODO: 
-1. if the loader fails for some reason we should have some backup data to showcase for these scenarios
-2. clicking on dermrx ai dermatology agent on left should take us on homepage.
-3. analysis for patient name should be in url session based on patient id and session id not just on the homepage. 
-4. 
+OTHERS: 
+also make sure we have a button for judges to know that please only click yes if you think you are evaluating the
+-> now this loading of weights takes a bit time so we let them know machine is spot on and less charge or something. 
+-> maybe emailing me telling we want to check the frontend, and then i can actually spin my instance and give them confirmation??
 
 
 technical challenge getting google and aws
-making it responsive
-all requests are secure fro my own frontend only 
-also make sure we have a button for judges to know that please only click yes if you think you are evaluating the
--> now this loading of weights takes a bit time so we let them know. 
-machine is spot on and less charge or something. 
-
-tier based confidence is good but showing 18.7% confidence is shit right???? thinking about it. 
--> medgemma takes time what to do? and it's not correct in general actually what are the some best practices for medgemma?
--> for better writing? 
-
-
--> add more to food interaction
--> where is medgemma in drug check recommendation???
+adding classification score and visualization for best images from zero-shot classification in notebook 1. 
