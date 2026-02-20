@@ -199,6 +199,7 @@ class ChatService:
         session_id: str,
         message: str,
         context: dict | None = None,
+        history: list[dict] | None = None,
     ) -> str:
         """
         Process a chat message. Creates session on first call (context required).
@@ -211,9 +212,11 @@ class ChatService:
                 return "No analysis context provided. Please run an analysis first."
             system_prompt = build_system_prompt(context)
             session = _store.create(session_id, system_prompt)
+            if history:
+                session.history = [ChatMessage(role=h.get("role", "user"), content=h.get("content", "")) for h in history]
             logger.info(
                 f"Chat session created: {session_id} "
-                f"(system prompt: {len(system_prompt)} chars)"
+                f"(system prompt: {len(system_prompt)} chars, restored {len(session.history)} history turns)"
             )
 
         # Append user message

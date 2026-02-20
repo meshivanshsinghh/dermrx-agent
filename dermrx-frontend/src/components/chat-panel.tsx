@@ -75,7 +75,10 @@ export default function ChatPanel({
         const session = sessions.find((s) => s.id === sessionId);
         if (session && session.chatHistory) {
           initialMessages = session.chatHistory;
-          initialContextSent = session.chatHistory.length > 0;
+          // IMPORTANT: If we are revisiting a session, the backend has likely dumped it to save GPU RAM.
+          // By forcing `initialContextSent = false`, we guarantee the next message will transmit 
+          // both the clinical context and the chat history so the backend can seamlessly reconstruct its memory.
+          initialContextSent = false;
         }
       }
 
@@ -117,7 +120,11 @@ export default function ChatPanel({
       try {
         // Send context only on the very first message of this session
         const context = !contextSent ? currentResult : null;
-        const response = await sendChatMessage(chatSessionId, message, context);
+        // The `messages` state variable here captures the array BEFORE our setMessages(...) above.
+        // This makes it perfect: it's the full prior history without the current user message duplicated!
+        const historyPayload = !contextSent ? messages : undefined;
+
+        const response = await sendChatMessage(chatSessionId, message, context, historyPayload);
 
         if (!contextSent) setContextSent(true);
 
@@ -188,14 +195,14 @@ export default function ChatPanel({
         <div className="flex items-center gap-2">
           <div
             className={`h-8 w-8 rounded-lg flex items-center justify-center ${hasResult
-                ? "bg-blue-100 dark:bg-blue-900/30"
-                : "bg-muted"
+              ? "bg-blue-100 dark:bg-blue-900/30"
+              : "bg-muted"
               }`}
           >
             <Bot
               className={`h-4 w-4 ${hasResult
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-muted-foreground"
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-muted-foreground"
                 }`}
             />
           </div>
@@ -277,8 +284,8 @@ export default function ChatPanel({
                 )}
                 <div
                   className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${msg.role === "user"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-muted"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-muted"
                     }`}
                 >
                   {msg.role === "assistant" ? (

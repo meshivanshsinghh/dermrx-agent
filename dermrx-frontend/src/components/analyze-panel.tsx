@@ -380,10 +380,10 @@ export default function AnalyzePanel({
                   <div
                     key={step.id}
                     className={`h-3 w-3 rounded-full border-2 transition-all duration-300 ${status === "complete"
-                        ? "bg-emerald-500 border-emerald-500 scale-100"
-                        : status === "current"
-                          ? "bg-indigo-500 border-indigo-500 scale-125 ring-4 ring-indigo-500/20"
-                          : "bg-background border-muted-foreground/20 scale-90"
+                      ? "bg-emerald-500 border-emerald-500 scale-100"
+                      : status === "current"
+                        ? "bg-indigo-500 border-indigo-500 scale-125 ring-4 ring-indigo-500/20"
+                        : "bg-background border-muted-foreground/20 scale-90"
                       }`}
                   />
                 );
@@ -398,10 +398,10 @@ export default function AnalyzePanel({
               return (
                 <div key={step.id} className="text-center">
                   <p className={`text-[9px] sm:text-[10px] font-medium leading-tight ${status === "complete"
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : status === "current"
-                        ? "text-indigo-700 dark:text-indigo-300 font-semibold"
-                        : "text-muted-foreground/40"
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : status === "current"
+                      ? "text-indigo-700 dark:text-indigo-300 font-semibold"
+                      : "text-muted-foreground/40"
                     }`}>
                     {step.label.split(" ").slice(0, 2).join(" ")}
                   </p>
@@ -654,19 +654,23 @@ export default function AnalyzePanel({
                             Diagnostic Confidence
                           </span>
                         </div>
-                        <Badge className={`text-[10px] px-2 py-0.5 ${getConfidenceBadgeColor(result.classification.confidence_level)}`}>
-                          {result.classification.confidence_level === "HIGH" ? "Strong Match"
-                            : result.classification.confidence_level === "MODERATE" ? "Moderate Match"
-                              : "Low Match"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={`text-[10px] px-2 py-0.5 ${getConfidenceBadgeColor(result.classification.confidence_level)}`}>
+                            {result.classification.confidence_level === "HIGH" ? "Strong Match"
+                              : result.classification.confidence_level === "MODERATE" ? "Moderate Match"
+                                : "Low Match"}
+                          </Badge>
+                        </div>
                       </div>
                       <div className="relative h-2 rounded-full bg-muted overflow-hidden">
                         <div
                           className={`absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ${getConfidenceColor(result.classification.confidence_level)}`}
                           style={{
-                            width: `${result.classification.confidence_level === "HIGH" ? 85
-                                : result.classification.confidence_level === "MODERATE" ? 55
-                                  : 25
+                            width: `${result.classification.confidence >= 0.15
+                              ? 85 + Math.min(15, (result.classification.confidence - 0.15) * 100) // 85-100%
+                              : result.classification.confidence >= 0.08
+                                ? 50 + ((result.classification.confidence - 0.08) / 0.07) * 34 // 50-84%
+                                : Math.max(10, (result.classification.confidence / 0.08) * 49) // 10-49%
                               }%`,
                           }}
                         />
@@ -718,14 +722,14 @@ export default function AnalyzePanel({
                           .slice(0, 5);
                         const maxScore = sorted[0]?.score || 1;
                         return sorted.map((entry, index) => {
-                          const normalizedPct = Math.round((entry.score / maxScore) * 100);
+                          const relativeMatchPct = Math.round((entry.score / maxScore) * 100);
                           const isTop = index === 0;
                           return (
                             <div
                               key={entry.category}
                               className={`flex items-center gap-2 sm:gap-3 rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 ${isTop
-                                  ? "bg-muted/40 border border-border/50"
-                                  : ""
+                                ? "bg-muted/40 border border-border/50"
+                                : ""
                                 }`}
                             >
                               <span className="text-[11px] font-bold tabular-nums text-muted-foreground/40 w-5 text-right shrink-0">
@@ -736,16 +740,16 @@ export default function AnalyzePanel({
                                   <div className="flex items-center gap-2">
                                     <span
                                       className={`text-sm truncate ${isTop
-                                          ? "font-semibold text-foreground"
-                                          : "font-medium text-muted-foreground"
+                                        ? "font-semibold text-foreground"
+                                        : "font-medium text-muted-foreground"
                                         }`}
                                     >
                                       {entry.display_name}
                                     </span>
                                     {entry.tier > 1 && (
                                       <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${entry.tier === 2
-                                          ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                                         }`}>
                                         Tier {entry.tier}
                                       </span>
@@ -757,21 +761,13 @@ export default function AnalyzePanel({
                                     )}
                                   </div>
                                   <div className="flex items-center gap-2 ml-2">
-                                    <span
-                                      className={`text-sm font-mono tabular-nums ${isTop
-                                          ? "font-bold text-foreground"
-                                          : "text-muted-foreground"
-                                        }`}
-                                    >
-                                      {normalizedPct}%
-                                    </span>
                                   </div>
                                 </div>
                                 <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                                   <div
                                     className={`h-full rounded-full transition-all duration-700 ${isTop ? "bg-foreground/70" : "bg-foreground/15"
                                       }`}
-                                    style={{ width: `${normalizedPct}%` }}
+                                    style={{ width: `${relativeMatchPct}%` }}
                                   />
                                 </div>
                               </div>
@@ -781,7 +777,7 @@ export default function AnalyzePanel({
                       })()}
                     </div>
                     <p className="text-[10px] text-muted-foreground/50 mt-2">
-                      Relative match strength across differential diagnoses. Top prediction normalized to 100%.
+                      Relative match strength across differential diagnoses based on visual clinical features.
                     </p>
                   </CardContent>
                 </Card>
@@ -1013,8 +1009,8 @@ export default function AnalyzePanel({
                                   </span>
                                   <span
                                     className={`text-[10px] uppercase tracking-widest font-bold ${candidate?.status === "REJECTED"
-                                        ? "text-red-500"
-                                        : "text-muted-foreground"
+                                      ? "text-red-500"
+                                      : "text-muted-foreground"
                                       }`}
                                   >
                                     {candidate?.status || "avoided"}
@@ -1086,8 +1082,8 @@ export default function AnalyzePanel({
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleFileDrop}
           className={`border-2 border-dashed rounded-xl transition-colors ${preview
-              ? "border-border bg-muted/30 p-6"
-              : "border-muted-foreground/20 hover:border-foreground/30 hover:bg-muted/20 p-0"
+            ? "border-border bg-muted/30 p-6"
+            : "border-muted-foreground/20 hover:border-foreground/30 hover:bg-muted/20 p-0"
             }`}
         >
           {preview ? (

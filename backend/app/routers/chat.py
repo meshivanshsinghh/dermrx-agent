@@ -32,6 +32,7 @@ class ChatRequest(BaseModel):
     session_id: str
     message: str
     context: Optional[dict[str, Any]] = None
+    history: Optional[list[dict[str, str]]] = None
 
 
 class ChatResponse(BaseModel):
@@ -54,6 +55,7 @@ async def chat(body: ChatRequest):
             session_id=body.session_id,
             message=body.message.strip(),
             context=body.context,
+            history=body.history,
         )
 
         logger.info(f"Chat {body.session_id}: Q={body.message[:80]}... A={reply[:80]}...")

@@ -75,6 +75,7 @@ export async function sendChatMessage(
   sessionId: string,
   message: string,
   context?: AnalyzeResponse | DrugCheckResponse | null,
+  history?: { role: string; content: string }[],
 ): Promise<ChatApiResponse> {
   const body: Record<string, unknown> = {
     session_id: sessionId,
@@ -83,6 +84,9 @@ export async function sendChatMessage(
   // Send context only on first message (when context is provided)
   if (context) {
     body.context = context;
+  }
+  if (history && history.length > 0) {
+    body.history = history;
   }
 
   const res = await fetch(`${API_BASE}/api/chat`, {
