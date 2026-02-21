@@ -384,10 +384,14 @@ export default function Home() {
     <div className="h-screen flex flex-col overflow-hidden bg-background text-foreground">
       {/* ── GLOBAL DEMO MODE BANNER ── */}
       {isDemoMode && (
-        <div className="bg-amber-500 text-white px-4 py-2 text-center text-xs sm:text-sm font-medium shrink-0 flex items-center justify-center gap-2 relative z-[60]">
-          <AlertTriangle className="h-4 w-4" />
-          <span>
-            <strong>Read-Only Demo Mode Active:</strong> The live AI backend has been paused for the judging period. You are viewing pre-computed capabilities. Note: Patient creation and live chats are disabled.
+        <div className="sticky top-0 bg-amber-500 text-white px-3 sm:px-4 py-2 text-center text-[11px] sm:text-xs md:text-sm font-medium shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 z-[60] shadow-md">
+          <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+          <span className="leading-tight">
+            <strong className="hidden sm:inline">Read-Only Demo Mode Active:</strong>
+            <strong className="sm:hidden">Demo Mode:</strong>
+            <span className="hidden md:inline"> The live AI backend has been paused for the judging period. You are viewing pre-computed capabilities. Note: Patient creation and live chats are disabled.</span>
+            <span className="hidden sm:inline md:hidden"> Live AI backend paused. Viewing pre-computed results. Patient creation & chats disabled.</span>
+            <span className="sm:hidden"> Pre-computed results only. Creation & chats disabled.</span>
           </span>
         </div>
       )}
