@@ -673,10 +673,18 @@ export default function AnalyzePanel({
                       </div>
                       <p className="text-[10px] text-muted-foreground/70">
                         {result.classification.confidence_level === "HIGH"
-                          ? "High confidence in this diagnosis — proceeding with treatment evaluation."
+                          ? isTier1
+                            ? "High confidence in this diagnosis — proceeding with treatment evaluation."
+                            : isTier2
+                              ? "High confidence in this diagnosis — specialist referral recommended."
+                              : "High confidence in this diagnosis — urgent specialist attention required."
                           : result.classification.confidence_level === "MODERATE"
-                            ? "Moderate confidence — clinical correlation recommended."
-                            : "Low confidence — specialist evaluation suggested."}
+                            ? isTier1
+                              ? "Moderate confidence — proceeding with treatment evaluation."
+                              : "Moderate confidence — clinical correlation recommended."
+                            : isTier1
+                              ? "Low confidence — proceeding with caution."
+                              : "Low confidence — specialist evaluation suggested."}
                       </p>
                     </div>
 

@@ -115,7 +115,7 @@
         "candidates_evaluated": [],
         "selected_drug": null,
         "report": {
-          "clinical_summary": "Bullous Disease suspected. Requires specialized testing Specialist evaluation required.",
+          "clinical_summary": "Bullous Disease suspected. Requires specialized testing. Specialist evaluation required.",
           "recommended_treatment": "Specialist evaluation recommended",
           "drug_name": "none",
           "reasoning_trace": "Tier 3 / HIGH — treatment pipeline not triggered",
@@ -4683,10 +4683,10 @@
         "selected_drug": "terbinafine",
         "report": {
           "clinical_summary": "The patient presents with a fungal infection, likely onychomycosis, given the lack of specific details. The diagnosis is moderate based on the available data.",
-          "recommended_treatment": "Terbinafine, 500mg, orally, once daily, for 6 months.",
+          "recommended_treatment": "Terbinafine, 250mg, orally, once daily, for 6 months.",
           "drug_name": "terbinafine",
           "reasoning_trace": "Fluconazole and ketoconazole were rejected due to significant drug-drug interactions (DDIs) with atorvastatin, specifically increasing the plasma concentration of the statin, potentially leading to myopathy. Terbinafine is the preferred option among the remaining options.",
-          "patient_explanation": "\"I'm going to prescribe terbinafine to treat your fungal infection. It's a medication that helps kill the fungus causing the infection. I've chosen it because it doesn't interact negatively with your other medications, like atorvastatin. You will take one 500mg tablet daily for six months. It's important to finish the full course, even if you start feeling better, to ensure the infection is completely gone.\"",
+          "patient_explanation": "\"I'm going to prescribe terbinafine to treat your fungal infection. It's a medication that helps kill the fungus causing the infection. I've chosen it because it doesn't interact negatively with your other medications, like atorvastatin. You will take one 250mg tablet daily for six months. It's important to finish the full course, even if you start feeling better, to ensure the infection is completely gone.\"",
           "rejected_drugs": [
             {
               "drug": "fluconazole",
@@ -5674,7 +5674,7 @@
           "recommended_treatment": "adapalene, 0.1%, topical, 1 month",
           "drug_name": "adapalene",
           "reasoning_trace": "The patient is currently taking doxycycline. Concurrent use of tretinoin and isotretinoin with tetracyclines is contraindicated due to the risk of pseudotumor cerebri. Therefore, tretinoin and isotretinoin are rejected.",
-          "patient_explanation": "I am recommending you switch from your current acne treatment to adapalene. This is because I cannot prescribe tretinoin or isotretinoin at the same time as your doxycycline. Adaplene is a topical retinoid that can help improve your acne.",
+          "patient_explanation": "I am recommending you switch from your current acne treatment to adapalene. This is because I cannot prescribe tretinoin or isotretinoin at the same time as your doxycycline. Adapalene is a topical retinoid that can help improve your acne.",
           "rejected_drugs": [
             {
               "drug": "tretinoin",
