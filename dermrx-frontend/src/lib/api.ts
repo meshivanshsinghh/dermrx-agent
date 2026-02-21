@@ -66,9 +66,17 @@ export async function searchDrugs(query: string): Promise<string[]> {
   return (data.results || []).map((r: { drug_name: string }) => r.drug_name);
 }
 
-export async function checkHealth(): Promise<HealthResponse> {
-  const res = await fetch(`${API_BASE}/api/health`);
-  return res.json();
+export async function checkHealth(timeoutMs = 6000): Promise<HealthResponse> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/api/health`, {
+      signal: controller.signal,
+    });
+    return res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function sendChatMessage(

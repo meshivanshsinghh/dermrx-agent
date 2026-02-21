@@ -68,38 +68,7 @@
   --sidebar-ring: #6c63ff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #1a1a1a;
-    --card-foreground: #ededed;
-    --popover: #1a1a1a;
-    --popover-foreground: #ededed;
-    --primary: #818cf8;
-    --primary-foreground: #ffffff;
-    --secondary: #1e293b;
-    --secondary-foreground: #f1f5f9;
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
-    --accent: #1e293b;
-    --accent-foreground: #f1f5f9;
-    --destructive: #dc2626;
-    --destructive-foreground: #ffffff;
-    --border: #334155;
-    --input: #334155;
-    --ring: #818cf8;
 
-    --sidebar-background: #111118;
-    --sidebar-foreground: #e2e8f0;
-    --sidebar-primary: #818cf8;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #1e1b4b;
-    --sidebar-accent-foreground: #c7d2fe;
-    --sidebar-border: #1e293b;
-    --sidebar-ring: #818cf8;
-  }
-}
 
 /* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
@@ -175,14 +144,7 @@ a:focus-visible,
   box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  button:focus-visible,
-  a:focus-visible,
-  [role="button"]:focus-visible,
-  [tabindex]:not([tabindex="-1"]):focus-visible {
-    box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2);
-  }
-}
+
 
 /* Remove default focus outline for mouse users */
 *:focus:not(:focus-visible) {

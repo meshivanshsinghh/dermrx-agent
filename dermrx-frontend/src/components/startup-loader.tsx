@@ -72,8 +72,7 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
   const [completed, setCompleted] = useState(false);
   const [isMock, setIsMock] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
+
 
   const getStepStatus = useCallback(
     (index: number): StepStatus => {
@@ -85,7 +84,7 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
     [currentStepIndex, completed],
   );
 
-  // Main loading logic
+  // Main loading logic — single 8s health check, then demo if it fails
   useEffect(() => {
     let cancelled = false;
 
@@ -95,17 +94,14 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
       let healthData;
 
       try {
-        healthData = await checkHealth();
+        healthData = await checkHealth(8000);
       } catch {
-        // Backend not running — retry a few times
-        if (retryCount < 3) {
-          await new Promise((r) => setTimeout(r, 2000));
-          if (!cancelled) setRetryCount((c) => c + 1);
-          return;
+        // Backend unreachable — go straight to demo mode
+        if (!cancelled) {
+          setFadeOut(true);
+          await new Promise((r) => setTimeout(r, 500));
+          if (!cancelled) onReady(false, true);
         }
-        setError(
-          "Cannot connect, I ran out of AWS Credits!!"
-        );
         return;
       }
 
@@ -137,7 +133,7 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
         let allLoaded = false;
         while (!allLoaded && !cancelled) {
           try {
-            const status = await checkHealth();
+            const status = await checkHealth(10000);
             const loaded = status.models_loaded || {};
 
             // Advance to the step of the first model that's still loading
@@ -179,7 +175,7 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
     return () => {
       cancelled = true;
     };
-  }, [retryCount, onReady]);
+  }, [onReady]);
 
   const progress = completed
     ? 100
@@ -221,40 +217,9 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
           </div>
         </div>
 
-        {/* Error state & Demo Mode Fallback */}
-        {error && (
-          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-5 text-center space-y-4">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-amber-800 dark:text-amber-400">Backend Offline</p>
-              <p className="text-xs text-amber-700/80 dark:text-amber-400/80">{error}</p>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => {
-                  setFadeOut(true);
-                  setTimeout(() => onReady(false, true), 500);
-                }}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
-              >
-                Launch Demo Mode (Read-Only)
-              </button>
-
-              <button
-                onClick={() => {
-                  setError(null);
-                  setRetryCount(0);
-                }}
-                className="text-xs font-medium text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 underline py-1"
-              >
-                Retry connection
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Steps */}
-        {!error && (
+        {(
           <div className="space-y-1">
             {LOADING_STEPS.map((step, i) => {
               const status = getStepStatus(i);
@@ -326,7 +291,7 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
         )}
 
         {/* Progress bar */}
-        {!error && (
+        {(
           <div className="space-y-2">
             <div className="relative h-1.5 rounded-full bg-muted overflow-hidden">
               <div
