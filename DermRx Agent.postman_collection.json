@@ -1,0 +1,162 @@
+{
+  "info": {
+    "_postman_id": "53a03b34-8bce-4f6b-ade4-46919fb1085c",
+    "name": "DermRx Agent",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "6726232"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "localhost:8000/api/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Drug Search (autocomplete)",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "DDI Check by IDs - 2 DRUGS",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "DDI Check by IDs - 5 DRUGS",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "DDI Check by Names - 2 DRUGS",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "DDI Check by Names - 5 DRUGS",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Batching Test - More than 5",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/ddi/check-by-name?drugs=Fluconazole,Metformin,Lisinopril,Atorvastatin,Metoprolol,Omeprazole,Acetylsalicylic acid,Amlodipine",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "ddi",
+            "check-by-name"
+          ],
+          "query": [
+            {
+              "key": "drugs",
+              "value": "Fluconazole,Metformin,Lisinopril,Atorvastatin,Metoprolol,Omeprazole,Acetylsalicylic acid,Amlodipine"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Pipeline Check",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "image",
+              "type": "file",
+              "uuid": "4127dc5c-d260-447f-921a-4ac7e6954b30",
+              "src": "/Users/shivanshsingh/Documents/Screenshot 2026-02-14 at 6.13.28 PM.png"
+            },
+            {
+              "key": "patient_medications",
+              "value": "warfarin,metformin,lisinopril",
+              "type": "text",
+              "uuid": "ba6e4c9e-b018-48ba-8d0a-d713cddc3327"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/analyze",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "analyze"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Drug Check",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"drug_name\": \"fluconazole\",\n    \"patient_medications\": [\"warfarin\", \"metformin\", \"lisinopril\"]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/drug-check",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "drug-check"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
