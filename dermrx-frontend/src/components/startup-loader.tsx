@@ -72,7 +72,7 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
   const [completed, setCompleted] = useState(false);
   const [isMock, setIsMock] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
-
+  const [error, setError] = useState<string | null>(null);
 
   const getStepStatus = useCallback(
     (index: number): StepStatus => {
@@ -96,11 +96,9 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
       try {
         healthData = await checkHealth(8000);
       } catch {
-        // Backend unreachable — go straight to demo mode
+        // Backend unreachable — show demo mode button
         if (!cancelled) {
-          setFadeOut(true);
-          await new Promise((r) => setTimeout(r, 500));
-          if (!cancelled) onReady(false, true);
+          setError("Backend is currently unavailable.");
         }
         return;
       }
@@ -217,9 +215,27 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
           </div>
         </div>
 
+        {/* Error state & Demo Mode Fallback */}
+        {error && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center space-y-4">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-amber-800">Backend Offline</p>
+              <p className="text-xs text-amber-700/80">{error}</p>
+            </div>
+            <button
+              onClick={() => {
+                setFadeOut(true);
+                setTimeout(() => onReady(false, true), 500);
+              }}
+              className="w-full bg-amber-600 hover:bg-amber-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+            >
+              Launch Demo Mode (Read-Only)
+            </button>
+          </div>
+        )}
 
         {/* Steps */}
-        {(
+        {!error && (
           <div className="space-y-1">
             {LOADING_STEPS.map((step, i) => {
               const status = getStepStatus(i);
@@ -291,7 +307,7 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
         )}
 
         {/* Progress bar */}
-        {(
+        {!error && (
           <div className="space-y-2">
             <div className="relative h-1.5 rounded-full bg-muted overflow-hidden">
               <div

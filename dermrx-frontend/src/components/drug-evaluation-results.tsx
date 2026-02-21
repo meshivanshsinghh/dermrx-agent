@@ -1058,6 +1058,9 @@ export default function DrugEvaluationResults({
 
   return (
     <div className="space-y-4 animate-slide-in">
+      {/* Data Sources */}
+      <DataSources />
+
       {/* Patient-level warnings */}
       <PatientWarnings candidates={candidates} />
 
@@ -1151,9 +1154,6 @@ export default function DrugEvaluationResults({
           ))}
         </div>
       </div>
-
-      {/* Data Sources */}
-      <DataSources />
     </div>
   );
 }
