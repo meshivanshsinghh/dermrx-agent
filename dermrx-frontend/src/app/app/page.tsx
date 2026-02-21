@@ -488,100 +488,103 @@ export default function Home() {
               )}
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 overflow-y-auto">
-              {/* Mobile hamburger on home */}
-              <div className="lg:hidden self-start mb-4">
-                <Button variant="ghost" size="icon" onClick={() => setMobileSidebarOpen(true)}>
-                  <Menu className="h-5 w-5" />
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+              {/* Sticky mobile header on home */}
+              <div className="lg:hidden h-14 border-b flex items-center px-3 shrink-0">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setMobileSidebarOpen(true)}>
+                  <Menu className="h-4 w-4" />
                 </Button>
+                <span className="ml-2 text-sm font-semibold">DermRx Agent</span>
               </div>
 
-              {/* Hero */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shrink-0">
-                  <Stethoscope className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-lg font-bold leading-tight">DermRx Agent</h1>
-                    {isMockMode && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">
-                        Mock
-                      </span>
-                    )}
+              <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 overflow-y-auto">
+                {/* Hero */}
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shrink-0">
+                    <Stethoscope className="h-5 w-5 text-white" />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    AI-powered dermatology diagnosis &amp; agentic drug safety
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-lg font-bold leading-tight">DermRx Agent</h1>
+                      {isMockMode && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">
+                          Mock
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      AI-powered dermatology diagnosis &amp; agentic drug safety
+                    </p>
+                  </div>
+                </div>
+
+                {/* Demo Scenario Cards */}
+                <div className="w-full max-w-3xl mb-8">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-3 text-center">
+                    Launch a Demo Scenario
                   </p>
-                </div>
-              </div>
-
-              {/* Demo Scenario Cards */}
-              <div className="w-full max-w-3xl mb-8">
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-3 text-center">
-                  Launch a Demo Scenario
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  {DEMO_SCENARIOS.map((scenario) => {
-                    const Icon = scenario.accentIcon;
-                    return (
-                      <button
-                        key={scenario.id}
-                        onClick={() => handleLoadDemo(scenario)}
-                        className={`relative flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all ${scenario.borderColor} ${scenario.bgColor}`}
-                      >
-                        {/* Avatar + Badge row */}
-                        <div className="flex items-center justify-between w-full">
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${scenario.badgeColor}`}>
-                            {scenario.badge}
-                          </span>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={scenario.avatarPath}
-                            alt={scenario.patient.name}
-                            className="h-10 w-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm object-cover bg-slate-100 dark:bg-slate-800"
-                          />
-                        </div>
-
-                        {/* Icon + Title */}
-                        <div className="flex items-center gap-2">
-                          <div className="h-8 w-8 rounded-lg bg-white/80 dark:bg-white/10 flex items-center justify-center shadow-sm">
-                            <Icon className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold leading-tight">{scenario.title}</p>
-                            <p className="text-[10px] text-muted-foreground">{scenario.subtitle}</p>
-                          </div>
-                        </div>
-
-                        {/* Description */}
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {scenario.description}
-                        </p>
-
-                        {/* Expected outcome hint */}
-                        <p className="w-full mt-auto pt-2 text-[10px] text-muted-foreground/70 italic leading-snug">
-                          {scenario.expectedResult}
-                        </p>
-
-                        {/* Tags */}
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {scenario.tags.map((tag, i) => (
-                            <span
-                              key={tag}
-                              className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${scenario.tagColors[i]}`}
-                            >
-                              {tag}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                    {DEMO_SCENARIOS.map((scenario) => {
+                      const Icon = scenario.accentIcon;
+                      return (
+                        <button
+                          key={scenario.id}
+                          onClick={() => handleLoadDemo(scenario)}
+                          className={`relative flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all ${scenario.borderColor} ${scenario.bgColor}`}
+                        >
+                          {/* Avatar + Badge row */}
+                          <div className="flex items-center justify-between w-full">
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${scenario.badgeColor}`}>
+                              {scenario.badge}
                             </span>
-                          ))}
-                        </div>
-                      </button>
-                    );
-                  })}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={scenario.avatarPath}
+                              alt={scenario.patient.name}
+                              className="h-10 w-10 rounded-full border-2 border-white dark:border-slate-800 shadow-sm object-cover bg-slate-100 dark:bg-slate-800"
+                            />
+                          </div>
+
+                          {/* Icon + Title */}
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-lg bg-white/80 dark:bg-white/10 flex items-center justify-center shadow-sm">
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold leading-tight">{scenario.title}</p>
+                              <p className="text-[10px] text-muted-foreground">{scenario.subtitle}</p>
+                            </div>
+                          </div>
+
+                          {/* Description */}
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {scenario.description}
+                          </p>
+
+                          {/* Expected outcome hint */}
+                          <p className="w-full mt-auto pt-2 text-[10px] text-muted-foreground/70 italic leading-snug">
+                            {scenario.expectedResult}
+                          </p>
+
+                          {/* Tags */}
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {scenario.tags.map((tag, i) => (
+                              <span
+                                key={tag}
+                                className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${scenario.tagColors[i]}`}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+
+
               </div>
-
-
             </div>
           )}
         </div>

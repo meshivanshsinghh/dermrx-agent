@@ -104,7 +104,7 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
           return;
         }
         setError(
-          "Cannot connect to the live AI backend. The server may be paused for the judging period.",
+          "Cannot connect, I ran out of AWS Credits!!"
         );
         return;
       }
@@ -263,10 +263,10 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
                 <div
                   key={step.id}
                   className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-500 ${status === "current"
-                      ? "bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800"
-                      : status === "complete"
-                        ? "bg-emerald-50/50 dark:bg-emerald-900/5"
-                        : ""
+                    ? "bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800"
+                    : status === "complete"
+                      ? "bg-emerald-50/50 dark:bg-emerald-900/5"
+                      : ""
                     }`}
                   style={{
                     opacity: status === "pending" ? 0.4 : 1,
@@ -293,18 +293,18 @@ export default function StartupLoader({ onReady }: StartupLoaderProps) {
                     <div className="flex items-center gap-2">
                       <Icon
                         className={`h-3.5 w-3.5 ${status === "complete"
-                            ? "text-emerald-500"
-                            : status === "current"
-                              ? "text-indigo-600 dark:text-indigo-400"
-                              : "text-muted-foreground/40"
+                          ? "text-emerald-500"
+                          : status === "current"
+                            ? "text-indigo-600 dark:text-indigo-400"
+                            : "text-muted-foreground/40"
                           }`}
                       />
                       <p
                         className={`text-sm font-medium ${status === "complete"
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : status === "current"
-                              ? "text-indigo-700 dark:text-indigo-300"
-                              : "text-muted-foreground/50"
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : status === "current"
+                            ? "text-indigo-700 dark:text-indigo-300"
+                            : "text-muted-foreground/50"
                           }`}
                       >
                         {step.label}
