@@ -4,21 +4,21 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/p/:patientId/s/:sessionId",
-        destination: "/",
+        source: "/app/p/:patientId/s/:sessionId",
+        destination: "/app",
       },
       {
-        source: "/p/:patientId",
-        destination: "/",
+        source: "/app/p/:patientId",
+        destination: "/app",
       },
       // Legacy long-form URLs (backward compat)
       {
-        source: "/patient/:patientId/session/:sessionId",
-        destination: "/",
+        source: "/app/patient/:patientId/session/:sessionId",
+        destination: "/app",
       },
       {
-        source: "/patient/:patientId",
-        destination: "/",
+        source: "/app/patient/:patientId",
+        destination: "/app",
       },
     ];
   },
