@@ -258,16 +258,10 @@ export default function AnalyzePanel({
       timers.push(setTimeout(() => setStage("classifying"), 1500));
       timers.push(setTimeout(() => setStage("candidates"), 4000));
       timers.push(setTimeout(() => setStage("evaluating"), 6000));
-      timers.push(setTimeout(() => setStage("synthesizing"), 12000));
+      timers.push(setTimeout(() => setStage("synthesizing"), 6000));
 
-      // Fire the API call and a minimum-time promise in parallel.
-      // This ensures the animation plays for at least ~14s even if the
-      // backend responds instantly (mock mode).
-      const minDuration = new Promise((r) => setTimeout(r, 14500));
-      const [response] = await Promise.all([
-        analyzeImage(file, medications),
-        minDuration,
-      ]);
+      // Fire the API call and proceed immediately when backend responds.
+      const response = await analyzeImage(file, medications);
 
       timers.forEach(clearTimeout);
 
