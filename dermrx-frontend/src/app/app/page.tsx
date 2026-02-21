@@ -497,7 +497,7 @@ export default function Home() {
                 <span className="ml-2 text-sm font-semibold">DermRx Agent</span>
               </div>
 
-              <div className="flex-1 flex flex-col items-center p-4 pt-6 sm:p-8 overflow-y-auto">
+              <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 overflow-y-auto">
                 {/* Hero */}
                 <div className="flex items-center gap-3 mb-6">
                   <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shrink-0">
