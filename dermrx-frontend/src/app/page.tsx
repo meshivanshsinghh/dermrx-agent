@@ -384,7 +384,7 @@ export default function Home() {
     <div className="h-screen flex flex-col overflow-hidden bg-background text-foreground">
       {/* ── GLOBAL DEMO MODE BANNER ── */}
       {isDemoMode && (
-        <div className="sticky top-0 bg-amber-500 text-white px-3 sm:px-4 py-2 text-center text-[11px] sm:text-xs md:text-sm font-medium shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 z-[60] shadow-md">
+        <div className="fixed top-0 left-0 right-0 bg-amber-500 text-white px-3 sm:px-4 py-2 text-center text-[11px] sm:text-xs md:text-sm font-medium shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 z-[100] shadow-md">
           <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
           <span className="leading-tight">
             <strong className="hidden sm:inline">Read-Only Demo Mode Active:</strong>
@@ -396,10 +396,13 @@ export default function Home() {
         </div>
       )}
 
+      {/* Spacer to prevent content from going under fixed banner */}
+      {isDemoMode && <div className="h-[36px] sm:h-[40px] shrink-0" />}
+
       <div className="flex-1 flex overflow-hidden relative">
         {/* ── Mobile sidebar overlay ── */}
         {mobileSidebarOpen && (
-          <div className="fixed inset-0 z-40 lg:hidden">
+          <div className={`fixed z-40 lg:hidden ${isDemoMode ? 'top-[36px] sm:top-[40px] bottom-0 left-0 right-0' : 'inset-0'}`}>
             <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
             <div className="absolute inset-y-0 left-0 w-72 z-50">
               <Sidebar
