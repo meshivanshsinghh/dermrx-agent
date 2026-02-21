@@ -1,0 +1,24 @@
+# ── Server Management ──
+sudo systemctl start dermrx        # Start server
+sudo systemctl stop dermrx         # Stop server
+sudo systemctl restart dermrx      # Restart server
+sudo systemctl status dermrx       # Check if running
+
+# ── Logs ──
+sudo journalctl -u dermrx -f       # Live logs
+sudo journalctl -u dermrx --since "10 min ago"  # Recent logs
+
+# ── Nginx ──
+sudo systemctl status nginx        # Check Nginx
+sudo nginx -t                      # Test Nginx config
+sudo systemctl restart nginx       # Restart Nginx
+
+# ── SSL Certificate ──
+sudo certbot certificates          # Check SSL expiry
+sudo certbot renew --dry-run       # Test auto-renewal
+
+# ── GPU ──
+nvidia-smi                         # Check GPU usage
+
+# ── Quick Health Check ──
+curl https://api.shivanshsingh.in/api/health

@@ -25,5 +25,9 @@ CORS_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
+    "https://dermrx-agent.vercel.app",
     *_extra,
 ]
+
+# Regex to match all Vercel preview deployment URLs
+CORS_ORIGIN_REGEX = r"https://dermrx-agent(-[a-z0-9]+)*-shivansh-singhs-projects(-[a-z0-9]+)*\.vercel\.app"
