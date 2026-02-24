@@ -54,10 +54,10 @@ export function LandingPage() {
           onWatchDemo={handleWatchDemo}
         />
       </div>
-
-      <div ref={demoRef}>
+      {/*       <div ref={demoRef}>
         <DemoVideoSection content={landingPageContent.demoVideo} />
       </div>
+ */}
 
       <div ref={problemRef}>
         <ProblemSection
