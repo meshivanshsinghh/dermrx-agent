@@ -2,19 +2,15 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { DemoVideoContent } from '@/lib/landing-page-types';
-import { Play, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Play } from 'lucide-react';
 
 interface DemoVideoSectionProps {
   content: DemoVideoContent;
 }
 
 export function DemoVideoSection({ content }: DemoVideoSectionProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const [isInView, setIsInView] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -33,15 +29,6 @@ export function DemoVideoSection({ content }: DemoVideoSectionProps) {
 
     return () => observer.disconnect();
   }, []);
-
-  const handleVideoError = () => {
-    console.error('Video failed to load:', content.videoUrl);
-    setVideoError(true);
-  };
-
-  const handleVideoLoaded = () => {
-    setIsVideoLoaded(true);
-  };
 
   return (
     <section
@@ -75,67 +62,28 @@ export function DemoVideoSection({ content }: DemoVideoSectionProps) {
           lists, and generate safe, evidence-based treatment recommendations — all in under 60 seconds.
         </p>
 
-        {/* Video Player with glow effect */}
+        {/* YouTube Video Embed with glow effect */}
         <div className="video-glow rounded-2xl">
           <div
             className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl bg-slate-900 dark:bg-slate-800"
             role="region"
             aria-label="Demo video player"
           >
-            {videoError ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 p-8 text-center">
-                <div className="mb-6 h-20 w-20 rounded-full bg-indigo-500/10 flex items-center justify-center">
+            {!isInView ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
+                <div className="h-20 w-20 rounded-full bg-indigo-500/10 flex items-center justify-center animate-pulse">
                   <Play className="h-10 w-10 text-indigo-400" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white">Demo Video Coming Soon</h3>
-                <p className="text-sm text-slate-400 mb-6 max-w-md">
-                  The full 3-minute demo showcases the complete pipeline: image upload → diagnosis → medication check → safe recommendation.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="border-slate-600 text-slate-300 hover:bg-white/10"
-                >
-                  <a
-                    href="https://www.youtube.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="gap-2"
-                    aria-label="Watch demo video on YouTube (opens in new tab)"
-                  >
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                    Watch on YouTube
-                  </a>
-                </Button>
               </div>
             ) : (
-              <>
-                {!isVideoLoaded && isInView && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
-                    <div className="h-20 w-20 rounded-full bg-indigo-500/10 flex items-center justify-center animate-pulse">
-                      <Play className="h-10 w-10 text-indigo-400" aria-hidden="true" />
-                    </div>
-                  </div>
-                )}
-
-                {isInView && (
-                  <video
-                    ref={videoRef}
-                    className="w-full h-full object-cover"
-                    controls
-                    poster="/demo/video-poster.jpg"
-                    onError={handleVideoError}
-                    onLoadedData={handleVideoLoaded}
-                    preload="metadata"
-                    aria-label="DermRx Agent demonstration video"
-                  >
-                    <source src={content.videoUrl} type="video/mp4" />
-                    <track kind="captions" src="/demo/captions.vtt" srcLang="en" label="English" />
-                    Your browser does not support the video tag.
-                  </video>
-                )}
-              </>
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src="https://www.youtube.com/embed/CIHco6gJCcw?rel=0"
+                title="DermRx Agent Demo Video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
             )}
           </div>
         </div>

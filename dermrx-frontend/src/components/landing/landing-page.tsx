@@ -13,7 +13,7 @@ import {
   ProblemSection,
   HowItWorksSection,
   ComparisonSection,
-  ArchitectureSection,
+  // ArchitectureSection,
   FooterSection,
 } from './index';
 
@@ -34,7 +34,7 @@ export function LandingPage() {
   const problemRef = useRef<HTMLDivElement>(null);
   const howItWorksRef = useRef<HTMLDivElement>(null);
   const comparisonRef = useRef<HTMLDivElement>(null);
-  const architectureRef = useRef<HTMLDivElement>(null);
+  // const architectureRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
   const handleWatchDemo = () => scrollToSection(demoRef);
@@ -54,10 +54,10 @@ export function LandingPage() {
           onWatchDemo={handleWatchDemo}
         />
       </div>
-      {/*       <div ref={demoRef}>
+      <div ref={demoRef}>
         <DemoVideoSection content={landingPageContent.demoVideo} />
       </div>
- */}
+
 
       <div ref={problemRef}>
         <ProblemSection
@@ -76,14 +76,15 @@ export function LandingPage() {
           features={landingPageContent.comparison.features}
         />
       </div>
-
-      <div ref={architectureRef}>
+      {/*
+           <div ref={architectureRef}>
         <ArchitectureSection
           headline={landingPageContent.architecture.headline}
           callouts={landingPageContent.architecture.callouts}
         />
       </div>
-
+      */}
+      `
       <div ref={footerRef}>
         <FooterSection
           builtBy={landingPageContent.footer.builtBy}
